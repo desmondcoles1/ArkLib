@@ -31,5 +31,4 @@ lemma Polishchuk_Spielman {F : Type} [Field F]
         ∀ x ∈ Q_x, Bivariate.evalX x P = quot_Y x)
     ∧ (∃ Q_y : Finset F, Q_y.card ≥ n_y - a_y ∧ Q_y ⊆ P_y ∧
         ∀ y ∈ Q_y, Bivariate.evalX y P = quot_X y)
-    := by
-  sorry
+    := sorry
