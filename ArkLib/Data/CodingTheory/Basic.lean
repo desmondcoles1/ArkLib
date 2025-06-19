@@ -76,7 +76,7 @@ noncomputable def distFromCode (u : n → R) (C : Set (n → R)) : ℕ∞ :=
 notation "Δ₀(" u ", " C ")" => distFromCode u C
 
 noncomputable def minDist (C : Set (n → R)) : ℕ :=
-  sInf { d | ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v = d }
+  sInf {d | ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v = d}
 
 @[simp]
 theorem dist_empty : ‖ (∅ : Set (n → R) ) ‖₀ = 0 := by simp [dist]
