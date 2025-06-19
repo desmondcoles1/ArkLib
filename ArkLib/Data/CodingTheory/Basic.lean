@@ -76,7 +76,7 @@ noncomputable def distFromCode (u : n → R) (C : Set (n → R)) : ℕ∞ :=
 notation "Δ₀(" u ", " C ")" => distFromCode u C
 
 noncomputable def minDist (C : Set (n → R)) : ℕ :=
-  sInf {d | ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v = d}
+  sInf { d | ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v = d }
 
 @[simp]
 theorem dist_empty : ‖ (∅ : Set (n → R) ) ‖₀ = 0 := by simp [dist]
@@ -380,7 +380,7 @@ notation "δᵣ" C => minRelHammingDistCode C
 -/
 @[simp]
 lemma possibleRelHammingDistsToC_subset_relHammingDistRange [DecidableEq F] :
-  Code.possibleDistsToCode w C relHammingDist ⊆ relHammingDistRange ι := fun _ ↦ by
+  possibleDistsToCode w C relHammingDist ⊆ relHammingDistRange ι := fun _ ↦ by
     aesop (add simp Code.possibleDistsToCode)
 
 /--
@@ -689,6 +689,7 @@ lemma dist_eq_minWtCodewords [CommRing F] {LC : LinearCode ι F} :
     unfold Code.minDist minWtCodewords
     refine congrArg _ (Set.ext fun _ ↦ ⟨fun ⟨u, _, v, _⟩ ↦ ⟨u - v, ?p₁⟩, fun _ ↦ ⟨0, ?p₂⟩⟩) <;>
     aesop (add simp [hammingDist_eq_wt_sub, sub_eq_zero])
+
 
 
 open Finset in
