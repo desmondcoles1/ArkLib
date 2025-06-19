@@ -54,7 +54,7 @@ def checkMatrix (deg : ℕ) [Fintype ι] : Matrix (Fin (Fintype.card ι - deg)) 
 --   sorry
 end ReedSolomon
 
-open Polynomial Matrix Code LinearCode
+open Classical Polynomial Matrix Code LinearCode
 
 variable {F ι ι' : Type*}
          {C : Set (ι → F)}

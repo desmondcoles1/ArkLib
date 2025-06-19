@@ -691,7 +691,6 @@ lemma dist_eq_minWtCodewords [CommRing F] {LC : LinearCode ι F} :
     aesop (add simp [hammingDist_eq_wt_sub, sub_eq_zero])
 
 
-
 open Finset in
 
 lemma dist_UB [CommRing F] {LC : LinearCode ι F} :
