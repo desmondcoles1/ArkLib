@@ -327,7 +327,7 @@ section
 
 variable [DecidableEq F]
 
-/-- The set of possible distances between distinct codewords in a code.
+/-- The set of possible relative distances between distinct codewords in a code.
 -/
 def possibleRelHammingDists (C : Set (ι → F)) : Set ℚ≥0 :=
   possibleDists C relHammingDist
@@ -666,7 +666,7 @@ The Hamming distance between codewords equals to the weight of their difference.
 -/
 lemma hammingDist_eq_wt_sub [CommRing F] {u v : ι → F} : hammingDist u v = Code.wt (u - v) := by
   aesop (add simp [hammingDist, Code.wt, sub_eq_zero])
-  
+
 /--
   The min distance of a linear code equals the minimum of the weights of non-zero codewords.
 -/
