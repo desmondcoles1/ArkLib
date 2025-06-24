@@ -23,12 +23,12 @@ lemma Polishchuk_Spielman {F : Type} [Semiring F] [Field F]
   (h_quot_X : ∀ y ∈ P_y,
     (quot_X y).natDegree ≤ (b_x - a_x) ∧ Bivariate.evalY y g = (quot_X y) * (Bivariate.evalY y f))
   (h_quot_Y : ∀ x ∈ P_x,
-    (quot_Y x).natDegree ≤ (b_y - a_y) ∧ f_support_nonempty x g = (quot_Y x) * (f_support_nonempty x f))
+    (quot_Y x).natDegree ≤ (b_y - a_y) ∧ Bivariate.evalX x g = (quot_Y x) * (Bivariate.evalX x f))
   : ∃ q : F[X][Y], g = q * f
     ∧ Bivariate.degreeX q ≤ b_x - a_x ∧ Bivariate.degreeY q ≤ b_y - a_y
     ∧ (∃ Q_x : Finset F, Q_x.card ≥ n_x - a_x ∧ Q_x ⊆ P_x ∧
-        ∀ x ∈ Q_x, f_support_nonempty x q = quot_Y x)
+        ∀ x ∈ Q_x, Bivariate.evalX x q = quot_Y x)
     ∧ (∃ Q_y : Finset F, Q_y.card ≥ n_y - a_y ∧ Q_y ⊆ P_y ∧
-        ∀ y ∈ Q_y, f_support_nonempty y q = quot_X y)
+        ∀ y ∈ Q_y, Bivariate.evalX y q = quot_X y)
     := by
   sorry
