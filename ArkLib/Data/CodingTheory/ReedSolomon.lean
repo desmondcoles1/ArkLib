@@ -11,6 +11,9 @@ import Mathlib.RingTheory.Henselian
 import ArkLib.Data.Fin.Lift
 import ArkLib.Data.MvPolynomial.LinearMvExtension
 import ArkLib.Data.Polynomial.Interface
+import Mathlib.Data.Real.Basic
+import Mathlib.Data.Real.Sqrt
+
 
 /-!
   # Reed-Solomon Codes
@@ -23,7 +26,7 @@ import ArkLib.Data.Polynomial.Interface
 
 namespace ReedSolomon
 
-open Polynomial
+open Polynomial NNReal
 
 variable {F : Type*} [Semiring F] {ι : Type*} (domain : ι ↪ F)
 
@@ -214,6 +217,8 @@ lemma genMatIsVandermonde [Fintype ι] [Field F] [DecidableEq F] [inst : NeZero 
 
 section
 
+open NNReal
+
 variable [Field F]
 
 lemma dim_eq_deg_of_le [NeZero n] (inj : Function.Injective α) (h : n ≤ m) :
@@ -237,6 +242,9 @@ lemma dist_le_length [DecidableEq F] (inj : Function.Injective α) :
     minDist ((ReedSolomon.code ⟨α, inj⟩ n) : Set (Fin m → F)) ≤ m := by
   convert dist_UB
   simp
+
+noncomputable def sqrtRate [Fintype ι] (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
+  (LinearCode.rate (ReedSolomon.code domain deg) : ℝ≥0).sqrt
 
 end
 
