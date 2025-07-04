@@ -44,7 +44,7 @@ def weightedDegree (p : F[X][Y]) (u v : ℕ) : Option ℕ :=
   List.max? <|
     List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
 
-def rootMultiplicity₀ : Option ℕ :=
+def rootMultiplicity₀ [DecidableEq F] : Option ℕ :=
   let deg := weightedDegree f 1 1
   match deg with
   | none => none 
@@ -53,11 +53,16 @@ def rootMultiplicity₀ : Option ℕ :=
       (fun x => if coeff f x.1 x.2 ≠ 0 then x.1 + x.2 else 0) 
       (List.product (List.range deg.succ) (List.range deg.succ)))
 
-noncomputable def rootMultiplicity {F : Type} [CommSemiring F] (f : F[X][Y]) (x y : F) : Option ℕ :=
+noncomputable def rootMultiplicity 
+  {F : Type} 
+  [CommSemiring F] 
+  [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
   let X := (Polynomial.X : Polynomial F)
   rootMultiplicity₀ (F := F) ((f.comp (Y + (C (C y)))).map (Polynomial.compRingHom (X + C x)))
 
-lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F] {x y : F} (f : F[X][Y])
+lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F] 
+  [DecidableEq F]
+  {x y : F} (f : F[X][Y])
   (h : some 0 < (rootMultiplicity (f := f) x y))
   :
   (f.eval 0).eval 0 = 0
