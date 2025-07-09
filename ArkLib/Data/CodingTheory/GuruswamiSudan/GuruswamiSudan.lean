@@ -24,6 +24,8 @@ As in the Berlekamp-Welch case, this can be shown to be equivalent to a
 a system of linear equations.
 -/
 structure GuruswamiSudanCondition (k r D : ℕ) (ωs f : Fin n → F) (Q : Polynomial (Polynomial F)) where 
+  /-- Q ≠ 0 -/
+  Q_ne_0 : Q ≠ 0
   /-- Degree of the polynomial. -/
   Q_deg : Bivariate.weightedDegree Q 1 (k-1) ≤ D 
   /-- (ωs i, f i) must be root of the polynomial Q. -/
@@ -68,8 +70,5 @@ lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs f : Fin n → 
   (h : Δ₀(f, p.eval ∘ f) ≤ proximity_gap_johnson (n := n) k m)
   :
   ((X : F[X][X]) - C p) ∣ Q := by sorry 
-
-
-
 
 end GuruswamiSudan 
