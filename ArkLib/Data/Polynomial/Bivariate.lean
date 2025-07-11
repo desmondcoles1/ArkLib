@@ -25,7 +25,7 @@ The set of coefficients of a bivariate polynomial.
 def coeffs [DecidableEq F] : Finset F[X] := f.support.image (fun n => f.coeff n)
 
 /-- (i, j)-coefficient of a polynomial. -/
-def coeff (i j : ℕ) : F := (f.coeff j).coeff i 
+def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i 
 
 /-- The coeffiecient of `Y^n` is a polynomial in `X`. -/
 def coeff_Y_n (n : ℕ) : F[X] := f.coeff n
@@ -40,11 +40,11 @@ def degreeY : ℕ := Polynomial.natDegree f
 The maximal `u * i + v * j` such that the polynomial `p`
 contains a monomial `x^i * y * j`.
 -/
-def weightedDegree (p : F[X][Y]) (u v : ℕ) : Option ℕ := 
+def weightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : Option ℕ := 
   List.max? <|
     List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
 
-def rootMultiplicity₀ [DecidableEq F] : Option ℕ :=
+def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][Y]) : Option ℕ :=
   let deg := weightedDegree f 1 1
   match deg with
   | none => none 
@@ -53,8 +53,8 @@ def rootMultiplicity₀ [DecidableEq F] : Option ℕ :=
       (fun x => if coeff f x.1 x.2 ≠ 0 then x.1 + x.2 else 0) 
       (List.product (List.range deg.succ) (List.range deg.succ)))
 
-noncomputable def rootMultiplicity 
-  {F : Type} 
+noncomputable def rootMultiplicity.{u}
+  {F : Type u} 
   [CommSemiring F] 
   [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
   let X := (Polynomial.X : Polynomial F)

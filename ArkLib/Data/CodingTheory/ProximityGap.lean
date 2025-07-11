@@ -1,4 +1,8 @@
+import Mathlib.FieldTheory.RatFunc.Defs
+import Mathlib.FieldTheory.RatFunc.Basic
+
 import ArkLib.Data.CodingTheory.Basic
+import ArkLib.Data.Polynomial.Bivariate
 
 /-!
   # Definitions and Theorems about Proximity Gaps
@@ -37,3 +41,18 @@ def proximityGap (d : ℕ) (bound : ℕ) : Prop :=
 def correlatedAgreement (C : Set (n → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → n → F) : Prop :=
   ∃ S : Finset n, #(S) ≥ (1 - δ) * (Fintype.card n) ∧
     ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ {j | v i j = W i j} ⊆ S
+
+variable [Field F] 
+
+lemma proximity_gap_claim_5_4 [DecidableEq (RatFunc F)] {n k m : ℕ} {ωs u₀ u₁ : Fin n → F} 
+  :
+  ∃ Q : Polynomial (Polynomial (RatFunc F)) , Q ≠ 0 
+    ∧ ∀ i, Bivariate.rootMultiplicity (F := RatFunc F)
+      (Polynomial.C (Polynomial.C (RatFunc.mk (Polynomial.C (ωs i)) 1)) : Polynomial (Polynomial (RatFunc F))) 
+      (RatFunc.mk (Polynomial.C <| ωs i) 1 : RatFunc F)
+      ((RatFunc.mk (Polynomial.C <| u₀ i) 1 + 
+        (RatFunc.mk (Polynomial.X) 1) * 
+          (RatFunc.mk (Polynomial.C <| u₁ i) 1)): RatFunc F) ≥ m := by sorry 
+
+   
+
