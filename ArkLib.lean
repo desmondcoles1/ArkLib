@@ -30,6 +30,7 @@ import ArkLib.Data.CodingTheory.ProximityGap
 import ArkLib.Data.CodingTheory.ReedMuller
 import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.Data.EllipticCurve.BN254
+import ArkLib.Data.FieldTheory.BinaryField.AdditiveNTT.AdditiveNTT
 import ArkLib.Data.FieldTheory.BinaryField.AdditiveNTT.NovelPolynomialBasis
 import ArkLib.Data.FieldTheory.BinaryField.AdditiveNTT.Prelude
 import ArkLib.Data.FieldTheory.BinaryField.Tower.Basic
