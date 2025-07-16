@@ -68,6 +68,51 @@ lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
   (f.eval 0).eval 0 = 0
   := by
   sorry
+
+/-- Pad a list `l` with zeros on the right to length `n` -/
+def padRight (l : List F) (n : Nat) : List F :=
+  l ++ List.replicate (n - l.length) 0
+
+/-- Rotate a list to the right by 1 position -/
+def rotateRight (l : List F) : List F :=
+  match l.reverse with
+  | [] => []
+  | x::xs => x :: xs.reverse
+
+/-- Build the Sylvester matrix of two polynomials -/
+def sylvesterMatrix {F : Type} [Semiring F] 
+    [Inhabited F]
+    (p q : Polynomial F) 
+    : Matrix (Fin ((p.natDegree + q.natDegree) - 1)) (Fin ((p.natDegree + q.natDegree) - 1)) F :=
+  let coeffs1 := p.coeffs.toList.reverse
+  let coeffs2 := q.coeffs.toList.reverse 
+  let l1 := coeffs1.length
+  let l2 := coeffs2.length
+  let N := l1 + l2 - 2
+  let rowP : List (List F) :=
+    List.range (l2 - 1) |>.map (fun i =>
+      let padded := padRight coeffs1 N
+      let iterated := List.iterate rotateRight padded i
+      (List.getD iterated iterated.length.pred padded))
+  let rowQ : List (List F) :=
+    List.range (l1 - 1) |>.map (fun i =>
+      let padded := padRight coeffs2 N
+      let iterated := List.iterate rotateRight padded i
+      (List.getD iterated iterated.length.pred padded))
+  let rows := rowP ++ rowQ
+  Matrix.of (fun i j => (rows[i]!)[j]!)
+where
+  m := p.natDegree + 1
+  n := q.natDegree + 1
+
+def resultant {F : Type} [CommRing F] [Inhabited F] (f g : F[X]) : F :=
+  (sylvesterMatrix f g).det
+
+def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
+  1/f.leadingCoeff * resultant f (Polynomial.derivative f) 
+
+/- def discr_y {F : Type} [Field F] (f : F[X][Y]) : F[X] := -/
+/-   discriminant f -/
  
 -- Katy: The next def, lemma and def can be deleted. Just keeping for now in case we need
 -- the lemma for somethying
