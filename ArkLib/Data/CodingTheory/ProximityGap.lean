@@ -71,12 +71,12 @@ noncomputable def distToSet (Δ : (ι → α) → (ι → α) → ℕ) (x : ι �
 -- /--
 -- Definition 1.1 in [BCIKS20].
 -- -/
-noncomputable def generalProximityGap (P : Finset (ι → α)) (C : Set (Finset (ι → α)))
- (Δ : (ι → α) → (ι → α) → ℕ) (δ ε : ℝ≥0) : Prop :=
-  ∀ S ∈ C (PMF.uniformOfFinset S).toOuterMeasure {x | distToSet Δ x P ≤ δ} = 1
-    ∨ (PMF.uniformOfFinset S).toOuterMeasure {x | distToSet Δ x P ≤ δ} ≤ ε
+noncomputable def generalProximityGap
+  (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (Δ : (ι → α) → (ι → α) → ℕ) (δ ε : ℝ≥0)
+  (h : ∀ x ∈ C, x.Nonempty) : Prop :=
+  ∀ (S : Finset _) (mem : S ∈ C), (PMF.uniformOfFinset S (h _ mem)).toOuterMeasure {x | distToSet Δ x P ≤ δ} = 1
+    ∨ (PMF.uniformOfFinset S (h _ mem)).toOuterMeasure {x | distToSet Δ x P ≤ δ} ≤ ε
 
-#check @generalProximityGap
 /--
   The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
   defined up to the Johnson bound. More precisely, let `ρ` be the rate of the Reed-Solomon code.
