@@ -243,7 +243,7 @@ lemma dist_le_length [DecidableEq F] (inj : Function.Injective α) :
   convert dist_UB
   simp
 
-noncomputable def sqrtRate [Fintype ι] (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
+abbrev sqrtRate [Fintype ι] (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
   (LinearCode.rate (ReedSolomon.code domain deg) : ℝ≥0).sqrt
 
 end
