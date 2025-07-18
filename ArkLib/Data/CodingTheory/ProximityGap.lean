@@ -74,13 +74,14 @@ noncomputable def distToSet (Δ : (ι → α) → (ι → α) → ℕ) (x : ι �
 noncomputable def generalProximityGap
   (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (Δ : (ι → α) → (ι → α) → ℕ) (δ ε : ℝ≥0)
   (h : ∀ x ∈ C, x.Nonempty) : Prop :=
-  ∀ (S : Finset _) (mem : S ∈ C), (PMF.uniformOfFinset S (h _ mem)).toOuterMeasure {x | distToSet Δ x P ≤ δ} = 1
+  ∀ (S : Finset _) (mem : S ∈ C), (PMF.uniformOfFinset S (h _ mem)).toOuterMeasure
+  {x | distToSet Δ x P ≤ δ} = 1
     ∨ (PMF.uniformOfFinset S (h _ mem)).toOuterMeasure {x | distToSet Δ x P ≤ δ} ≤ ε
 
 noncomputable def generalProximityGap'
-  (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (Δ : (ι → α) → (ι → α) → ℕ) (δ ε : ℝ≥0)
- : Prop :=
-  ∀ (S : Finset _) (h : S.Nonempty), S ∈ C → (PMF.uniformOfFinset S h).toOuterMeasure {x | distToSet Δ x P ≤ δ} = 1
+  (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (Δ : (ι → α) → (ι → α) → ℕ) (δ ε : ℝ≥0) : Prop :=
+  ∀ (S : Finset _) (h : S.Nonempty), S ∈ C → (PMF.uniformOfFinset S h).toOuterMeasure
+   {x | distToSet Δ x P ≤ δ} = 1
     ∨ (PMF.uniformOfFinset S h).toOuterMeasure {x | distToSet Δ x P ≤ δ} ≤ ε
 
 /--
@@ -250,17 +251,35 @@ theorem correlatedAgreement_affine_spaces [Fintype ι] [Field F] [Fintype F]
  correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 abbrev AffSpanSet [Fintype ι] [Nonempty ι] [Field F] [Fintype F] [DecidableEq F]
-{k : ℕ} (u : Fin k → ι → F) : Set (ι → F) :=
+{k : ℕ} [NeZero k] (u : Fin k → ι → F) : Set (ι → F) :=
  (affineSpan F (finsetU u)).carrier
 
--- /--
--- Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
--- -/
--- theorem proximity_gap_RSCodes' [Fintype ι] [Nonempty ι] [Field F][Fintype F] [DecidableEq F]
--- (δ : ℝ≥0) {k : ℕ} (deg : ℕ) (domain : ι ↪ F) (u : Fin k → ι → F)
--- (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
--- generalProximityGap (RScodeFinset domain deg) (AffSpanSet u)
---   Code.relHammingDistToCode  δ (errorBound δ deg) := by sorry
+lemma AffSpanFinite [Fintype ι] [Nonempty ι] [Field F] [Fintype F] [DecidableEq F]
+{k : ℕ} [NeZero k] (u : Fin k → ι → F) : (AffSpanSet u).Finite := by
+  unfold AffSpanSet
+  sorry
+noncomputable def affineSpanSet_Fintype {F : Type*} [Fintype ι][Nonempty ι]
+[Field F] [Fintype F] [DecidableEq F] {k : ℕ} [NeZero k]
+  {u : Fin k → ι → F} : Fintype (AffSpanSet u) := by
+  apply Fintype.ofFinite
+
+noncomputable def AffSpanSetFinset [Fintype ι] [Nonempty ι] [Field F] [Fintype F] [DecidableEq F]
+{k : ℕ} [NeZero k] (u : Fin k → ι → F) : Finset (ι → F) :=
+  (AffSpanFinite u).toFinset
+
+noncomputable def AffSpanSetFinsetCol [Fintype ι] [Nonempty ι] [Field F] [Fintype F] [DecidableEq F]
+{k : ℕ} [NeZero k] (u : Fin k → ι → F) : Set (Finset (ι → F)) := sorry
+
+
+
+/--
+  Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
+-/
+theorem proximity_gap_RSCodes' [Fintype ι] [Nonempty ι] [Field F][Fintype F] [DecidableEq F]
+(δ : ℝ≥0) {k : ℕ} [NeZero k] (deg : ℕ) (domain : ι ↪ F) (u : Fin k → ι → F)
+(hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
+generalProximityGap' (RScodeFinset domain deg) (AffSpanSetFinset u)
+  Code.relHammingDistToCode  δ (errorBound δ deg) := by sorry
 
 #check AffineSubspace
 
