@@ -7,6 +7,7 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 import Mathlib.Algebra.Polynomial.Eval.Defs
 import Mathlib.Algebra.Polynomial.Bivariate
 import Mathlib.Data.Fintype.Defs
+import Mathlib.FieldTheory.Separable
 
 open Polynomial
 open Polynomial.Bivariate
@@ -113,6 +114,9 @@ def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
 
 /- def discr_y {F : Type} [Field F] (f : F[X][Y]) : F[X] := -/
 /-   discriminant f -/
+
+lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) : 
+  f.Separable ↔ discriminant f = 0 := by sorry
  
 -- Katy: The next def, lemma and def can be deleted. Just keeping for now in case we need
 -- the lemma for somethying

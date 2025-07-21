@@ -4,6 +4,19 @@ import Mathlib.FieldTheory.RatFunc.Basic
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.Polynomial.Bivariate
 
+import Mathlib.Algebra.Field.Basic
+import Mathlib.Algebra.Polynomial.Basic
+import Mathlib.Algebra.Group.Irreducible.Defs
+import Mathlib.Data.Real.Sqrt
+import Mathlib.FieldTheory.RatFunc.Defs
+import Mathlib.FieldTheory.RatFunc.Basic
+
+import ArkLib.Data.CodingTheory.Basic
+import ArkLib.Data.CodingTheory.GuruswamiSudan
+import ArkLib.Data.Polynomial.Bivariate
+import Mathlib.FieldTheory.RatFunc.AsPolynomial
+
+
 /-!
   # Definitions and Theorems about Proximity Gaps
 
@@ -53,6 +66,41 @@ lemma proximity_gap_claim_5_4 [DecidableEq (RatFunc F)] {n k m : ℕ} {ωs u₀ 
       ((RatFunc.mk (Polynomial.C <| u₀ i) 1 + 
         (RatFunc.mk (Polynomial.X) 1) * 
           (RatFunc.mk (Polynomial.C <| u₁ i) 1)): RatFunc F) ≥ m := by sorry 
+
+open GuruswamiSudan
+
+variable {n : ℕ}
+variable {F : Type} [Field F] [DecidableEq F]
+
+/-- Lemma 5.3 from the Proximity gap paper -/ 
+lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs f : Fin n → F} :
+  ∃ Q, GuruswamiSudanCondition k m (proximity_gap_degree_bound (n := n) k m) ωs f Q := by
+  sorry
+
+open Bivariate
+open Polynomial 
+lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs f : Fin n → F} 
+  {Q : F[X][X]} {p : F[X]} 
+  (h : Δ₀(f, p.eval ∘ f) ≤ proximity_gap_johnson (n := n) k m)
+  :
+  ((X : F[X][X]) - Polynomial.C p) ∣ Q := by sorry 
+
+opaque the_S [Field F] (δ : ℚ) (ωs f : Fin n → F) 
+  : Set F := sorry
+
+opaque eval_on_Z [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X][X]) (z : F) : F[X] := 
+  sorry
+
+opaque eval_on_Z₂ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X][X]) (z : F) : F[X][X] := 
+  sorry
+
+lemma bla {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] {δ: ℚ} {x₀ : F} {ωs f : Fin n → F} 
+  {Q : (RatFunc F)[X][X]} {p : (RatFunc F)[X]} 
+  (h : Δ₀(f, p.eval ∘ (fun (x : F) => RatFunc.mk (Polynomial.C x 1) ∘ f) ≤ proximity_gap_johnson (n := n) k m)
+  :
+  ∃ R H, R ∣ Q ∧ Irreducible H ∧ H ∣ (Bivariate.evalX (RatFunc.mk (Polynomial.C x₀) 1) R) ∧ 
+    { z ∈ the_S (F := F) δ ωs f | (eval_on_Z R z).comp (Polynomial.C p) = 0 } 
+    := by sorry
 
    
 
