@@ -85,21 +85,35 @@ lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs f : Fin n → 
   :
   ((X : F[X][X]) - Polynomial.C p) ∣ Q := by sorry 
 
-opaque the_S [Field F] (δ : ℚ) (ωs f : Fin n → F) 
-  : Set F := sorry
+def the_S [Field F] (δ : ℚ) (V : LinearCode (ι := Fin n) (F := F)) (u₀ u₁ : Fin n → F) 
+  : Finset F := 
+    @Set.toFinset _ { z | ∀ v ∈ V.carrier, Δ₀(u₀ + (fun _ => z) * u₁, v) ≤ δ} sorry
 
-opaque eval_on_Z [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X][X]) (z : F) : F[X] := 
+opaque eval_on_Z₀ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X]) (z : F) : F := 
+  sorry 
+
+opaque eval_on_Z₁ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X]) (z : F) : F[X] := 
   sorry
 
 opaque eval_on_Z₂ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X][X]) (z : F) : F[X][X] := 
   sorry
 
-lemma bla {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] {δ: ℚ} {x₀ : F} {ωs f : Fin n → F} 
+noncomputable def D_X (rho : ℚ) (m : ℕ) : ℕ := Nat.floor <| (m + (1 : ℚ)/2) * Real.sqrt rho * n
+def D_Y (Q : F[X][X]) : ℕ := Bivariate.degreeY Q 
+def D_YZ (Q : F[X][X]) : ℕ := Bivariate.totalDegree Q
+
+lemma lemma_5_7 
+  {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] 
+  {V : LinearCode (ι := Fin n) F} {δ: ℚ} {x₀ : F} {f u₀ u₁ : Fin n → F} 
   {Q : (RatFunc F)[X][X]} {p : (RatFunc F)[X]} 
-  (h : Δ₀(f, p.eval ∘ (fun (x : F) => RatFunc.mk (Polynomial.C x 1) ∘ f) ≤ proximity_gap_johnson (n := n) k m)
   :
   ∃ R H, R ∣ Q ∧ Irreducible H ∧ H ∣ (Bivariate.evalX (RatFunc.mk (Polynomial.C x₀) 1) R) ∧ 
-    { z ∈ the_S (F := F) δ ωs f | (eval_on_Z R z).comp (Polynomial.C p) = 0 } 
+   ({ z ∈ the_S (F := F) δ V u₀ u₁ | 
+      (eval_on_Z₂ R z).comp (Polynomial.C (eval_on_Z₁ p z)) = 0
+      ∧ (eval_on_Z₁ H z).comp (eval_on_Z₁ p z) = 0 }).card ≥ (the_S (F := F) δ V u₀ u₁).card 
+        / (Bivariate.degreeY Q)  
+      ∧ (the_S (F := F) δ V u₀ u₁).card 
+        / (Bivariate.degreeY Q) > 2 * D_Y Q ^ 2 * (D_X (n := n) (rho := k/n) m) * D_YZ Q
     := by sorry
 
    
