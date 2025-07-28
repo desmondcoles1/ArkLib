@@ -112,8 +112,8 @@ def resultant {F : Type} [CommRing F] [Inhabited F] (f g : F[X]) : F :=
 def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
   1/f.leadingCoeff * resultant f (Polynomial.derivative f) 
 
-/- def discr_y {F : Type} [Field F] (f : F[X][Y]) : F[X] := -/
-/-   discriminant f -/
+opaque discr_y {F : Type} [Field F] (f : F[X][Y]) : F[X] :=
+  sorry
 
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) : 
   f.Separable ↔ discriminant f = 0 := by sorry

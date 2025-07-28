@@ -85,6 +85,7 @@ lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs f : Fin n → 
   :
   ((X : F[X][X]) - Polynomial.C p) ∣ Q := by sorry 
 
+
 def the_S [Field F] (δ : ℚ) (V : LinearCode (ι := Fin n) (F := F)) (u₀ u₁ : Fin n → F) 
   : Finset F := 
     @Set.toFinset _ { z | ∀ v ∈ V.carrier, Δ₀(u₀ + (fun _ => z) * u₁, v) ≤ δ} sorry
@@ -102,6 +103,8 @@ noncomputable def D_X (rho : ℚ) (m : ℕ) : ℕ := Nat.floor <| (m + (1 : ℚ)
 def D_Y (Q : F[X][X]) : ℕ := Bivariate.degreeY Q 
 def D_YZ (Q : F[X][X]) : ℕ := Bivariate.totalDegree Q
 
+lemma eq_5_12 {Q : F[X][Y][Z]} : True := sorry
+
 lemma lemma_5_7 
   {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] 
   {V : LinearCode (ι := Fin n) F} {δ: ℚ} {x₀ : F} {f u₀ u₁ : Fin n → F} 
@@ -115,6 +118,4 @@ lemma lemma_5_7
       ∧ (the_S (F := F) δ V u₀ u₁).card 
         / (Bivariate.degreeY Q) > 2 * D_Y Q ^ 2 * (D_X (n := n) (rho := k/n) m) * D_YZ Q
     := by sorry
-
-   
 
