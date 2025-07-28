@@ -100,7 +100,7 @@ def D_YZ (Q : F[X][X]) : ℕ := Bivariate.totalDegree Q
 
 namespace abc
 
-notation3:max R "[X][Y]" => Polynomial (Polynomial R)
+notation3:max R "[Z][X]" => Polynomial (Polynomial R)
 
 notation3:max R "[Z][X][Y]" => Polynomial (Polynomial (Polynomial (R)))
 
@@ -108,9 +108,16 @@ notation3:max "Y" => Polynomial.X (R := Polynomial _)
 
 notation3:max "Z" => Polynomial.X (R := Polynomial (Polynomial _))
 
+opaque C₀ (Q : F[Z][X][Y]) : F[Z][X] := sorry
+opaque R₀ (Q : F[Z][X][Y]) : List F[Z][X][Y] := sorry
+opaque f₀ (Q : F[Z][X][Y]) : List ℕ := sorry
+opaque e₀ (Q : F[Z][X][Y]) : List ℕ := sorry
 
 lemma eq_5_12 {Q : F[Z][X][Y]} : 
-  ∃ (C : F[X][Y]) (R : List F[Z][X][Y]) (f e : List ℕ) ,
+  let C := C₀ Q
+  let R := R₀ Q
+  let f := f₀ Q
+  let e := e₀ Q
   R.length = f.length ∧
   f.length = e.length ∧
   ∀ eᵢ∈ e, 1 ≤ eᵢ∧
@@ -119,6 +126,13 @@ lemma eq_5_12 {Q : F[Z][X][Y]} :
   Q = (Polynomial.C C) * 
     (List.prod <| List.map (fun ((R, f), e) => (R.comp (Y ^ f))^e) (List.zip (List.zip R f) e)) 
     := sorry
+
+lemma lemma_5_6
+  {Q  : F[Z][X][Y]}
+  :
+  ∃ x₀,
+  ∀ R ∈ R₀ Q,
+  Bivariate.evalX x₀ (Bivariate.discr_y R) ≠ 0 := by sorry
 
 lemma lemma_5_7 
   {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] 
