@@ -9,19 +9,19 @@ import ArkLib.Data.CodingTheory.ProximityGap
 import ArkLib.Data.CodingTheory.ReedSolomon
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 
-open NNReal
+open NNReal ProximityGap
 
 /-!
   Divergence of sets.
 
-  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes"
+  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes".
 -/
 
 namespace DivergenceOfSets
 
 noncomputable section
 
-open Classical Code
+open Classical Code ReedSolomonCode
 
 variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [DecidableEq F]
@@ -54,38 +54,16 @@ def divergence (U V : Set (ι → F)) : ℚ≥0 :=
   then (possibleDeltas U V).toFinset.max' (Set.toFinset_nonempty.2 h)
   else 0
 
-#check AffineSubspace
-
--- abbrev AffSpaceSet [Fintype ι] [Nonempty ι] [Field F] [Fintype F] [DecidableEq F] :
---   Set (ι → F) :=
---   AffineSubspace.instSetLike F (ι → F)
-
--- /--
---   Corollary 1.3 (Concentration bounds) from [BCIKS20].
--- -/
--- lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] [Nonempty ι] (deg : ℕ) (domain : ι ↪ F)
--- (δ' : ℝ≥0)
---   (hδ' : (divergence AffineSubspace F (ι → F) (ReedSolomon.code domain deg) : ℝ≥0)
---     ≤  1 - (ReedSolomonCode.sqrtRate deg domain)) :
---     let δ' := (divergence AffineSubspace F (ι → F) (ReedSolomon.code domain deg) : ℝ≥0)
---     (PMF.uniformOfFintype (AffineSubspace F (ι → F))).toOuterMeasure
---     {y | (Code.relHammingDistToCode y (ReedSolomon.code domain deg).carrier : ℝ≥0) ≠ δ'}
---     ≤ (errorBound δ' deg domain) := by sorry
-
-
 /--
   Corollary 1.3 (Concentration bounds) from [BCIKS20].
 -/
-lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] [Nonempty ι] (deg : ℕ) (domain : ι ↪ F)
-(δ' : ℝ≥0)
-  (hδ' : (divergence AffineSubspace F (ι → F) (ReedSolomon.code domain deg) : ℝ≥0)
-    ≤  1 - (ReedSolomonCode.sqrtRate deg domain)) :
-    let δ' := (divergence AffineSubspace F (ι → F) (ReedSolomon.code domain deg) : ℝ≥0)
-    (PMF.uniformOfFintype (AffineSubspace F (ι → F))).toOuterMeasure
-    {y | (Code.relHammingDistToCode y (ReedSolomon.code domain deg).carrier : ℝ≥0) ≠ δ'}
+lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] (deg : ℕ) (domain : ι ↪ F)
+  {U : AffineSubspace F (ι → F)} [Nonempty U]
+  (hdiv : (divergence U (RScodeSet domain deg) : ℝ≥0) ≤  1 - (ReedSolomonCode.sqrtRate deg domain))
+  : let δ' := divergence U (RScodeSet domain deg)
+    (PMF.uniformOfFintype U).toOuterMeasure
+    {y | Code.relHammingDistToCode y (RScodeSet domain deg) ≠ δ'}
     ≤ (errorBound δ' deg domain) := by sorry
-
-#check AffineSubspace
 
 end
 end DivergenceOfSets

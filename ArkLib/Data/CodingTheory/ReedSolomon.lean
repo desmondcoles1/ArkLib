@@ -13,6 +13,14 @@ import ArkLib.Data.MvPolynomial.LinearMvExtension
 import ArkLib.Data.Polynomial.Interface
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
+import Mathlib.Data.Set.Defs
+import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
+import Mathlib.Data.Finset.BooleanAlgebra
+import Mathlib.Data.Set.Defs
+import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Probability.Distributions.Uniform
+import Mathlib.RingTheory.Henselian
+
 
 
 /-!
@@ -165,6 +173,34 @@ end
 end Vandermonde
 
 namespace ReedSolomonCode
+
+section
+
+open Finset Function
+
+open scoped BigOperators
+
+variable {ι : Type*}[Fintype ι] [Nonempty ι]
+         {F : Type*} [Field F] [Fintype F]
+
+abbrev RScodeSet (domain : ι ↪ F) (deg : ℕ) : Set (ι → F) := (ReedSolomon.code domain deg).carrier
+
+omit [Nonempty ι] in
+/--
+The underlying set of a Reed-Solomon code over a finite field is finite.
+-/
+lemma RScodeSet_finite (domain : ι ↪ F) (deg : ℕ) : (RScodeSet domain deg).Finite := by
+  unfold RScodeSet
+  exact Set.toFinite _
+
+noncomputable instance toFintype
+  (domain : ι ↪ F) (deg : ℕ) : Fintype {f : ι → F // f ∈ RScodeSet domain deg} :=
+  Fintype.ofFinset (RScodeSet_finite domain deg).toFinset (by aesop)
+
+noncomputable def toFinset (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F)
+  := (RScodeSet domain deg).toFinset
+
+end
 
 section
 
