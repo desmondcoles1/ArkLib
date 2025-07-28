@@ -1,15 +1,10 @@
-import Mathlib.FieldTheory.RatFunc.Defs
-import Mathlib.FieldTheory.RatFunc.Basic
-
-import ArkLib.Data.CodingTheory.Basic
-import ArkLib.Data.Polynomial.Bivariate
-
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Group.Irreducible.Defs
 import Mathlib.Data.Real.Sqrt
 import Mathlib.FieldTheory.RatFunc.Defs
 import Mathlib.FieldTheory.RatFunc.Basic
+import Mathlib.FieldTheory.Separable
 
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.GuruswamiSudan
@@ -103,7 +98,27 @@ noncomputable def D_X (rho : ℚ) (m : ℕ) : ℕ := Nat.floor <| (m + (1 : ℚ)
 def D_Y (Q : F[X][X]) : ℕ := Bivariate.degreeY Q 
 def D_YZ (Q : F[X][X]) : ℕ := Bivariate.totalDegree Q
 
-lemma eq_5_12 {Q : F[X][Y][Z]} : True := sorry
+namespace abc
+
+notation3:max R "[X][Y]" => Polynomial (Polynomial R)
+
+notation3:max R "[Z][X][Y]" => Polynomial (Polynomial (Polynomial (R)))
+
+notation3:max "Y" => Polynomial.X (R := Polynomial _)
+
+notation3:max "Z" => Polynomial.X (R := Polynomial (Polynomial _))
+
+
+lemma eq_5_12 {Q : F[Z][X][Y]} : 
+  ∃ (C : F[X][Y]) (R : List F[Z][X][Y]) (f e : List ℕ) ,
+  R.length = f.length ∧
+  f.length = e.length ∧
+  ∀ eᵢ∈ e, 1 ≤ eᵢ∧
+  ∀ Rᵢ ∈ R, Rᵢ.Separable ∧
+  ∀ Rᵢ ∈ R, Irreducible Rᵢ ∧
+  Q = (Polynomial.C C) * 
+    (List.prod <| List.map (fun ((R, f), e) => (R.comp (Y ^ f))^e) (List.zip (List.zip R f) e)) 
+    := sorry
 
 lemma lemma_5_7 
   {k m : ℕ} [Field F] [DecidableEq (RatFunc F)] 
@@ -119,3 +134,4 @@ lemma lemma_5_7
         / (Bivariate.degreeY Q) > 2 * D_Y Q ^ 2 * (D_X (n := n) (rho := k/n) m) * D_YZ Q
     := by sorry
 
+end abc
