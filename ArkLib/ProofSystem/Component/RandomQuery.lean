@@ -196,7 +196,7 @@ open NNReal
   In other words, the oracle instance has distance at most `d`.
 -/
 @[simp]
-theorem oracleVerifier_rbrKnowledgeSoundness [Fintype σ]
+theorem oracleVerifier_rbrKnowledgeSoundness [Nonempty (Query OStatement)]
     {d : ℕ} (hDist : OracleInterface.distanceLE OStatement d) :
     (oracleVerifier oSpec OStatement).rbrKnowledgeSoundness init impl
       (relIn OStatement)
@@ -213,7 +213,7 @@ theorem oracleVerifier_rbrKnowledgeSoundness [Fintype σ]
   unfold SimOracle.append
   simp [challengeQueryImpl]
   classical
-  simp only [probEvent_bind_eq_sum_finSupport]
+  simp only [probEvent_bind_eq_tsum]
   simp [ProtocolSpec.Transcript.concat, Fin.snoc, default]
   unfold Function.comp
   dsimp
@@ -221,8 +221,9 @@ theorem oracleVerifier_rbrKnowledgeSoundness [Fintype σ]
   _ ≤ ((Finset.card
     {x | ¬oracles 0 = oracles 1 ∧ oracle (oracles 0) x = oracle (oracles 1) x} : ENNReal) /
         (Fintype.card (Query OStatement))) := by
-    rw [← Finset.sum_mul]
-    sorry
+    rw [ENNReal.tsum_mul_right]
+    grw [OracleComp.tsum_probOutput_le_one]
+    simp
   _ ≤ (((d : ℝ≥0) / (Fintype.card (Query OStatement)))) := by
     gcongr
     simp
@@ -230,7 +231,11 @@ theorem oracleVerifier_rbrKnowledgeSoundness [Fintype σ]
     · simp [hOracles]
     · simp [hOracles]
       exact hDist (oracles 0) (oracles 1) hOracles
-  _ = _ := by norm_cast; sorry
+  _ = _ := by
+    refine (ENNReal.toNNReal_eq_toNNReal_iff' ?_ ?_).mp ?_
+    · simp; intro h'; apply ENNReal.div_eq_top.mp at h'; simp at h'
+    · simp; intro h'; apply ENNReal.div_eq_top.mp at h'; simp at h'
+    · simp
 
 end RandomQuery
 
