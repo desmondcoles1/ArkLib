@@ -195,6 +195,16 @@ section Append
 
 variable {m n : ℕ} {α β : Sort*}
 
+@[simp]
+lemma append_zero_of_succ_left {u : Fin (m + 1) → α} {v : Fin n → α} :
+    (append u v) 0 = u 0 := by
+  simp [append, addCases, castLT]
+
+@[simp]
+lemma append_last_of_succ_right {u : Fin m → α} {v : Fin (n + 1) → α} :
+    (append u v) (last (m + n)) = v (last n) := by
+  simp [append, addCases, last]
+
 theorem append_comp {a : Fin m → α} {b : Fin n → α} (f : α → β) :
     append (f ∘ a) (f ∘ b) = f ∘ append a b := by
   funext i

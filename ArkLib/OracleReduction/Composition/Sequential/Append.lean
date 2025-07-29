@@ -127,82 +127,73 @@ def Prover.append (P₁ : Prover oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec₁)
     (P₂ : Prover oSpec Stmt₂ Wit₂ Stmt₃ Wit₃ pSpec₂) :
       Prover oSpec Stmt₁ Wit₁ Stmt₃ Wit₃ (pSpec₁ ++ₚ pSpec₂) where
 
-  /- The combined prover's states are the concatenation of the first prover's states, except the
-  last one, and the second prover's states. -/
-  PrvState := Fin.append (m := m) (Fin.init P₁.PrvState) P₂.PrvState
+  /- The combined prover's states are the concatenation of the first prover's states and the second
+  prover's states (except the first one). -/
+  PrvState := Fin.append (m := m + 1) P₁.PrvState (Fin.tail P₂.PrvState) ∘ Fin.cast (by omega)
 
   /- The combined prover's input function is the first prover's input function, except for when the
   first protocol is empty, in which case it is the second prover's input function -/
-  input := fun ctxIn => by
-    by_cases h : m > 0
-    · simp [Fin.append, Fin.addCases, Fin.init, Fin.castLT, h]
-      exact P₁.input ctxIn
-    · simp [Fin.append, Fin.addCases, h, Fin.subNat]
-      exact (
-        letI state := P₁.input ctxIn
-        haveI : 0 = Fin.last m := by aesop
-        haveI state : P₁.PrvState (Fin.last m) := by simpa [this] using state
-        P₂.input (P₁.output state))
+  input := fun ctxIn => by simp; exact P₁.input ctxIn
 
   /- The combined prover sends messages according to the round index `i` as follows:
-  - if `i < m - 1`, then it sends the message & updates the state as the first prover
-  - if `i = m - 1`, then it sends the message as the first prover, but further returns the beginning
+  - if `i < m`, then it sends the message & updates the state as the first prover
+  - if `i = m`, then it sends the message as the first prover, but further returns the beginning
     state of the second prover
   - if `i > m`, then it sends the message & updates the state as the second prover. -/
-  sendMessage := fun ⟨⟨i, hLt⟩, h⟩ state => by
+  sendMessage := fun ⟨i, hDir⟩ state => by
+    dsimp [ProtocolSpec.append, Fin.append, Fin.addCases, Fin.tail,
+      Fin.cast, Fin.castLT, Fin.succ, Fin.castSucc] at hDir state ⊢
     by_cases hi : i < m
-    · dsimp [ProtocolSpec.append, Fin.append, Fin.addCases, Fin.init,
-        Fin.cast, Fin.castLT, Fin.succ, Fin.castSucc] at h state ⊢
-      by_cases hi' : i + 1 < m
-      · simp [hi, hi'] at h state ⊢
-        exact P₁.sendMessage ⟨⟨i, hi⟩, h⟩ state
-      · haveI : i + 1 = m := by omega
-        simp [hi, this] at h state ⊢
-        exact (do
-          let ⟨msg, state⟩ ← P₁.sendMessage ⟨⟨i, hi⟩, h⟩ state
-          haveI state : P₁.PrvState (Fin.last m) := by
-            simpa only [Fin.last, Fin.succ_mk, this] using state
-          return ⟨msg, P₂.input (P₁.output state)⟩)
-    · haveI : ¬ i + 1 < m := by omega
-      simp [ProtocolSpec.append, Fin.append, Fin.addCases, hi, this, Fin.cast, Fin.castLT, Fin.succ,
-        Fin.castSucc] at h state ⊢
-      exact (do
-        let ⟨msg, newState⟩ ← P₂.sendMessage ⟨⟨i - m, by omega⟩, h⟩ state
-        haveI newState : P₂.PrvState ⟨i + 1 - m, by omega⟩ := by
-          haveI : i + 1 - m = i - m + 1 := by omega
-          simpa only [this, Fin.succ] using newState
-        return ⟨msg, newState⟩)
+    · haveI : i < m + 1 := by omega
+      simp [hi] at hDir ⊢
+      simp [this] at state
+      exact P₁.sendMessage ⟨⟨i, hi⟩, hDir⟩ state
+    · by_cases hi' : i = m
+      · simp [hi'] at hDir state ⊢
+        letI ctxIn₂ := P₁.output state
+        letI state₂ := P₂.input ctxIn₂
+        exact P₂.sendMessage ⟨⟨0, by omega⟩, hDir⟩ state₂
+      · haveI hi1 : ¬ i < m + 1 := by omega
+        haveI hi2 : i - (m + 1) + 1 = i - m := by omega
+        simp [hi] at hDir ⊢
+        simp [hi1] at state
+        exact P₂.sendMessage ⟨⟨i - m, by omega⟩, hDir⟩ (dcast (by simp [hi2]) state)
 
   /- Receiving challenges is implemented essentially the same as sending messages, modulo the
   difference in direction. -/
-  receiveChallenge := fun ⟨⟨i, hLt⟩, h⟩ state chal => by
+  receiveChallenge := fun ⟨i, hDir⟩ state chal => by
+    dsimp [ProtocolSpec.append, Fin.append, Fin.addCases, Fin.tail,
+      Fin.cast, Fin.castLT, Fin.succ, Fin.castSucc] at hDir state chal ⊢
     by_cases hi : i < m
-    · simp [ProtocolSpec.append, Fin.append, Fin.addCases, Fin.init, hi,
-        Fin.cast, Fin.castLT, Fin.succ, Fin.castSucc] at h state chal ⊢
-      by_cases hi' : i + 1 < m
-      · simp [hi']
-        exact P₁.receiveChallenge ⟨⟨i, hi⟩, h⟩ state chal
-      · haveI : i + 1 = m := by omega
-        simp [this]
-        exact (
-          letI newState := P₁.receiveChallenge ⟨⟨i, hi⟩, h⟩ state chal
-          haveI newState : P₁.PrvState (Fin.last m) := by
-            simpa [Fin.last, this] using newState
-          P₂.input (P₁.output newState))
-    · haveI : ¬ i + 1 < m := by omega
-      simp [ProtocolSpec.append, Fin.append, Fin.addCases, hi, this, Fin.cast, Fin.castLT, Fin.succ,
-        Fin.castSucc] at h state chal ⊢
-      exact (
-        letI newState := P₂.receiveChallenge ⟨⟨i - m, by omega⟩, h⟩ state chal
-        haveI newState := by
-          haveI : i + 1 - m = i - m + 1 := by omega
-          simpa [Fin.succ, this] using newState
-        newState)
+    · haveI : i < m + 1 := by omega
+      simp [hi] at hDir chal ⊢
+      simp [this] at state
+      exact P₁.receiveChallenge ⟨⟨i, hi⟩, hDir⟩ state chal
+    · by_cases hi' : i = m
+      · simp [hi'] at hDir state chal ⊢
+        letI ctxIn₂ := P₁.output state
+        letI state₂ := P₂.input ctxIn₂
+        exact P₂.receiveChallenge ⟨⟨0, by omega⟩, hDir⟩ state₂ chal
+      · haveI hi1 : ¬ i < m + 1 := by omega
+        haveI hi2 : i - (m + 1) + 1 = i - m := by omega
+        simp [hi] at hDir chal ⊢
+        simp [hi1] at state
+        exact P₂.receiveChallenge ⟨⟨i - m, by omega⟩, hDir⟩ (dcast (by simp [hi2]) state) chal
 
-  /- The combined prover's output function is simply the second prover's output function. -/
+  /- The combined prover's output function has two cases:
+  - if the second protocol is empty, then it is the composition of the first prover's output
+    function, the second prover's input function, and the second prover's output function.
+  - if the second protocol is non-empty, then it is the second prover's output function. -/
   output := fun state => by
-    simp [Fin.append, Fin.addCases, Fin.last] at state
-    exact P₂.output state
+    dsimp [Fin.append, Fin.addCases, Fin.tail, Fin.cast, Fin.last, Fin.subNat] at state
+    by_cases hn : n = 0
+    · simp [hn] at state
+      letI ctxIn₂ := P₁.output state
+      letI state₂ := P₂.input ctxIn₂
+      exact P₂.output (dcast (by simp [hn]) state₂)
+    · haveI : m + n - (m + 1) + 1 = n := by omega
+      simp [hn] at state
+      exact P₂.output (dcast (by simp [this, Fin.last]) state)
 
 /-- Composition of verifiers. Return the conjunction of the decisions of the two verifiers. -/
 def Verifier.append (V₁ : Verifier oSpec Stmt₁ Stmt₂ pSpec₁)
@@ -217,6 +208,8 @@ def Reduction.append (R₁ : Reduction oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec
       Reduction oSpec Stmt₁ Wit₁ Stmt₃ Wit₃ (pSpec₁ ++ₚ pSpec₂) where
   prover := Prover.append R₁.prover R₂.prover
   verifier := Verifier.append R₁.verifier R₂.verifier
+
+section OracleProtocol
 
 variable [Oₘ₁ : ∀ i, OracleInterface (pSpec₁.Message i)]
   [Oₘ₂ : ∀ i, OracleInterface (pSpec₂.Message i)]
@@ -270,7 +263,7 @@ def OracleReduction.append (R₁ : OracleReduction oSpec Stmt₁ OStmt₁ Wit₁
   prover := Prover.append R₁.prover R₂.prover
   verifier := OracleVerifier.append R₁.verifier R₂.verifier
 
-namespace Verifier
+end OracleProtocol
 
 /-! Sequential composition of extractors and state functions
 
@@ -286,11 +279,13 @@ via `guard` statements).
 
 As such, the definitions below are temporary until further development. -/
 
+namespace Extractor
+
 /-- The sequential composition of two straightline extractors.
 
 TODO: state a monotone condition on the extractor, namely that if extraction succeeds on a given
 query log, then it also succeeds on any extension of that query log -/
-def Extractor.Straightline.append (E₁ : Extractor.Straightline oSpec Stmt₁ Wit₁ Wit₂ pSpec₁)
+def Straightline.append (E₁ : Extractor.Straightline oSpec Stmt₁ Wit₁ Wit₂ pSpec₁)
     (E₂ : Extractor.Straightline oSpec Stmt₂ Wit₂ Wit₃ pSpec₂)
     (V₁ : Verifier oSpec Stmt₁ Stmt₂ pSpec₁) :
       Extractor.Straightline oSpec Stmt₁ Wit₁ Wit₃ (pSpec₁ ++ₚ pSpec₂) :=
@@ -301,27 +296,32 @@ def Extractor.Straightline.append (E₁ : Extractor.Straightline oSpec Stmt₁ W
     return wit₁
 
 /-- The round-by-round extractor for the sequential composition of two (oracle) reductions -/
-def Extractor.RoundByRound.append
+def RoundByRound.append
     {WitMid₁ : Fin (m + 1) → Type} {WitMid₂ : Fin (n + 1) → Type}
     (E₁ : Extractor.RoundByRound oSpec Stmt₁ Wit₁ Wit₂ pSpec₁ WitMid₁)
     (E₂ : Extractor.RoundByRound oSpec Stmt₂ Wit₂ Wit₃ pSpec₂ WitMid₂) :
       Extractor.RoundByRound oSpec Stmt₁ Wit₁ Wit₃ (pSpec₁ ++ₚ pSpec₂)
-        (Fin.append (m := m + 1) WitMid₁ (Fin.init WitMid₂) ∘ Fin.cast (by omega)) where
+        (Fin.append (m := m + 1) WitMid₁ (Fin.tail WitMid₂) ∘ Fin.cast (by omega)) where
   eqIn := by
     simp [Fin.append, Fin.addCases, Fin.castLT]
     exact E₁.eqIn
   extractMid := fun idx stmt₁ tr h => by
-    simp at h ⊢
+    dsimp [Fin.append, Fin.addCases, Fin.tail, Fin.castLT, Fin.cast] at h ⊢
+    by_cases hi : idx < m
+    · simp [hi] at h
+      sorry
     -- do casing
     sorry
   extractOut := fun stmt₁ tr wit₃ => by
-    simp [Fin.cast]
+    dsimp [Fin.append, Fin.addCases, Fin.tail, Fin.castLT, Fin.cast]
     sorry
+
+end Extractor
+
+namespace Verifier
 
 variable {σ : Type} (init : ProbComp σ) (impl : QueryImpl oSpec (StateT σ ProbComp))
     {lang₁ : Set Stmt₁} {lang₂ : Set Stmt₂} {lang₃ : Set Stmt₃}
-
-example {a b : ℕ} (h : a < b) : min b a = a := by exact min_eq_right_of_lt h
 
 /-- The sequential composition of two state functions. -/
 def StateFunction.append
@@ -353,7 +353,22 @@ end Verifier
 
 section Execution
 
-variable [∀ i, SelectableType (pSpec₁.Challenge i)] [∀ i, SelectableType (pSpec₂.Challenge i)]
+namespace Prover
+
+variable {P₁ : Prover oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec₁}
+    {P₂ : Prover oSpec Stmt₂ Wit₂ Stmt₃ Wit₃ pSpec₂}
+    {stmt : Stmt₁} {wit : Wit₁}
+
+-- #print Prover.processRound
+
+-- theorem append_processRound (roundIdx : Fin (m + n)) (stmt : Stmt₁) (wit : Wit₁)
+--     (transcript : pSpec₁.FullTranscript) (proveQueryLog : Set (Stmt₁ × Wit₁))
+--     (verifyQueryLog : Set (Stmt₂ × Wit₂)) :
+--       (P₁.append P₂).processRound roundIdx stmt wit transcript proveQueryLog verifyQueryLog =
+--         (P₁.processRound roundIdx stmt wit transcript proveQueryLog verifyQueryLog) ∧
+--         (P₂.processRound roundIdx stmt wit transcript proveQueryLog verifyQueryLog) := sorry
+
+-- theorem append_runToRound
 
 /--
 States that running an appended prover `P₁.append P₂` with an initial statement `stmt₁` and
@@ -362,16 +377,63 @@ witness `wit₁` behaves as expected: it first runs `P₁` to obtain an intermed
 to produce the final statement `stmt₃`, witness `wit₃`, and transcript `transcript₂`.
 The overall output is `stmt₃`, `wit₃`, and the combined transcript `transcript₁ ++ₜ transcript₂`.
 -/
-theorem Prover.append_run (P₁ : Prover oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec₁)
-    (P₂ : Prover oSpec Stmt₂ Wit₂ Stmt₃ Wit₃ pSpec₂) (stmt : Stmt₁) (wit : Wit₁) :
+theorem append_run (stmt : Stmt₁) (wit : Wit₁) :
       (P₁.append P₂).run stmt wit = (do
         let ⟨⟨stmt₂, wit₂⟩, transcript₁⟩ ← liftM (P₁.run stmt wit)
         let ⟨⟨stmt₃, wit₃⟩, transcript₂⟩ ← liftM (P₂.run stmt₂ wit₂)
-        -- TODO: should we refactor the prover to take in a running query log?
-        return ⟨⟨stmt₃, wit₃⟩, transcript₁ ++ₜ transcript₂⟩) :=
+        return ⟨⟨stmt₃, wit₃⟩, transcript₁ ++ₜ transcript₂⟩) := by
+  unfold run runToRound
   sorry
 
 -- TODO: Need to define a function that "extracts" a second prover from the combined prover
+
+end Prover
+
+namespace Verifier
+
+variable {V₁ : Verifier oSpec Stmt₁ Stmt₂ pSpec₁} {V₂ : Verifier oSpec Stmt₂ Stmt₃ pSpec₂}
+  {stmt : Stmt₁}
+
+/-- Running the sequential composition of two verifiers on a transcript of the combined protocol
+  is equivalent to running the first verifier on the first part of the transcript, and the second
+  verifier on the second part of the transcript, and returning the final statement. -/
+theorem append_run (tr : (pSpec₁ ++ₚ pSpec₂).FullTranscript) :
+      (V₁.append V₂).run stmt tr =
+        (do
+          let stmt₂ ← V₁.run stmt tr.fst
+          let stmt₃ ← V₂.run stmt₂ tr.snd
+          return stmt₃) := rfl
+
+end Verifier
+
+namespace Reduction
+
+variable {R₁ : Reduction oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec₁}
+    {R₂ : Reduction oSpec Stmt₂ Wit₂ Stmt₃ Wit₃ pSpec₂}
+    {stmt : Stmt₁} {wit : Wit₁}
+
+/- Unfortunately this is not true due to sequencing: `(R₁.append R₂).run` runs the two provers
+first, then the two verifiers, whereas `R₁.run` and then `R₂.run` runs the first prover and
+verifier, then the second prover and verifier.
+
+We need justification to be able to swap the first verifier with the second prover, which would be
+true if we interpret / maps this oracle computation (a priori a term of the free monad) into a
+commutative monad (such as `Id`, i.e. all oracle queries are answered deterministically, `PMF`, i.e.
+all oracle queries are answered probabilistically, `Option`, `ReaderT ρ`, `Set`, `WriterT` into a
+commutative monoid, etc.). -/
+
+-- TODO: prove this after VCVio refactor
+-- theorem append_run_interp {m : Type → Type} [Monad m] [m.IsCommutative]
+--     {interp : OracleImpl oSpec m} : ((R₁.append R₂).run stmt wit).runM interp =
+--         (do
+--           let ⟨ctx₁, stmt₂, transcript₁⟩ ← liftM (R₁.run stmt wit)
+--           let ⟨ctx₂, stmt₃, transcript₂⟩ ← liftM (R₂.run stmt₂ ctx₁.2)
+--           return ⟨ctx₂, stmt₃, transcript₁ ++ₜ transcript₂⟩).runM interp := by
+--   unfold run append
+--   simp [Prover.append_run, Verifier.append_run]
+--   sorry
+
+end Reduction
 
 end Execution
 
@@ -385,26 +447,44 @@ open OracleComp
 
 variable {Stmt₁ Wit₁ Stmt₂ Wit₂ Stmt₃ Wit₃ : Type}
     {pSpec₁ : ProtocolSpec m} {pSpec₂ : ProtocolSpec n}
-    [∀ i, SelectableType (pSpec₁.Challenge i)]
-    [∀ i, SelectableType (pSpec₂.Challenge i)]
+    [∀ i, SelectableType (pSpec₁.Challenge i)] [∀ i, SelectableType (pSpec₂.Challenge i)]
     {σ : Type} {init : ProbComp σ} {impl : QueryImpl oSpec (StateT σ ProbComp)}
     {rel₁ : Set (Stmt₁ × Wit₁)} {rel₂ : Set (Stmt₂ × Wit₂)} {rel₃ : Set (Stmt₃ × Wit₃)}
 
+/-
+TODO: when do these theorems hold? The answer may be that when oracle queries are answered according
+to a _commutative_ monad, which are then interpreted into a probability distribution.
+
+Unfortunately, this means that `StateT` is out; this works for `ReaderT` and `WriterT` into a
+commutative monoid. If we still want composition to work for `StateT`, then we need to have extra
+conditions (what are they?)
+-/
+
 namespace Reduction
 
-/-- If two reductions satisfy completeness with compatible relations (`rel₁`, `rel₂` for `R₁` and
-    `rel₂`, `rel₃` for `R₂`), and respective completeness errors `completenessError₁` and
-    `completenessError₂`, then their sequential composition `R₁.append R₂` also satisfies
-    completeness with respect to `rel₁` and `rel₃`.
-    The completeness error of the appended reduction is the sum of the individual errors
-    (`completenessError₁ + completenessError₂`). -/
+/-- Sequential composition preserves completeness
+
+  Namely, two reductions satisfy completeness with compatible relations (`rel₁`, `rel₂` for `R₁` and
+  `rel₂`, `rel₃` for `R₂`), and respective completeness errors `completenessError₁` and
+  `completenessError₂`, then their sequential composition `R₁.append R₂` also satisfies
+  completeness with respect to `rel₁` and `rel₃`.
+
+  The completeness error of the appended reduction is the sum of the individual errors
+  (`completenessError₁ + completenessError₂`). -/
 theorem completeness_append (R₁ : Reduction oSpec Stmt₁ Wit₁ Stmt₂ Wit₂ pSpec₁)
     (R₂ : Reduction oSpec Stmt₂ Wit₂ Stmt₃ Wit₃ pSpec₂)
     {completenessError₁ completenessError₂ : ℝ≥0}
     (h₁ : R₁.completeness init impl rel₁ rel₂ completenessError₁)
     (h₂ : R₂.completeness init impl rel₂ rel₃ completenessError₂) :
       (R₁.append R₂).completeness init impl
-        rel₁ rel₃ (completenessError₁ + completenessError₂) := sorry
+        rel₁ rel₃ (completenessError₁ + completenessError₂) := by
+  unfold completeness at h₁ h₂ ⊢
+  intro stmtIn witIn hRelIn
+  have h₁' := h₁ stmtIn witIn hRelIn
+  clear h₁
+  unfold Reduction.append Reduction.run
+  simp [Prover.append_run, Verifier.append_run]
+  sorry
 
 /-- If two reductions satisfy perfect completeness with compatible relations, then their
   concatenation also satisfies perfect completeness. -/

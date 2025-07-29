@@ -29,8 +29,6 @@ noncomputable section
 open OracleComp OracleSpec ProtocolSpec
 open scoped NNReal
 
--- TODO: we can generalize `ProbComp` to anything that has `HasEvalDist`
-
 variable {ι : Type} {oSpec : OracleSpec ι}
   {StmtIn : Type} {ιₛᵢ : Type} {OStmtIn : ιₛᵢ → Type} [Oₛᵢ : ∀ i, OracleInterface (OStmtIn i)]
   {WitIn : Type}
@@ -39,6 +37,27 @@ variable {ι : Type} {oSpec : OracleSpec ι}
   {n : ℕ} {pSpec : ProtocolSpec n} [∀ i, SelectableType (pSpec.Challenge i)]
   -- Note: `σ` may depend on the previous data, like `StmtIn`, `pSpec`, and so on
   {σ : Type} (init : ProbComp σ) (impl : QueryImpl oSpec (StateT σ ProbComp))
+
+/-
+TODO: the "right" factoring for the security definitions are the following:
+
+- We have a two-layer interpretation approach: first, interpret the oracle queries into some monad
+  `m` which admits a monad morphism into `PMF` (i.e. `HasEvalDist`); then we interpret the resulting
+  monad into `PMF`.
+
+  This does not preclude `m` from being the same oracle computation type, but more interesting
+  possibilities are possible, such as `m = ReaderT ρ` for lazy sampling of the shared oracle.
+
+  Another possibility: given `OracleInterface OStmt`, we have an interpretation map
+
+  `interpOStmt : OracleComp (oSpec + [OStmt]ₒ) →ᵐ ReaderT OStmt (OracleComp oSpec)`
+
+- Relations should be `Stmt → Wit → m Prop`, with `m` being the intermediate monad. When `m` is the
+  result of `interpOStmt` above, for instance, we get `Stmt → Wit → OStmt → Prop`, which is what we
+  want. Same for when we interpret `oSpec` into `Reader (oSpec.FunctionType)`; we then have
+  `m = Stmt → Wit → oSpec.FunctionType → Prop`, which allows us to define relations that rely
+  on the (randomly sampled, at the beginning) values of the shared oracle.
+-/
 
 namespace Reduction
 
