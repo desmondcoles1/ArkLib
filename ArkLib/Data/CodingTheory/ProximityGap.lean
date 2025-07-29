@@ -146,6 +146,32 @@ lemma lemma_5_7
         / (Bivariate.degreeY Q)  
       ∧ (the_S (F := F) δ V u₀ u₁).card 
         / (Bivariate.degreeY Q) > 2 * D_Y Q ^ 2 * (D_X (n := n) (rho := k/n) m) * D_YZ Q
-    := by sorry
+    := by sorry 
+
+def curve [Field F] (u : List (Fin n → F)) (z : F) : Fin n → F :=
+    List.zip u (List.map (fun i => z ^ i) (List.range u.length)) 
+    |> List.map (fun (u, z) i => (u i) * z)
+    |> List.sum 
+
+def the_S_multi [Field F] [Finite F] (δ : ℚ) (u : List (Fin n → F)) (V : Finset (Fin n → F)) : Finset F :=
+  @Set.toFinset _ { z | ∀ v ∈ V, Δ₀(curve u z, v) ≤ δ} sorry
+
+theorem theorem_6_1 
+  [Field F]
+  [Finite F]
+  {rho : ℚ}
+  {δ : ℚ}
+  {V : Finset (Fin n → F)}
+  (hδ : δ ≤ (1 - rho)/2)
+  {u : List (Fin n → F)}
+  (hS : n * u.length < (the_S_multi δ u V).card)
+  :
+  the_S_multi δ u V = F ∧
+  ∃ (v : List (Fin n → F)) (z : F),
+    v.length = u.length ∧
+    Δ₀(curve u z, curve v z) ≤ δ ∧
+    ({ x : Fin n | 
+      List.map (fun el => el x) u 
+      ≠ List.map (fun el => el x) v } : Finset _).card ≤ δ * n := sorry
 
 end abc
