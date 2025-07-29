@@ -8,6 +8,9 @@ import VCVio
 import ArkLib.ProofSystem.Fri.RoundConsistency
 import ArkLib.ToInit.Data.List.Control
 
+open Monad
+
+
 section Defs
 
 variable (F : Type) [Field F]

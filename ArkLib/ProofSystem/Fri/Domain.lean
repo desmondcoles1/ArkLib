@@ -32,38 +32,26 @@ instance : IsCyclic (D gen n) := by
 instance {i : Fin (n + 1)} : IsCyclic (evalDomain gen i) := by
   unfold evalDomain
   rw [Subgroup.isCyclic_iff_exists_zpowers_eq_top]
-  exists ((gen ^ 2 ^ i.1))
+  exists (gen ^ 2 ^ i.1)
 
+attribute [local grind _=_] zpow_mul zpow_natCast
+
+@[grind]
 lemma pow_2_pow_i_mem_Di_of_mem_D {gen : Fˣ} :
   ∀ {x : Fˣ} (i : Fin (n + 1)),
-    x ∈ (D gen n) → x ^ (2 ^ i.val) ∈ evalDomain gen i := by
-  intros x i h
-  simp only [D, evalDomain, Fin.coe_ofNat_eq_mod, Nat.zero_mod, pow_zero, pow_one] at h
-  simp only [evalDomain]
-  rw [Subgroup.mem_zpowers_iff] at h ⊢
-  rcases h with ⟨k, h⟩
-  exists k
-  rw [←h]
-  have {x : Fˣ} {n : ℕ} : x ^ n = x ^ (n : ℤ) := by rfl
-  rw [this, this, ←zpow_mul, ←zpow_mul]
-  ring_nf
+    x ∈ (D gen n) → x ^ (2 ^ i.val) ∈ evalDomain gen i := 
+  fun {x} i h ↦
+    suffices ∃ k : ℤ, (gen ^ 2 ^ i.1) ^ k = x ^ 2 ^ i.1 by aesop (add simp Subgroup.mem_zpowers_iff)
+    by obtain ⟨k, h⟩ := Subgroup.mem_zpowers_iff.1 h; simp at h
+       use k
+       grind
 
 lemma sqr_mem_D_succ_i_of_mem_D_i {gen : Fˣ} : ∀ {x : Fˣ} {i : Fin n},
-  x ∈ evalDomain gen i.castSucc → x ^ 2 ∈ evalDomain gen i.succ := by
-  intros x i h
-  simp only [evalDomain, Fin.coe_castSucc] at h
-  simp only [evalDomain, Fin.val_succ]
-  rw [Subgroup.mem_zpowers_iff] at h ⊢
-  rcases h with ⟨k, h⟩
-  exists k
-  rw [←h]
-  have {x : Fˣ} {n : ℕ} : x ^ n = x ^ (n : ℤ) := by rfl
-  rw [this, this, this, ←zpow_mul, ←zpow_mul, ←zpow_mul]
-  simp only [Nat.cast_pow, Nat.cast_ofNat]
-  rw [@mul_comm ℤ _ k 2, ←mul_assoc]
-  have : (2 : ℤ) ^ (i.val + 1) = 2 ^ i.val * 2 := by
-    ring
-  rw [this]
+  x ∈ evalDomain gen i.castSucc → x ^ 2 ∈ evalDomain gen i.succ := fun {x} i h ↦
+  suffices ∃ k : ℤ, (gen ^ 2 ^ (i.1 + 1)) ^ k = x ^ 2 by aesop (add simp Subgroup.mem_zpowers_iff)
+  by obtain ⟨k, h⟩ := Subgroup.mem_zpowers_iff.1 h; simp at h
+     use k
+     aesop (add safe [(by ring), (by grind)])
 
 lemma one_in_doms (i : Fin n) : 1 ∈ evalDomain gen i.castSucc := by
   simp only [evalDomain, Fin.coe_castSucc]

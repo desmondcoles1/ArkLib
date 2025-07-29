@@ -7,6 +7,8 @@ Authors: Julian Sutherland
 import Init.Prelude
 import Init.Data.List.Control
 
+namespace Monad
+
 def replicateM {α : Type} {m} [Monad m] : Nat → m α → m (List α)
 | 0, _ => pure []
 | n + 1, m => do
@@ -45,3 +47,5 @@ def scanlM {α β : Type} {m} [Monad m] (f : β → α → m β) : β → List �
   let b' <- f b a;
   let bs <- scanlM f b' as
   pure (b::bs)
+
+end Monad
