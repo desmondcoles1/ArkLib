@@ -16,7 +16,7 @@ import ArkLib.Data.FieldTheory.NonBinaryField.Basic
 
 namespace Polynomial
 
-variable {F: Type} [NonBinaryField F]
+variable {F : Type} [NonBinaryField F]
 
 /-- The even part of a polynomial `f = a_0 + a_1 X + a_2 X² + ...`, which is the polynomial
 
@@ -40,24 +40,16 @@ section
 
 variable {f : Polynomial F}
 
-lemma evenPart_def :
-  evenPart f = C (2⁻¹ : F) * (f + f.comp (-X)) := rfl
-
 @[simp]
 lemma evenPart_by_2 :
   2 * (evenPart f) = f + f.comp (-X) := by
-  simp [evenPart_def, ext_iff]
-
-lemma oddPart_def :
-  oddPart f =
-  C (2⁻¹ : F) * (f - f.comp (-X)) /ₘ X
-  := rfl
+  simp [evenPart.eq_def, ext_iff]
 
 @[simp]
 lemma oddPart_by_2 :
     2 * (oddPart f) = (f - f.comp (-X)) /ₘ X
  := by
-  simp [oddPart_def, ext_iff]
+  simp [oddPart.eq_def, ext_iff]
   by_cases heq : f - f.comp (-X) = 0
   · simp [heq]
   · intro n

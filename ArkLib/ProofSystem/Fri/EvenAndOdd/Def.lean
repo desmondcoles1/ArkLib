@@ -42,13 +42,10 @@ section
 
 variable {f : Polynomial F}
 
-lemma fₑ_def :
-  fₑ f = C (2⁻¹ : F) * (f + f.comp (-X)) := rfl
-
 @[simp]
 lemma fₑ_by_2 :
   2 * (fₑ f) = f + f.comp (-X) := by
-  simp [fₑ_def, ext_iff]
+  simp [fₑ.eq_def, ext_iff]
 
 lemma fₒ_def :
   fₒ f =
