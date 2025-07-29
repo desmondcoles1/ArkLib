@@ -174,4 +174,25 @@ theorem theorem_6_1
       List.map (fun el => el x) u 
       ≠ List.map (fun el => el x) v } : Finset _).card ≤ δ * n := sorry
 
+noncomputable def δ₀ (rho : ℚ) (m : ℕ) : ℝ :=
+  1 - Real.sqrt rho - Real.sqrt rho / (2 * m)
+
+theorem theorem_6_2
+  [Field F]
+  [Finite F]
+  {m : ℕ}
+  {rho : ℚ}
+  {δ : ℚ}
+  (hm : 3 ≤ m)
+  {V : Finset (Fin n → F)}
+  (hδ : δ ≤ δ₀ rho m)
+  {u : List (Fin n → F)}
+  (hS : ((1 + 1 / (2 * m)) ^ 7 * m ^ 7) / (3 * (Real.sqrt rho) ^ 3) 
+    * n ^ 2 * u.length < (the_S_multi δ u V).card)
+  :
+  ∃ (v : List (Fin n → F)),
+  ∀ i ≤ v.length, v.getD (fallback := fun _ => 0) i ∈ V ∧ v.length = u.length ∧
+  (1 - δ) * n ≤ ({x : Fin n | ∀ i ≤ u.length, u.getD i (fun _ => 0)
+    = v.getD i (fun _ => 0) } : Finset _).card := sorry
+
 end abc
