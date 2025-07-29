@@ -44,7 +44,7 @@ def getEval (i : Fin r) (x : F)
   := OracleComp.lift
     (OracleSpec.query (spec := FriQuerySpec F D r) (Oracle.PO i) x)
 
-def getChallengeQ  :
+def getChallengeQ :
     (OracleComp (FriQuerySpec F D r)) D :=
   OracleComp.lift
     (OracleSpec.query (spec := FriQuerySpec F D r) Oracle.RO ())
@@ -52,17 +52,13 @@ def getChallengeQ  :
 noncomputable def query :
     OracleComp (FriQuerySpec F D r) Unit
   := do
-    let challenges <- replicateM r <|
-      (do
-        let c <- getChallengeQ;
-        return c.val.val
-      )
+    let challenges ← replicateM r (getChallengeQ <&> (·.1.1))
     mapM_ (fun (i : ℕ) => do
-      let x₀ := challenges.getD i 0;
-      let s₀ <- getChallengeQ;
-      let s₀ := (s₀.val.val ^ (2 ^ i));
-      let α₀ <- getEval (Fin.ofNat _ i) s₀;
-      let α₁ <- getEval (Fin.ofNat _ i) (-s₀);
-      let β <- getEval (Fin.ofNat _ i.succ) (s₀ ^ 2);
+      let x₀ := challenges.getD i 0
+      let s₀ <- getChallengeQ
+      let s₀ := (s₀.val.val ^ (2 ^ i))
+      let α₀ <- getEval (Fin.ofNat _ i) s₀
+      let α₁ <- getEval (Fin.ofNat _ i) (-s₀)
+      let β <- getEval (Fin.ofNat _ i.succ) (s₀ ^ 2)
       guard (consistency_check x₀ s₀ (-s₀) α₀ α₁ β)
     ) (List.range r)
