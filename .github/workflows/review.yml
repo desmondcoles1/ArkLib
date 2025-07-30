@@ -62,11 +62,16 @@ jobs:
 
       - name: Post Review Comment
         uses: actions/github-script@v7
+        env:
+          REVIEW_TEXT: ${{ steps.ai_review.outputs.review_text }}
         with:
           script: |
+            const header = '### 🤖 AI Review (with external context)\\n\\n';
+            const reviewBody = process.env.REVIEW_TEXT;
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### 🤖 AI Review (with external context)\n\n${{ steps.ai_review.outputs.review_text }}`
+              body: header + reviewBody
             });
