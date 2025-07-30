@@ -58,7 +58,9 @@ def listDecodable (C : Code ι F) (r : ℝ) (ℓ : ℝ) : Prop :=
   ∀ y : ι → F, listOfCloseCodewordsRel C y r ≤ ℓ
 
 /--
-The code `C` is uniquely decodable if it is `(r,1)`-list decodable
+A code `C` is uniquely decodable up to a relative distance `r` if for any word `y : ι → F`,
+there is at most one codeword in `C` within a relative Hamming distance of `r`.
+This is a special case of list decodability where the list size `ℓ` is 1.
 -/
 def uniqueDecodable (C : Code ι F) (r : ℝ) : Prop :=
   listDecodable C r 1
