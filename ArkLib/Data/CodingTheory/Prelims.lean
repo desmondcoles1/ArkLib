@@ -70,8 +70,9 @@ end
 
 namespace Affine
 section
-variable {ι : Type*} [Fintype ι] [Nonempty ι]
+variable {ι : Type*} [Fintype ι]
          {F : Type*}
+         {k : ℕ}
 
 /--
   Affine line between two vectors with coefficients in a semiring.
@@ -79,72 +80,57 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
 def line [Ring F] (u v : ι → F) : Submodule F (ι → F) :=
   vectorSpan _ {u, v}
 
-def finsetOfVectors {k : ℕ} [DecidableEq F] (U : Fin k → ι → F) : Finset (ι → F) :=
+variable [DecidableEq F]
+
+def finsetOfVectors (U : Fin k → ι → F) : Finset (ι → F) :=
   Finset.univ.image U
 
-abbrev setOfVectorsU {k : ℕ} [DecidableEq F] (U : Fin k → ι → F) : Set (ι → F) :=
-  Finset.toSet (finsetOfVectors U)
-
-instance finsetU_nonempty [DecidableEq F] {k : ℕ} [NeZero k] [Fintype ι]
+@[simp]
+lemma Nonempty_finsetOfVector [NeZero k]
   {U : Fin k → ι → F} : (finsetOfVectors U).Nonempty := by simp [finsetOfVectors]
 
-instance [DecidableEq F] {k : ℕ} [NeZero k] {U : Fin k → ι → F} :
-  Nonempty (finsetOfVectors U) := by
-  have := finsetU_nonempty (U := U)
-  simp only [nonempty_subtype]
-  exact this
+instance [NeZero k] {U : Fin k → ι → F} : Nonempty (finsetOfVectors U) :=
+  Nonempty_finsetOfVector.to_subtype
 
-instance [DecidableEq F] {k : ℕ} [NeZero k] [Fintype ι] {U : Fin k → ι → F} :
-  Nonempty (setOfVectorsU U) := by
-  have := finsetU_nonempty (U := U)
-  simp only [nonempty_subtype]
-  exact this
+noncomputable def affineSpan_Fintype [Field F] [Fintype F]
+  {U : Fin k → ι → F} : Fintype ↥(affineSpan F (finsetOfVectors U).toSet) := Fintype.ofFinite _
 
-instance setVectorsU_nonempty [DecidableEq F] {k : ℕ} [NeZero k] {U : Fin k → ι → F}
-  : (setOfVectorsU U).Nonempty := by
-  simp [setOfVectorsU]
-  exact finsetU_nonempty
+section
 
-noncomputable def affineSpan_Fintype [Field F] [Fintype F] [DecidableEq F] {k : ℕ}
-  {U : Fin k → ι → F} : Fintype ↥(affineSpan F (setOfVectorsU U)) := by
-  apply Fintype.ofFinite
+variable [Field F]
 
-omit [Nonempty ι] in
-lemma affineSpan_nonempty' [Field F] [Fintype F] [DecidableEq F] {k : ℕ} [NeZero k]
-  {U : Fin k → ι → F} : Nonempty ↥(affineSpan F (setOfVectorsU U)) := by
-  have affineSpan_ne_iff := @affineSpan_nonempty F _ _ _ _ _ _ (setOfVectorsU U)
-  unfold Set.Nonempty at affineSpan_ne_iff
-  symm at affineSpan_ne_iff
-  simp
-  apply affineSpan_ne_iff.1
-  exact setVectorsU_nonempty
+private lemma affineSpan_nonempty'' [NeZero k] {U : Fin k → ι → F} :
+  Set.Nonempty (affineSpan F (finsetOfVectors U).toSet : Set (ι → F)) := by simp
 
-abbrev AffSpanSet [Field F] [Fintype F] [DecidableEq F]
-  {k : ℕ} [NeZero k] (U : Fin k → ι → F) : Set (ι → F) :=
+lemma affineSpan_nonempty' [NeZero k] {U : Fin k → ι → F} :
+  Nonempty ↥(affineSpan F (finsetOfVectors U).toSet) := affineSpan_nonempty''.to_subtype
+
+variable [Fintype F]
+
+abbrev AffSpanSet [NeZero k] (U : Fin k → ι → F) : Set (ι → F) :=
   (affineSpan F (finsetOfVectors U)).carrier
 
-lemma AffSpanFinite [Field F] [Fintype F] [DecidableEq F]
-  {k : ℕ} [NeZero k] (u : Fin k → ι → F) : (AffSpanSet u).Finite := by
+lemma AffSpanFinite [NeZero k] (u : Fin k → ι → F) : (AffSpanSet u).Finite := by
   unfold AffSpanSet
   sorry
 
-noncomputable def affineSpanSet_Fintype [Field F] [Fintype F] [DecidableEq F] {k : ℕ} [NeZero k]
-  {U : Fin k → ι → F} : Fintype (AffSpanSet U) := by
-  apply Fintype.ofFinite
+noncomputable def affineSpanSet_Fintype [NeZero k] {U : Fin k → ι → F} : Fintype (AffSpanSet U) :=
+  Fintype.ofFinite _
 
 /--
 
 -/
-noncomputable def AffSpanSetFinset [Field F] [Fintype F] [DecidableEq F]
-  {k : ℕ} [NeZero k] (U : Fin k → ι → F) : Finset (ι → F) :=
+noncomputable def AffSpanSetFinset [NeZero k] (U : Fin k → ι → F) : Finset (ι → F) :=
   (AffSpanFinite U).toFinset
 
 /--
   A collection of affine subspaces in `F^ι`.
 -/
-noncomputable def AffSpanSetFinsetCol [Field F] [Fintype F] [DecidableEq F] {k t : ℕ} [NeZero k]
- [NeZero t] (C : Fin t → (Fin k → (ι → F))) : Set (Finset (ι → F))
- := Set.range (fun i => AffSpanSetFinset (C i))
+noncomputable def AffSpanSetFinsetCol {t : ℕ} [NeZero k] [NeZero t]
+  (C : Fin t → (Fin k → (ι → F))) : Set (Finset (ι → F))
+  := Set.range (fun i => AffSpanSetFinset (C i))
+
+end
 
 end
 end Affine
@@ -169,17 +155,14 @@ def parametrisedCurve {l : ℕ} [Semiring F] (u : Fin l → ι → F) : Set (ι 
 /--
   A parametrised curve over a finite field is finite.
 -/
-def parametrisedCurveFinite {F : Type*} [DecidableEq ι] [Fintype F] [DecidableEq F]
-  [Semiring F] {l : ℕ} (u : Fin l → ι → F) : Finset (ι → F)
-  := {v | ∃ r : F, v = ∑ i : Fin l, (r ^ (i : ℕ)) • u i}
+def parametrisedCurveFinite [DecidableEq ι] [Fintype F] [DecidableEq F] [Semiring F]
+  {l : ℕ} (u : Fin l → ι → F) : Finset (ι → F) :=
+  {v | ∃ r : F, v = ∑ i : Fin l, (r ^ (i : ℕ)) • u i}
 
-instance [Fintype F] [Nonempty F] [Semiring F] [DecidableEq ι][DecidableEq F] {l : ℕ} :
-  ∀ u : Fin l → ι → F, Nonempty {x // x ∈ parametrisedCurveFinite u } := by
-  intro u
-  unfold parametrisedCurveFinite
-  simp only [mem_filter, mem_univ, true_and, nonempty_subtype]
-  have ⟨r⟩ := ‹Nonempty F›
-  use ∑ i : Fin l, r ^ (i : ℕ) • u i, r
+instance [Fintype F] [Nonempty F] [Semiring F] [DecidableEq ι] [DecidableEq F] {l : ℕ}
+  {u : Fin l → ι → F} : Nonempty {x // x ∈ parametrisedCurveFinite u} := by
+  simp [parametrisedCurveFinite]
+  use ∑ i : Fin l, Classical.arbitrary F ^ (i : ℕ) • u i, Classical.arbitrary F
 
 end
 end Curve
@@ -202,8 +185,26 @@ lemma Fintype.zero_lt_card {ι : Type*} [Fintype ι] [Nonempty ι] : 0 < Fintype
 
 namespace Finset
 
+section
+
+variable {α : Type*} [DecidableEq α] {s : Finset α}
+
 @[simp]
-theorem card_univ_filter_eq {α : Type*} [Fintype α] [DecidableEq α] {e : α} :
+theorem card_filter_prod_self_eq :
+  #({x ∈ s ×ˢ s | x.1 = x.2}) = #s := by
+  rw [Finset.card_eq_of_equiv]
+  simp
+  exact ⟨
+    fun ⟨x, _⟩ ↦ ⟨x.1, by tauto⟩,
+    fun ⟨x, hx⟩ ↦ ⟨(x, x), by tauto⟩,
+    by simp [Function.LeftInverse],
+    by simp [Function.LeftInverse, Function.RightInverse]
+  ⟩
+
+variable [Fintype α]
+
+@[simp]
+theorem card_univ_filter_eq {e : α} :
   #{x : α | x ≠ e} = #(Finset.univ (α := α)) - 1 := by
   rw [
     Finset.filter_congr (q := (· ∉ ({e} : Finset _))) (by simp),
@@ -212,7 +213,7 @@ theorem card_univ_filter_eq {α : Type*} [Fintype α] [DecidableEq α] {e : α} 
   simp
 
 @[simp]
-theorem card_prod_self_eq {α : Type*} [Fintype α] [DecidableEq α] {s : Finset α} :
+theorem card_prod_self_eq :
   #(((s ×ˢ s : Finset _) ∩ ({x : α × α | x.1 = x.2} : Finset _)) : Finset _) = #s := by
   rw [Finset.card_eq_of_equiv]
   simp
@@ -223,16 +224,6 @@ theorem card_prod_self_eq {α : Type*} [Fintype α] [DecidableEq α] {s : Finset
     by simp [Function.RightInverse, Function.LeftInverse]
   ⟩
 
-@[simp]
-theorem card_filter_prod_self_eq {α : Type*} [Fintype α] [DecidableEq α] {s : Finset α} :
-  #({x ∈ s ×ˢ s | x.1 = x.2}) = #s := by
-  rw [Finset.card_eq_of_equiv]
-  simp
-  exact ⟨
-    fun ⟨x, _⟩ ↦ ⟨x.1, by tauto⟩,
-    fun ⟨x, hx⟩ ↦ ⟨(x, x), by tauto⟩,
-    by simp [Function.LeftInverse],
-    by simp [Function.LeftInverse, Function.RightInverse]
-  ⟩
+end
 
 end Finset

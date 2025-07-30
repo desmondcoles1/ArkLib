@@ -84,54 +84,58 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
   bound, i.e. `δ ∈ [0, (1-√ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-√ρ)/2 , 1 - √ρ]`.
 -/
 noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
-  if UD : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)/2 then Fintype.card ι / Fintype.card F
-  else if JB : δ ≥ 1 - (ReedSolomonCode.sqrtRate deg domain)/2 ∧ δ ≤ 1 -
-  (ReedSolomonCode.sqrtRate deg domain)
-    then
-    let m := min (1 - (ReedSolomonCode.sqrtRate deg domain) - δ)
-                (ReedSolomonCode.sqrtRate deg domain/ 20)
-    ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
-    else 0
+  letI inf := ReedSolomonCode.sqrtRate deg domain
+  if δ ≤ 1 - inf/2 then Fintype.card ι / Fintype.card F
+  else if δ ≥ 1 - inf/2 ∧ δ ≤ 1 - inf
+       then letI m := min (1 - inf - δ) (inf / 20)
+            ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
+       else 0
 
 /--
   Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
 -/
-theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] (deg : ℕ) (domain : ι ↪ F)
-  (C : Fin t → (Fin k → (ι → F))) (δ : ℝ≥0) (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
-  generalProximityGap (ReedSolomonCode.toFinset domain deg) (Affine.AffSpanSetFinsetCol C)
-  δ (errorBound δ deg domain) := by sorry
+theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] {deg : ℕ} {domain : ι ↪ F}
+  (C : Fin t → (Fin k → (ι → F))) {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
+  generalProximityGap
+    (ReedSolomonCode.toFinset domain deg)
+    (Affine.AffSpanSetFinsetCol C)
+    δ
+    (errorBound δ deg domain) := by sorry
 
 /--
   Theorem 1.4 (Main Theorem — Correlated agreement over lines) in [BCIKS20].
 -/
-theorem correlatedAgreement_lines (u : Fin 2 → ι → F) (deg : ℕ) (domain : ι ↪ F)
-  (δ : ℝ≥0) (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
-  (hproximity : (PMF.uniformOfFintype F).toOuterMeasure
-    {z | Code.relHammingDistToCode (u 1 + z • u 2) (ReedSolomon.code domain deg) ≤ δ}
-      > errorBound δ deg domain) :
+theorem correlatedAgreement_lines {u : Fin 2 → ι → F} {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
+  (hproximity :
+    (PMF.uniformOfFintype F).toOuterMeasure
+      {z | Code.relHammingDistToCode (u 1 + z • u 2) (ReedSolomon.code domain deg) ≤ δ} >
+      errorBound δ deg domain) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 /--
   Theorem 1.5 (Correlated agreement for low-degree parameterised curves) in [BCIKS20].
 -/
-theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} (u : Fin k → ι → F)
-  (deg : ℕ) (domain : ι ↪ F) (δ : ℝ≥0) (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
-  (hproximity : (PMF.uniformOfFintype (Curve.parametrisedCurveFinite u)).toOuterMeasure
-    {y | Code.relHammingDistToCode y.1 (ReedSolomon.code domain deg) ≤ δ}
-    > k*(errorBound δ deg domain)):
+theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k → ι → F}
+  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
+  (hproximity :
+    (PMF.uniformOfFintype (Curve.parametrisedCurveFinite u)).toOuterMeasure
+      {y | Code.relHammingDistToCode y.1 (ReedSolomon.code domain deg) ≤ δ} >
+      k * (errorBound δ deg domain)) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 open Affine in
 /--
 Theorem 1.6 (Correlated agreement over affine spaces) in [BCIKS20].
 -/
-theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] (u : Fin k → ι → F)
-  (deg : ℕ) (domain : ι ↪ F) (δ : ℝ≥0) (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
+theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin k → ι → F} {deg : ℕ}
+  {domain : ι ↪ F} {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
-    (@PMF.uniformOfFintype (affineSpan F (Affine.setOfVectorsU u))
-    affineSpan_Fintype affineSpan_nonempty').toOuterMeasure
-    {y | Code.relHammingDistToCode (ι := ι) (F := F) y (ReedSolomon.code domain deg) ≤ δ}
-    > errorBound δ deg domain) :
+    (@PMF.uniformOfFintype (affineSpan F (Affine.finsetOfVectors u).toSet)
+      affineSpan_Fintype affineSpan_nonempty').toOuterMeasure
+        {y | Code.relHammingDistToCode (ι := ι) (F := F) y (ReedSolomon.code domain deg) ≤ δ} >
+        errorBound δ deg domain) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 end

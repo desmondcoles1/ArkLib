@@ -155,12 +155,13 @@ theorem mulVecLin_coeff_vandermondens_eq_eval_matrixOfPolynomials
     nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, eval_eq_sum
   ]
   refine Eq.symm (Finset.sum_of_injOn (·%n) ?p₁ ?p₂ (fun i _ h ↦ ?p₃) (fun i _ ↦ ?p₄))
-  · stop -- TODO: fix this
-    aesop (add simp [Set.InjOn])
+  · aesop (config := { warnOnNonterminal := false })
+          (add simp [Set.InjOn])
           (add safe forward [le_natDegree_of_mem_supp, lt_of_le_of_lt, Nat.lt_add_one_of_le])
-          (add 10% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
+          (add 50% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
                                  fun h₁ h₂ ↦ by aesop (add simp Nat.mod_eq_of_lt)))
           (erase simp mem_support_iff)
+    rw [Nat.mod_eq_of_lt, Nat.mod_eq_of_lt] at a_2 <;> assumption
   · aesop (add simp Set.MapsTo) (add safe apply Nat.mod_lt) (add 1% cases Nat)
   · aesop (add safe (by specialize h i)) (add simp [Nat.mod_eq_of_lt])
   · have : i < n := by aesop (add safe forward le_natDegree_of_mem_supp)
@@ -180,25 +181,13 @@ open Finset Function
 
 open scoped BigOperators
 
-variable {ι : Type*}[Fintype ι] [Nonempty ι]
+variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [Field F] [Fintype F]
 
 abbrev RScodeSet (domain : ι ↪ F) (deg : ℕ) : Set (ι → F) := (ReedSolomon.code domain deg).carrier
 
-omit [Nonempty ι] in
-/--
-The underlying set of a Reed-Solomon code over a finite field is finite.
--/
-lemma RScodeSet_finite (domain : ι ↪ F) (deg : ℕ) : (RScodeSet domain deg).Finite := by
-  unfold RScodeSet
-  exact Set.toFinite _
-
-noncomputable instance toFintype
-  (domain : ι ↪ F) (deg : ℕ) : Fintype {f : ι → F // f ∈ RScodeSet domain deg} :=
-  Fintype.ofFinset (RScodeSet_finite domain deg).toFinset (by aesop)
-
-noncomputable def toFinset (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F)
-  := (RScodeSet domain deg).toFinset
+def toFinset (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F) :=
+  (RScodeSet domain deg).toFinset
 
 end
 
