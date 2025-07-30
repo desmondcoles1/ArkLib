@@ -84,10 +84,10 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
   bound, i.e. `δ ∈ [0, (1-√ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-√ρ)/2 , 1 - √ρ]`.
 -/
 noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
-  letI inf := ReedSolomonCode.sqrtRate deg domain
-  if δ ≤ 1 - inf/2 then Fintype.card ι / Fintype.card F
-  else if δ ≥ 1 - inf/2 ∧ δ ≤ 1 - inf
-       then letI m := min (1 - inf - δ) (inf / 20)
+  letI j := ReedSolomonCode.sqrtRate deg domain
+  if δ ≤ 1 - j/2 then Fintype.card ι / Fintype.card F
+  else if δ ≥ 1 - j/2 ∧ δ ≤ 1 - j
+       then letI m := min (1 - j - δ) (j / 20)
             ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
        else 0
 
