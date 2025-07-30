@@ -57,6 +57,12 @@ The code `C` is `(r,ℓ)`-list decodable.
 def listDecodable (C : Code ι F) (r : ℝ) (ℓ : ℝ) : Prop :=
   ∀ y : ι → F, listOfCloseCodewordsRel C y r ≤ ℓ
 
+/--
+The code `C` is uniquely decodable if it is `(r,1)`-list decodable
+-/
+def uniqueDecodable (C : Code ι F) (r : ℝ) : Prop :=
+  listDecodable C r 1
+
 section Lemmas
 
 variable {C : Code ι F} {y : ι → F} {n : ℕ} {r : ℝ} {ℓ : ℝ}
