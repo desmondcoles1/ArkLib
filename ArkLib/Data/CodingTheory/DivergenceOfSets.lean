@@ -57,12 +57,12 @@ def divergence (U V : Set (ι → F)) : ℚ≥0 :=
 /--
   Corollary 1.3 (Concentration bounds) from [BCIKS20].
 -/
-lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] (deg : ℕ) (domain : ι ↪ F)
+lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] {deg : ℕ} {domain : ι ↪ F}
   {U : AffineSubspace F (ι → F)} [Nonempty U]
   (hdiv : (divergence U (RScodeSet domain deg) : ℝ≥0) ≤  1 - (ReedSolomonCode.sqrtRate deg domain))
   : let δ' := divergence U (RScodeSet domain deg)
     (PMF.uniformOfFintype U).toOuterMeasure
-    {y | Code.relHammingDistToCode y (RScodeSet domain deg) ≠ δ'}
+      {y | Code.relHammingDistToCode y (RScodeSet domain deg) ≠ δ'}
     ≤ (errorBound δ' deg domain) := by sorry
 
 end
