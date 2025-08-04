@@ -8,6 +8,7 @@ import Mathlib.FieldTheory.Separable
 
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.GuruswamiSudan
+import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.Data.Polynomial.Bivariate
 import Mathlib.FieldTheory.RatFunc.AsPolynomial
 
@@ -196,3 +197,4 @@ theorem theorem_6_2
     = v.getD i (fun _ => 0) } : Finset _).card := sorry
 
 end abc
+
