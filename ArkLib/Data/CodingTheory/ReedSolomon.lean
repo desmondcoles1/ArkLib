@@ -11,6 +11,17 @@ import Mathlib.RingTheory.Henselian
 import ArkLib.Data.Fin.Lift
 import ArkLib.Data.MvPolynomial.LinearMvExtension
 import ArkLib.Data.Polynomial.Interface
+import Mathlib.Data.Real.Basic
+import Mathlib.Data.Real.Sqrt
+import Mathlib.Data.Set.Defs
+import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
+import Mathlib.Data.Finset.BooleanAlgebra
+import Mathlib.Data.Set.Defs
+import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Probability.Distributions.Uniform
+import Mathlib.RingTheory.Henselian
+
+
 
 /-!
   # Reed-Solomon Codes
@@ -23,7 +34,7 @@ import ArkLib.Data.Polynomial.Interface
 
 namespace ReedSolomon
 
-open Polynomial
+open Polynomial NNReal
 
 variable {F : Type*} [Semiring F] {ι : Type*} (domain : ι ↪ F)
 
@@ -54,7 +65,7 @@ def checkMatrix (deg : ℕ) [Fintype ι] : Matrix (Fin (Fintype.card ι - deg)) 
 --   sorry
 end ReedSolomon
 
-open Polynomial Matrix Code LinearCode
+open Classical Polynomial Matrix Code LinearCode
 
 variable {F ι ι' : Type*}
          {C : Set (ι → F)}
@@ -144,12 +155,13 @@ theorem mulVecLin_coeff_vandermondens_eq_eval_matrixOfPolynomials
     nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, eval_eq_sum
   ]
   refine Eq.symm (Finset.sum_of_injOn (·%n) ?p₁ ?p₂ (fun i _ h ↦ ?p₃) (fun i _ ↦ ?p₄))
-  · stop -- TODO: fix this
-    aesop (add simp [Set.InjOn])
+  · aesop (config := { warnOnNonterminal := false })
+          (add simp [Set.InjOn])
           (add safe forward [le_natDegree_of_mem_supp, lt_of_le_of_lt, Nat.lt_add_one_of_le])
-          (add 10% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
+          (add 50% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
                                  fun h₁ h₂ ↦ by aesop (add simp Nat.mod_eq_of_lt)))
           (erase simp mem_support_iff)
+    rw [Nat.mod_eq_of_lt, Nat.mod_eq_of_lt] at a_2 <;> assumption
   · aesop (add simp Set.MapsTo) (add safe apply Nat.mod_lt) (add 1% cases Nat)
   · aesop (add safe (by specialize h i)) (add simp [Nat.mod_eq_of_lt])
   · have : i < n := by aesop (add safe forward le_natDegree_of_mem_supp)
@@ -162,6 +174,22 @@ end
 end Vandermonde
 
 namespace ReedSolomonCode
+
+section
+
+open Finset Function
+
+open scoped BigOperators
+
+variable {ι : Type*} [Fintype ι] [Nonempty ι]
+         {F : Type*} [Field F] [Fintype F]
+
+abbrev RScodeSet (domain : ι ↪ F) (deg : ℕ) : Set (ι → F) := (ReedSolomon.code domain deg).carrier
+
+def toFinset (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F) :=
+  (RScodeSet domain deg).toFinset
+
+end
 
 section
 
@@ -214,6 +242,8 @@ lemma genMatIsVandermonde [Fintype ι] [Field F] [DecidableEq F] [inst : NeZero 
 
 section
 
+open NNReal
+
 variable [Field F]
 
 lemma dim_eq_deg_of_le [NeZero n] (inj : Function.Injective α) (h : n ≤ m) :
@@ -237,6 +267,9 @@ lemma dist_le_length [DecidableEq F] (inj : Function.Injective α) :
     minDist ((ReedSolomon.code ⟨α, inj⟩ n) : Set (Fin m → F)) ≤ m := by
   convert dist_UB
   simp
+
+abbrev sqrtRate [Fintype ι] (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
+  (LinearCode.rate (ReedSolomon.code domain deg) : ℝ≥0).sqrt
 
 end
 

@@ -271,7 +271,8 @@ def relHammingDist (u v : ι → F) : ℚ≥0 :=
 -/
 notation "δᵣ(" u ", " v ")" => relHammingDist u v
 
-/-- The relative Hamming distance between two vectors is at most `1`.
+/--
+  The relative Hamming distance between two vectors is at most `1`.
 -/
 @[simp]
 lemma relHammingDist_le_one : δᵣ(u, v) ≤ 1 := by
@@ -280,7 +281,8 @@ lemma relHammingDist_le_one : δᵣ(u, v) ≤ 1 := by
   rw [div_le_iff₀ (by simp)]
   simp [hammingDist_le_card_fintype]
 
-/-- The relative Hamming distance between two vectors is non-negative.
+/--
+  The relative Hamming distance between two vectors is non-negative.
 -/
 @[simp]
 lemma zero_le_relHammingDist : 0 ≤ δᵣ(u, v) := by
@@ -291,18 +293,21 @@ lemma zero_le_relHammingDist : 0 ≤ δᵣ(u, v) := by
 
 end
 
-/-- The range of the relative Hamming distance function.
+/--
+  The range of the relative Hamming distance function.
 -/
 def relHammingDistRange (ι : Type*) [Fintype ι] : Set ℚ≥0 :=
   {d : ℚ≥0 | ∃ d' : ℕ, d' ≤ Fintype.card ι ∧ d = d' / Fintype.card ι}
 
-/-- The range of the relative Hamming distance is well-defined.
+/--
+  The range of the relative Hamming distance is well-defined.
 -/
 @[simp]
 lemma relHammingDist_mem_relHammingDistRange [DecidableEq F] : δᵣ(u, v) ∈ relHammingDistRange ι :=
   ⟨hammingDist _ _, Finset.card_filter_le _ _, rfl⟩
 
-/-- The range of the relative Hamming distance function is finite.
+/--
+  The range of the relative Hamming distance function is finite.
 -/
 @[simp]
 lemma finite_relHammingDistRange [Nonempty ι] : (relHammingDistRange ι).Finite := by
@@ -318,7 +323,8 @@ lemma finite_relHammingDistRange [Nonempty ι] : (relHammingDistRange ι).Finite
         ⟩⟩
       ⟩
 
-/-- The set of pairs of distinct elements from a finite set is finite.
+/--
+  The set of pairs of distinct elements from a finite set is finite.
 -/
 @[simp]
 lemma finite_offDiag [Finite F] : C.offDiag.Finite := Set.Finite.offDiag (Set.toFinite _)
@@ -327,13 +333,15 @@ section
 
 variable [DecidableEq F]
 
-/-- The set of possible distances between distinct codewords in a code.
+/--
+  The set of possible distances between distinct codewords in a code.
 -/
 def possibleRelHammingDists (C : Set (ι → F)) : Set ℚ≥0 :=
   possibleDists C relHammingDist
 
-/-- The set of possible distances between distinct codewords in a code is a subset of the range of
-  the relative Hamming distance function.
+/--
+  The set of possible distances between distinct codewords in a code is a subset of the range of the
+  relative Hamming distance function.
 -/
 @[simp]
 lemma possibleRelHammingDists_subset_relHammingDistRange :
@@ -342,14 +350,16 @@ lemma possibleRelHammingDists_subset_relHammingDistRange :
 
 variable [Nonempty ι]
 
-/-- The set of possible distances between distinct codewords in a code is a finite set.
+/--
+  The set of possible distances between distinct codewords in a code is a finite set.
 -/
 @[simp]
 lemma finite_possibleRelHammingDists : (possibleRelHammingDists C).Finite :=
   Set.Finite.subset finite_relHammingDistRange possibleRelHammingDists_subset_relHammingDistRange
 
 open Classical in
-/-- The minimum relative Hamming distance of a code.
+/--
+  The minimum relative Hamming distance of a code.
 -/
 def minRelHammingDistCode (C : Set (ι → F)) : ℚ≥0 :=
   haveI : Fintype (possibleRelHammingDists C) := @Fintype.ofFinite _ finite_possibleRelHammingDists
@@ -364,7 +374,8 @@ end
 -/
 notation "δᵣ" C => minRelHammingDistCode C
 
-/-- The range set of possible relative Hamming distances from a vector to a code is a subset
+/--
+  The range set of possible relative Hamming distances from a vector to a code is a subset
   of the range of the relative Hamming distance function.
 -/
 @[simp]
@@ -372,7 +383,8 @@ lemma possibleRelHammingDistsToC_subset_relHammingDistRange [DecidableEq F] :
   possibleDistsToCode w C relHammingDist ⊆ relHammingDistRange ι := fun _ ↦ by
     aesop (add simp Code.possibleDistsToCode)
 
-/-- The set of possible relative Hamming distances from a vector to a code is a finite set.
+/--
+  The set of possible relative Hamming distances from a vector to a code is a finite set.
 -/
 @[simp]
 lemma finite_possibleRelHammingDistsToCode [Nonempty ι] [DecidableEq F] :
@@ -403,7 +415,8 @@ notation "δᵣ(" w ", " C ")" => relHammingDistToCode w C
 @[simp]
 lemma zero_mem_relHammingDistRange : 0 ∈ relHammingDistRange ι := by use 0; simp
 
-/-- The relative Hamming distances between a vector and a codeword is in the
+/--
+  The relative Hamming distances between a vector and a codeword is in the
   range of the relative Hamming distance function.
 -/
 @[simp]
@@ -587,6 +600,7 @@ variable {F : Type*}
          {ι : Type*} [Fintype ι]
          {κ  : Type*} [Fintype κ]
 
+
 /--
   Linear code defined by left multiplication by its generator matrix.
 -/
@@ -666,7 +680,7 @@ The Hamming distance between codewords equals to the weight of their difference.
 -/
 lemma hammingDist_eq_wt_sub [CommRing F] {u v : ι → F} : hammingDist u v = Code.wt (u - v) := by
   aesop (add simp [hammingDist, Code.wt, sub_eq_zero])
-  
+
 /--
   The min distance of a linear code equals the minimum of the weights of non-zero codewords.
 -/
