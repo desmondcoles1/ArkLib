@@ -309,15 +309,24 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 
 open Uniform in
-theorem lemma_6_3 [DecidableEq ι] {k : ℕ} {u : Fin k → ι → F}
+theorem lemma_6_3 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
     (PMF.uniformOfFinset (@Set.toFinset _ sorry
-      (s := (AffineSubspace.carrier <| affineSpan _ (u '' (Set.univ) : Set ( ι → F))))) (hs := sorry)).toOuterMeasure
-      {y | Code.relHammingDistToCode y (ReedSolomon.code domain deg) ≤ δ} >
-      k * (ProximityGap.errorBound δ deg domain)) :
-  True := by sorry
+      (s := (AffineSubspace.carrier
+        <| affineSpan F 
+          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v }; 
+            set
+            )))) (hs := sorry)).toOuterMeasure
+      {y : ι → F | Code.relHammingDistToCode y (ReedSolomon.code domain deg) ≤ δ} >
+      (ProximityGap.errorBound δ deg domain)) :
+  ∀ x ∈ (AffineSubspace.carrier
+  <| affineSpan F 
+    (let set := { x  | ∃ v ∈ (List.tail u), x = v }; 
+      set
+      )), Code.relHammingDistToCode x (ReedSolomon.code domain deg) ≤ δ
+  := by sorry
 
 end
 
