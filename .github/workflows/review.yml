@@ -38,11 +38,8 @@ jobs:
         id: get_args
         run: |
           # Use a stateful awk script to parse the structured comment.
-          # It's more robust than complex sed/grep pipelines.
-          # It reads the comment line by line, switching state when it sees a header.
-          # It builds comma-separated strings for the reference lists.
-          read -r -d '' PARSED_ARGS <<EOF
-          $(awk '
+          # This is more robust than complex sed/grep pipelines.
+          PARSED_ARGS=$(awk '
             # Switch section based on header
             /^External:/ { section="ext"; next }
             /^Internal:/ { section="int"; next }
@@ -53,17 +50,18 @@ jobs:
               # Trim leading/trailing whitespace from the line
               gsub(/^[ \t]+|[ \t]+$/, "", $0);
 
-              if (section == "ext" && /^- /) {
-                sub(/^- +/, "");
-                # Append with a comma if not the first item
+              # Skip empty lines or the initial /review command
+              if ($0 == "" || $0 == "/review") { next }
+
+              if (section == "ext") {
+                sub(/^- +/, ""); # Remove optional leading dash
                 if (ext) { ext = ext "," $0 } else { ext = $0 }
               }
-              else if (section == "int" && /^- /) {
-                sub(/^- +/, "");
+              else if (section == "int") {
+                sub(/^- +/, ""); # Remove optional leading dash
                 if (ark) { ark = ark "," $0 } else { ark = $0 }
               }
               else if (section == "com") {
-                # Append with a space if not the first line
                 if (com) { com = com " " $0 } else { com = $0 }
               }
             }
@@ -73,7 +71,6 @@ jobs:
               print "additional_comments=" com
             }
           ' <<< "${{ github.event.comment.body }}")
-          EOF
 
           echo "$PARSED_ARGS" >> $GITHUB_OUTPUT
 
