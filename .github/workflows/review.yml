@@ -37,19 +37,45 @@ jobs:
       - name: Extract arguments from comment
         id: get_args
         run: |
-          # Use a here-doc to handle multiline comment body safely
-          read -r -d '' BODY <<'EOF'
-          ${{ github.event.comment.body }}
+          # Use a stateful awk script to parse the structured comment.
+          # It's more robust than complex sed/grep pipelines.
+          # It reads the comment line by line, switching state when it sees a header.
+          # It builds comma-separated strings for the reference lists.
+          read -r -d '' PARSED_ARGS <<EOF
+          $(awk '
+            # Switch section based on header
+            /^External:/ { section="ext"; next }
+            /^Internal:/ { section="int"; next }
+            /^Comments:/ { section="com"; next }
+
+            # Process line based on current section
+            {
+              # Trim leading/trailing whitespace from the line
+              gsub(/^[ \t]+|[ \t]+$/, "", $0);
+
+              if (section == "ext" && /^- /) {
+                sub(/^- +/, "");
+                # Append with a comma if not the first item
+                if (ext) { ext = ext "," $0 } else { ext = $0 }
+              }
+              else if (section == "int" && /^- /) {
+                sub(/^- +/, "");
+                if (ark) { ark = ark "," $0 } else { ark = $0 }
+              }
+              else if (section == "com") {
+                # Append with a space if not the first line
+                if (com) { com = com " " $0 } else { com = $0 }
+              }
+            }
+            END {
+              print "external_refs=" ext
+              print "arklib_refs=" ark
+              print "additional_comments=" com
+            }
+          ' <<< "${{ github.event.comment.body }}")
           EOF
 
-          # Extract content after keywords, trim whitespace
-          EXT_REFS=$(echo "$BODY" | awk -F'External references:' 'NF>1{print $2}' | xargs)
-          ARK_REFS=$(echo "$BODY" | awk -F'ArkLib references:' 'NF>1{print $2}' | xargs)
-          ADD_COMMENTS=$(echo "$BODY" | awk '/Additional comments:/{flag=1; next} flag' | xargs)
-
-          echo "external_refs=$EXT_REFS" >> $GITHUB_OUTPUT
-          echo "arklib_refs=$ARK_REFS" >> $GITHUB_OUTPUT
-          echo "additional_comments=$ADD_COMMENTS" >> $GITHUB_OUTPUT
+          echo "$PARSED_ARGS" >> $GITHUB_OUTPUT
 
       - name: Run AI Review Script
         id: ai_review
