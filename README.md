@@ -1,4 +1,4 @@
-# Formally Verified Cryptographic Arguments of Knowledge
+# Formally Verified Arguments of Knowledge
 
 This library aims to provide a modular and composable framework for formally verifying **succinct non-interactive arguments of knowledge** (SNARKs). This is done as part of the [verified-zkevm effort](https://verified-zkevm.org/).
 
