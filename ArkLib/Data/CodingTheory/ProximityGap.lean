@@ -361,7 +361,7 @@ noncomputable def weightedCorrelatedAgreement.{u} {ι : Type u} {n : Type} [Fint
   sSup { x | ∃ D ⊆ (Finset.univ (α := n)), x = mu_set.{u} μ D ∧ 
     ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ ∀ j ∈ D,  v i j = W i j } 
 
-theorem theorem_7_1 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   {μ : ι → Set.Icc (0 : ℝ) 1}
   {M : ℕ}
@@ -384,15 +384,17 @@ theorem theorem_7_1 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι →
       (hs := sorry)).toOuterMeasure
       { z : List F | agree_set μ 
         (∑ i < z.length, fun ι => z.getD i 0 * u.getD i 0 ι) 
-        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
-      u.length * (ProximityGap.errorBound δ deg domain))
+        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } ≥
+      (ENNReal.ofReal <|
+      (u.length * (M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ) 
+      * (1 / min 
+        (α - ReedSolomonCode.sqrtRate deg domain)
+        (3 / ReedSolomonCode.sqrtRate deg domain))))
       :
-
-  ∀ x ∈ (AffineSubspace.carrier
-  <| affineSpan F 
-    (let set := { x  | ∃ v ∈ (List.tail u), x = v }; 
-      set
-      )), Code.relHammingDistToCode x (ReedSolomon.code domain deg) ≤ δ
+  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F), 
+    mu_set μ ι' ≥ α ∧
+    u.length = v.length ∧ 
+    ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
   := by sorry
 
 end
