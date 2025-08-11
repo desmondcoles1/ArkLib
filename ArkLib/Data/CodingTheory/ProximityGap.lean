@@ -332,4 +332,70 @@ end
 
 end abc
 
+namespace WeightedAgreement
+  
+open NNReal Finset Function
+
+open scoped BigOperators
+
+section
+
+variable {n : Type*} [Fintype n] [DecidableEq n]
+
+variable {ι : Type*} [Fintype ι] [Nonempty ι]
+variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
+
+variable (C : Submodule F (n → F)) [DecidablePred (· ∈ C)]
+
+noncomputable def agree (μ : ι → Set.Icc (0 : ℝ) 1) (u v : ι → F) : ℝ :=
+  1 / (Fintype.card ι) * ∑ i ∈ { i | u i = v i }, (μ i).1
+
+noncomputable def agree_set (μ : ι → Set.Icc (0 : ℝ) 1) (u : ι → F) (V : Finset (ι → F)) : ℝ :=
+  sSup (Finset.map ⟨fun v ↦ (Δ₀(u, v) : ℝ), by sorry⟩ V)
+
+noncomputable def mu_set.{u} {ι : Type u} (μ : ι → Set.Icc (0 : ℝ) 1) (V : Finset.{u} ι) : ℝ :=
+  1/V.card * ∑ i ∈ V, (μ i).1
+
+noncomputable def weightedCorrelatedAgreement.{u} {ι : Type u} {n : Type} [Fintype n] (μ : ι → Set.Icc (0 : ℝ) 1) 
+    (C : Set (n → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → n → F) : ℝ :=
+  sSup { x | ∃ D ⊆ (Finset.univ (α := n)), x = mu_set.{u} μ D ∧ 
+    ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ ∀ j ∈ D,  v i j = W i j } 
+
+theorem theorem_7_1 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {M : ℕ}
+  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
+  {α : ℝ}
+  (hα : (ReedSolomonCode.sqrtRate deg domain) < α)
+  (hproximity :
+    (PMF.uniformOfFinset 
+      (@Set.toFinset _ 
+        { z : List F |  z.length = u.length } sorry) 
+      (hs := sorry)).toOuterMeasure
+      { z : List F | agree_set μ 
+        (∑ i < z.length, fun ι => z.getD i 0 * u.getD i 0 ι) 
+        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
+      u.length * (ProximityGap.errorBound δ deg domain)) 
+  (h_additionally :
+    (PMF.uniformOfFinset 
+      (@Set.toFinset _ 
+        { z : List F |  z.length = u.length } sorry) 
+      (hs := sorry)).toOuterMeasure
+      { z : List F | agree_set μ 
+        (∑ i < z.length, fun ι => z.getD i 0 * u.getD i 0 ι) 
+        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
+      u.length * (ProximityGap.errorBound δ deg domain))
+      :
+
+  ∀ x ∈ (AffineSubspace.carrier
+  <| affineSpan F 
+    (let set := { x  | ∃ v ∈ (List.tail u), x = v }; 
+      set
+      )), Code.relHammingDistToCode x (ReedSolomon.code domain deg) ≤ δ
+  := by sorry
+
+end
+
+end WeightedAgreement
 
