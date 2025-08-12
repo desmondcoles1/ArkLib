@@ -397,6 +397,29 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
     ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
   := by sorry
 
+theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {M m : ℕ}
+  (hm : 3 ≤ m)
+  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
+  {α : ℝ}
+  (hα : (ReedSolomonCode.sqrtRate deg domain) * (1 + 1/(2 * m : ℝ)) < α)
+  (hS : { z : F | agree_set μ (fun i => ∑ j < u.length, z ^ j * u.getD j 0 i) 
+          (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) >
+          max 
+            ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2 * u.length 
+              / (3 * (ReedSolomonCode.sqrtRate deg domain)^2))
+            ((2 * m + 1) * (M * (Fintype.card ι) + 1) * u.length / (ReedSolomonCode.sqrtRate deg domain
+              |> NNReal.toReal))
+          })
+  :
+  ∃ v : List (ι → F), v.length = u.length ∧
+  mu_set μ (@Set.toFinset _ { i ∈ (Finset.univ (α := ι)) 
+    | ∀ j ≤ u.length, u.getD j 0 i = v.getD j 0 i  } sorry) ≥ α
+  := by sorry
+
+
 end
 
 end WeightedAgreement
