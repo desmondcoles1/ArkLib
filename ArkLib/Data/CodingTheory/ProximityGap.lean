@@ -356,10 +356,10 @@ noncomputable def agree_set (μ : ι → Set.Icc (0 : ℝ) 1) (u : ι → F) (V 
 noncomputable def mu_set.{u} {ι : Type u} (μ : ι → Set.Icc (0 : ℝ) 1) (V : Finset.{u} ι) : ℝ :=
   1/V.card * ∑ i ∈ V, (μ i).1
 
-noncomputable def weightedCorrelatedAgreement.{u} {ι : Type u} {n : Type} [Fintype n] (μ : ι → Set.Icc (0 : ℝ) 1) 
-    (C : Set (n → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → n → F) : ℝ :=
-  sSup { x | ∃ D ⊆ (Finset.univ (α := n)), x = mu_set.{u} μ D ∧ 
-    ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ ∀ j ∈ D,  v i j = W i j } 
+noncomputable def weightedCorrelatedAgreement.{u} {ι : Type u} [Fintype ι] (μ : ι → Set.Icc (0 : ℝ) 1) 
+    (C : Set (ι → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → ι → F) : ℝ :=
+  sSup { x | ∃ D ⊆ (Finset.univ.{u} (α := ι)), x = mu_set.{u} μ D ∧ 
+    ∃ v : Fin k → ι → F, ∀ i, v i ∈ C ∧ ∀ j ∈ D,  v i j = W i j } 
 
 theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
