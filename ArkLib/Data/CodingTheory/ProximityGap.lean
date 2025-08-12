@@ -368,6 +368,7 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
   {α : ℝ}
   (hα : (ReedSolomonCode.sqrtRate deg domain) < α)
+  (hα₁ : α < 1)
   (hproximity :
     (PMF.uniformOfFinset 
       (@Set.toFinset _ 
@@ -419,6 +420,44 @@ theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
     | ∀ j ≤ u.length, u.getD j 0 i = v.getD j 0 i  } sorry) ≥ α
   := by sorry
 
+open Uniform in
+theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+  {deg : ℕ} {domain : ι ↪ F}
+  {μ : ι → Set.Icc (0 : ℝ) 1}  
+  {α : ℝ}
+  (hα : (ReedSolomonCode.sqrtRate deg domain) < α)
+  (hα₁ : α < 1)
+  {M : ℕ}
+  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
+  (hproximity :
+    (PMF.uniformOfFinset (@Set.toFinset _ sorry
+      (s := (AffineSubspace.carrier
+        <| affineSpan F 
+          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v }; 
+            set
+            )))) (hs := sorry)).toOuterMeasure
+      {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
+      (ProximityGap.errorBound (Real.toNNReal α) deg domain)) 
+  (h_additionally : 
+    (PMF.uniformOfFinset (@Set.toFinset _ sorry
+    (s := (AffineSubspace.carrier
+      <| affineSpan F 
+        (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v }; 
+          set
+          )))) (hs := sorry)).toOuterMeasure
+    {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α }
+      ≥
+      (ENNReal.ofReal <|
+      ((M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ) 
+      * (1 / min 
+        (α - ReedSolomonCode.sqrtRate deg domain)
+        (3 / ReedSolomonCode.sqrtRate deg domain))))
+  :
+  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F), 
+    mu_set μ ι' ≥ α ∧
+    u.length = v.length ∧ 
+    ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
+  := by sorry
 
 end
 
