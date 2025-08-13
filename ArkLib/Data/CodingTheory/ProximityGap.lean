@@ -393,6 +393,7 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
         (3 / ReedSolomonCode.sqrtRate deg domain))))
       :
   ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F), 
+    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧ 
     mu_set μ ι' ≥ α ∧
     u.length = v.length ∧ 
     ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
@@ -415,7 +416,8 @@ theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
               |> NNReal.toReal))
           })
   :
-  ∃ v : List (ι → F), v.length = u.length ∧
+  ∃ v : List (ι → F), v.length = u.length ∧  
+  (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧ 
   mu_set μ (@Set.toFinset _ { i ∈ (Finset.univ (α := ι)) 
     | ∀ j ≤ u.length, u.getD j 0 i = v.getD j 0 i  } sorry) ≥ α
   := by sorry
@@ -454,6 +456,7 @@ theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
         (3 / ReedSolomonCode.sqrtRate deg domain))))
   :
   ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F), 
+    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧ 
     mu_set μ ι' ≥ α ∧
     u.length = v.length ∧ 
     ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
@@ -494,10 +497,28 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u :
           )
   :
   ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F), 
+    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧ 
     mu_set μ ι' ≥ α ∧
     u.length = v.length ∧ 
     ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
   := by sorry
+
+lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+  {deg : ℕ} {domain : ι ↪ F}
+  {μ : ι → Set.Icc (0 : ℝ) 1}  
+  {α : ℝ}
+  (hα : 0 ≤ α)
+  {v : List (ι → F)}
+  (hv : ∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg))
+  (h_len : u.length = v.length)
+  {S' : Finset F}
+  (hS'_card : S'.card > u.length)
+  (hS'_agree : ∀ z ∈ S', agree μ (fun x => ∑ i < u.length, z ^ i * u.getD i 0 x)
+    (fun x => ∑ i < v.length, z ^ i * v.getD i 0 x) ≥ α)
+  :
+  mu_set μ (@Set.toFinset _ { x : ι | ∀ i < u.length, u.getD i 0 x = v.getD i 0 x} sorry)
+    ≥ α - (u.length : ℝ) / (S'.card - u.length) := by sorry
+
 
 end
 
