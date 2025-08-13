@@ -24,3 +24,5 @@
 
 /.claude/
 /.cursor/
+/.venv/
+/.vscode/
