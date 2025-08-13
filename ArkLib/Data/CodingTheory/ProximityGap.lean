@@ -520,6 +520,24 @@ lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : Lis
     ≥ α - (u.length : ℝ) / (S'.card - u.length) := by sorry
 
 
+lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+  {deg : ℕ} {domain : ι ↪ F}
+  {μ : ι → Set.Icc (0 : ℝ) 1}  
+  {α : ℝ}
+  {M : ℕ}
+  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
+  (hα : 0 ≤ α)
+  {v : List (ι → F)}
+  (hv : ∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg))
+  (h_len : u.length = v.length)
+  {S' : Finset F}
+  (hS'_card : S'.card > u.length)
+  (hS'_card₁ : S'.card > (M * Fintype.card ι + 1) * u.length)
+  (hS'_agree : ∀ z ∈ S', agree μ (fun x => ∑ i < u.length, z ^ i * u.getD i 0 x)
+    (fun x => ∑ i < v.length, z ^ i * v.getD i 0 x) ≥ α)
+  :
+  mu_set μ (@Set.toFinset _ { x : ι | ∀ i < u.length, u.getD i 0 x = v.getD i 0 x} sorry)
+    ≥ α := by sorry
 end
 
 end WeightedAgreement
