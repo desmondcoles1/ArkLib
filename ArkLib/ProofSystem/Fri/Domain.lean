@@ -1,3 +1,4 @@
+import Mathlib
 import Mathlib.GroupTheory.SpecificGroups.Cyclic
 
 import ArkLib.Data.FieldTheory.NonBinaryField.Basic
@@ -12,11 +13,11 @@ namespace Domain
 -- instance {i : Fin n} : Smooth 2 (evalDomain gen i.castSucc) where
 --   smooth := sorry
 
-variable {F : Type} [NonBinaryField F]
+variable {F : Type*} [NonBinaryField F]
 variable (gen : Fˣ)
 variable {n : ℕ}
 
-@[simp]
+@[simp, grind =]
 def evalDomain (i : Fin (n + 1)) : Subgroup Fˣ :=
   Subgroup.zpowers (gen ^ (2 ^ i.val))
 
@@ -32,87 +33,49 @@ instance : IsCyclic (D gen n) := by
 instance {i : Fin (n + 1)} : IsCyclic (evalDomain gen i) := by
   unfold evalDomain
   rw [Subgroup.isCyclic_iff_exists_zpowers_eq_top]
-  exists ((gen ^ 2 ^ i.1))
+  exists (gen ^ 2 ^ i.1)
 
+attribute [local grind _=_] zpow_mul zpow_natCast pow_mul pow_add
+attribute [local grind ←] Nat.two_pow_pred_lt_two_pow 
+attribute [local grind] mul_self_eq_one_iff Nat.two_pow_pred_mul_two pow_orderOf_eq_one sq
+
+@[grind]
 lemma pow_2_pow_i_mem_Di_of_mem_D {gen : Fˣ} :
   ∀ {x : Fˣ} (i : Fin (n + 1)),
-    x ∈ (D gen n) → x ^ (2 ^ i.val) ∈ evalDomain gen i := by
-  intros x i h
-  simp only [D, evalDomain, Fin.coe_ofNat_eq_mod, Nat.zero_mod, pow_zero, pow_one] at h
-  simp only [evalDomain]
-  rw [Subgroup.mem_zpowers_iff] at h ⊢
-  rcases h with ⟨k, h⟩
-  exists k
-  rw [←h]
-  have {x : Fˣ} {n : ℕ} : x ^ n = x ^ (n : ℤ) := by rfl
-  rw [this, this, ←zpow_mul, ←zpow_mul]
-  ring_nf
+    x ∈ (D gen n) → x ^ (2 ^ i.val) ∈ evalDomain gen i := 
+  fun {x} i h ↦
+    suffices ∃ k : ℤ, (gen ^ 2 ^ i.1) ^ k = x ^ 2 ^ i.1 by aesop (add simp Subgroup.mem_zpowers_iff)
+    by obtain ⟨k, h⟩ := Subgroup.mem_zpowers_iff.1 h; simp at h
+       use k
+       grind
 
+@[grind]
 lemma sqr_mem_D_succ_i_of_mem_D_i {gen : Fˣ} : ∀ {x : Fˣ} {i : Fin n},
-  x ∈ evalDomain gen i.castSucc → x ^ 2 ∈ evalDomain gen i.succ := by
-  intros x i h
-  simp only [evalDomain, Fin.coe_castSucc] at h
-  simp only [evalDomain, Fin.val_succ]
-  rw [Subgroup.mem_zpowers_iff] at h ⊢
-  rcases h with ⟨k, h⟩
-  exists k
-  rw [←h]
-  have {x : Fˣ} {n : ℕ} : x ^ n = x ^ (n : ℤ) := by rfl
-  rw [this, this, this, ←zpow_mul, ←zpow_mul, ←zpow_mul]
-  simp only [Nat.cast_pow, Nat.cast_ofNat]
-  rw [@mul_comm ℤ _ k 2, ←mul_assoc]
-  have : (2 : ℤ) ^ (i.val + 1) = 2 ^ i.val * 2 := by
-    ring
-  rw [this]
+  x ∈ evalDomain gen i.castSucc → x ^ 2 ∈ evalDomain gen i.succ := fun {x} i h ↦
+  suffices ∃ k : ℤ, (gen ^ 2 ^ (i.1 + 1)) ^ k = x ^ 2 by aesop (add simp Subgroup.mem_zpowers_iff)
+  by obtain ⟨k, h⟩ := Subgroup.mem_zpowers_iff.1 h; simp at h
+     use k
+     aesop (add safe [(by ring), (by grind)])
 
-lemma one_in_doms (i : Fin n) : 1 ∈ evalDomain gen i.castSucc := by
-  simp only [evalDomain, Fin.coe_castSucc]
-  apply OneMemClass.one_mem
+@[grind ←]
+lemma one_in_doms {i : Fin n} : 1 ∈ evalDomain gen i.castSucc := by aesop
 
 variable [gen_ord : Fact (orderOf gen = (2 ^ n))]
 
-lemma minus_one_in_doms (i : Fin n) :
-    -1 ∈ evalDomain gen i.castSucc := by
+lemma minus_one_in_doms {i : Fin n} : -1 ∈ evalDomain gen i.castSucc := by
   unfold evalDomain
-  have h : i.castSucc.1 < n := by
-    simp
   rw [Subgroup.mem_zpowers_iff]
-  exists ((2 ^ (n - (i.castSucc.1 + 1))))
+  exists 2 ^ (n - i.castSucc.1.succ)
+  have inst := gen_ord.out
+  have : i.castSucc.1 < n := by simp
+  have : (gen ^ 2 ^ (n - 1)) ^ 2 = 1 := by grind
+  have {x : Fˣ} : x * x = 1 → x = 1 ∨ x = -1 := fun _ ↦ (Units.inv_eq_self_iff _).1 <| by
+    rw [←mul_left_cancel_iff (a := x)]
+    aesop
+  have : gen ^ 2 ^ (n - 1) ≠ 1 := ((orderOf_eq_iff (by simp)).1 inst).2 _ (by grind) (by simp)
   norm_cast
   rw [←pow_mul, ←pow_add]
-  have : (↑i.castSucc.1 + (n - (↑i.castSucc.1 + 1))) = n - 1 := by
-    refine Eq.symm ((fun {b a c} h ↦ (Nat.sub_eq_iff_eq_add' h).mp) (Nat.le_sub_one_of_lt h) ?_)
-    exact Eq.symm (Nat.Simproc.sub_add_eq_comm n (↑i.castSucc) 1)
-  rw [this]
-  have : ((gen ^ 2 ^ (n - 1)) ^ 2) = 1 := by
-    rw [←pow_mul]
-    have : 2 ^ (n - 1) * 2 = 2 ^ n := by
-      apply Nat.two_pow_pred_mul_two
-      linarith [i.2]
-    rw [this, ←(@Fact.out _ gen_ord), pow_orderOf_eq_one]
-  have alg {x : Fˣ} : x^2 = 1 → x = 1 ∨ x = -1 := by
-    intros h
-    refine (Units.inv_eq_self_iff x).mp ?_
-    have {a b : Fˣ} (c : Fˣ) : c * a = c * b → a = b := by
-      intros h
-      have : c⁻¹ * (c * a) = c⁻¹ * (c * a) := by rfl
-      rw (occs := .pos [2]) [h] at this
-      rw [←mul_assoc, ←mul_assoc, inv_mul_cancel, one_mul, one_mul] at this
-      exact this
-    apply this x
-    simp only [mul_inv_cancel, h.symm, pow_two]
-  specialize alg this
-  rcases alg with alg | alg
-  · rw [orderOf_eq_iff (by simp)] at gen_ord
-    have gen_ord :=
-      (@Fact.out _ gen_ord).2
-        (2 ^ (n - 1))
-        (by apply Nat.two_pow_pred_lt_two_pow; linarith [i.2])
-        (by simp)
-    exfalso
-    apply gen_ord
-    exact alg
-  · assumption
+  grind
 
 def lift_to_subgroup {x : Fˣ} {H : Subgroup Fˣ} (h : x ∈ H) : H := ⟨x, h⟩
 
@@ -121,10 +84,10 @@ example : evalDomain gen (Fin.last n) = ⊥ := by
   rw [Fin.val_last, Subgroup.zpowers_eq_bot, ←(@Fact.out _ gen_ord), pow_orderOf_eq_one]
 
 instance {i : Fin (n + 1)} : OfNat (evalDomain gen i) 1 where
-  ofNat := ⟨1, one_in_doms gen i⟩
+  ofNat := ⟨1, one_in_doms gen (i := i)⟩
 
 instance domain_neg_inst {i : Fin n} : Neg (evalDomain gen i.castSucc) where
-  neg := fun x => (lift_to_subgroup (minus_one_in_doms gen i)) * x
+  neg := fun x => lift_to_subgroup (minus_one_in_doms gen) * x
 
 end Domain
 
