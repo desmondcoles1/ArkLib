@@ -5,16 +5,23 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 -/
 
 import ArkLib.Data.CodingTheory.Basic
+import ArkLib.Data.CodingTheory.ProximityGap
+import ArkLib.Data.CodingTheory.ReedSolomon
+import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
+
+open NNReal ProximityGap
 
 /-!
   Divergence of sets.
+
+  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes".
 -/
 
 namespace DivergenceOfSets
 
 noncomputable section
 
-open Classical Code
+open Classical Code ReedSolomonCode
 
 variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [DecidableEq F]
@@ -38,13 +45,25 @@ lemma possibleDeltas_subset_relHammingDistRange :
 lemma finite_possibleDeltas : (possibleDeltas U V).Finite :=
   Set.Finite.subset finite_relHammingDistRange possibleDeltas_subset_relHammingDistRange
 
-open Classical in
-def divergence (U V : Set (ι → F)) : ℚ :=
+/--
+  Definition of divergence of two sets from Section 1.2 in [BCIKS20].
+-/
+def divergence (U V : Set (ι → F)) : ℚ≥0 :=
   haveI : Fintype (possibleDeltas U V) := @Fintype.ofFinite _ finite_possibleDeltas
   if h : (possibleDeltas U V).Nonempty
   then (possibleDeltas U V).toFinset.max' (Set.toFinset_nonempty.2 h)
   else 0
 
-end
+/--
+  Corollary 1.3 (Concentration bounds) from [BCIKS20].
+-/
+lemma concentration_bounds [Fintype F] [Field F] [Fintype ι] {deg : ℕ} {domain : ι ↪ F}
+  {U : AffineSubspace F (ι → F)} [Nonempty U]
+  (hdiv : (divergence U (RScodeSet domain deg) : ℝ≥0) ≤  1 - (ReedSolomonCode.sqrtRate deg domain))
+  : let δ' := divergence U (RScodeSet domain deg)
+    (PMF.uniformOfFintype U).toOuterMeasure
+      {y | Code.relHammingDistToCode y (RScodeSet domain deg) ≠ δ'}
+    ≤ (errorBound δ' deg domain) := by sorry
 
+end
 end DivergenceOfSets
