@@ -17,7 +17,7 @@ attribute [simp] char_neq_2
 
 section NonBinaryField
 
-variable {F : Type} [NonBinaryField F]
+variable {F : Type*} [NonBinaryField F]
 
 @[simp]
 lemma two_mul_inv_two : (2 : F) * 2⁻¹ = 1 := by simp
@@ -29,7 +29,7 @@ end NonBinaryField
 
 section
 
-variable {F: Type} [Field F]
+variable {F : Type*} [Field F]
 
 open Polynomial
 
