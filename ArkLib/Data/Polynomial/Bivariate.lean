@@ -186,8 +186,9 @@ lemma degreeY_mul [IsDomain F] (hf : f ≠ 0) (hg : g ≠ 0)
 /--
 The `X`-degree of a bivariate polynomial.
 -/
-def degreeX : ℕ := f.toFinsupp.support.sup (fun n => (f.coeff n).natDegree)
+def degreeX (f : F[X][Y]) : ℕ := f.toFinsupp.support.sup (fun n => (f.coeff n).natDegree)
 
+open Classical in
 lemma natDeg_sum_eq_of_unique {α : Type} {s : Finset α} {f : α → F[X]} {deg : ℕ}
   (mx : α) (h : mx ∈ s) :
     (f mx).natDegree = deg →
