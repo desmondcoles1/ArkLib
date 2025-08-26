@@ -4,7 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Katerina Hristova, František Silváši, Julian Sutherland, Ilia Vlasov
 -/
 
+import Mathlib.Algebra.Algebra.Defs
+import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Bivariate
+import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Eval.Defs
 import Mathlib.Data.Fintype.Defs
 import Mathlib.FieldTheory.Separable
@@ -20,13 +23,18 @@ noncomputable section
 
 variable {F : Type} [Semiring F]
 
-/-- The set of coefficients of a bivariate polynomial.
--/
+/-- The set of coefficients of a bivariate polynomial. -/
 def coeffs [DecidableEq F] (f : F[X][Y]) : Finset F[X] := f.support.image f.coeff
 
-/-- The coefficient of `Y^n` is a polynomial in `X`.
--/
+/-- The coefficient of `Y^n` is a polynomial in `X`. -/
 def coeff_Y_n (f : F[X][Y]) (n : ℕ) : F[X] := f.coeff n
+
+/-- The polynomial coefficient of the highest power of `Y`. This is the leading coefficient in the
+classical sense if the bivariate polynomial is interpreted as a univariate polynomial over `F[X]`.
+-/
+def leadingCoeffY (f : F[X][Y]) : F[X] := f.coeff (natDegree f)
+
+def monicInY (f : F[X][Y]) : Prop := leadingCoeffY f = (1 : F[X])
 
 /-- `(i, j)`-coefficient of a polynomial. -/
 def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
@@ -39,6 +47,8 @@ def degreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
 
 /-- The `X`-degree of a bivariate polynomial. -/
 def degreeX (f : F[X][Y]) : ℕ := f.toFinsupp.support.sup (fun n => (f.coeff n).natDegree)
+
+def degreeX' (f : F[X][Y]) : ℕ := f.support.sup (fun n => (f.coeff n).natDegree)
 
 def totalDegree (f : F[X][Y]) : ℕ :=
   f.support.sup (fun m => (f.coeff m).natDegree + m)
@@ -71,8 +81,10 @@ lemma degreeY_as_weighted_deg (f : F[X][Y]) (hf : f ≠ 0) :
   degreeY f = weightedDegree' f 0 1 := by
   unfold degreeY weightedDegree'
   simp only [zero_mul, one_mul, zero_add]
-  rw[natDegree, degree]
-  sorry
+  rw[Polynomial.natDegree_eq_support_max' (p := f) hf, Finset.max'_eq_sup']
+  simp
+  exact Finset.sup'_eq_sup (Eq.refl f.support ▸ nonempty_support_iff.mpr hf) fun x ↦ x
+
 
 def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][Y]) : Option ℕ :=
   let deg := weightedDegree f 1 1
@@ -147,10 +159,7 @@ opaque discr_y {F : Type} [CommSemiring F] (f : F[X][Y]) : F[X] :=
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
   f.Separable ↔ discriminant f = 0 := by sorry
 
-/-- The polynomial coefficient of the highest power of `Y`. This is the leading coefficient in the
-classical sense if the bivariate polynomial is interpreted as a univariate polynomial over `F[X]`.
--/
-def leadingCoeffY (f : F[X][Y]) : F[X] := f.coeff (natDegree f)
+
 
 /-- The polynomial coefficient of the highest power of `Y` is `0` if and only if the bivariate
 polynomial is the zero polynomial. -/
@@ -595,7 +604,7 @@ lemma degreeX_le_degreeX_sub_degreeX [IsDomain F] (f q : F[X][Y]) (hf : f ≠ 0)
   rw [degreeX_mul]
   · aesop
   · rw [ne_zero_iff_coeffs_ne_zero]
-    exact coeff_ne_zero hg
+    exact coeff_ne_zero f q hg
   · exact hf
 
 /-- The `Y`-degree of the bivarate quotient is bounded above by the difference of the `Y`-degrees of
@@ -607,7 +616,7 @@ lemma degreeY_le_degreeY_sub_degreeY [IsDomain F] (f q : F[X][Y]) (hf : f ≠ 0)
   rw [degreeY_mul]
   · aesop
   · rw [ne_zero_iff_coeffs_ne_zero]
-    apply coeff_ne_zero (f := f) hg
+    apply coeff_ne_zero f q hg
   · exact hf
 
 def monomialY (n : ℕ) : F[X] →ₗ[F[X]] F[X][Y] where
@@ -615,7 +624,7 @@ def monomialY (n : ℕ) : F[X] →ₗ[F[X]] F[X][Y] where
   map_add' x y := by rw [Finsupp.single_add]; aesop
   map_smul' r x := by simp; rw[smul_monomial]; aesop
 
-/-- Monomial `X^n * Y^m` -/
+/-- Definition of the bivariate monomial `X^n * Y^m` -/
 def monomialXY (n m : ℕ) : F →ₗ[F] F[X][Y] where
   toFun t := ⟨Finsupp.single m ⟨(Finsupp.single n t)⟩⟩
   map_add' x y := by
@@ -630,11 +639,15 @@ theorem monomialXY_def {n m : ℕ} {a : F} : monomialXY n m a = monomial m (mono
   unfold monomialXY
   simp
 
+/-- Adding bivariate monomials works as expected.
+In particular, `(a + b) * X^n * Y^m = a * X^n * Y^m + b * X^n * Y^m`. -/
 @[simp, grind =]
 theorem monomialXY_add {n m : ℕ} {a b : F} :
   monomialXY n m (a + b) = monomialXY n m a + monomialXY n m b :=
   (monomialXY n m).map_add _ _
 
+/-- Multiplying bivariate monomials works as expected.
+In particular, `(a * X^n * Y^m) * (b * X^p * Y^q) = (a * b) * X^(n+p) * Y^(m+q)`. -/
 @[grind _=_]
 theorem monomialXY_mul_monomialXY {n m p q : ℕ} {a b : F} :
     monomialXY n m a * monomialXY p q b = monomialXY (n + p) (m + q) (a * b) :=
@@ -645,12 +658,15 @@ theorem monomialXY_mul_monomialXY {n m p q : ℕ} {a b : F} :
     Finsupp.single_zero, Finsupp.sum_single_index, zero_mul]
   rw [@monomial_mul_monomial]
 
+
 @[simp, grind _=_]
-theorem monomialXY_pow {n m k : ℕ} {a : F}:
+theorem monomialXY_pow {n m k : ℕ} {a : F} :
   monomialXY n m a ^ k = monomialXY (n * k) (m * k) (a ^ k) := by
   unfold monomialXY
   simp only [ofFinsupp_single, LinearMap.coe_mk, AddHom.coe_mk, Polynomial.monomial_pow]
 
+/-- Multiplying a bivariate monomial by a scalar works as expected.
+In particular, ` b * a * X^n * Y^m = b * (a * X^n * Y^m)`. -/
 @[simp, grind _=_]
 theorem smul_monomialXY {n m : ℕ} {a : F} {S} [SMulZeroClass S F] {b : S} :
   monomialXY n m (b • a) = b • monomialXY n m a := by
@@ -658,11 +674,14 @@ theorem smul_monomialXY {n m : ℕ} {a : F} {S} [SMulZeroClass S F] {b : S} :
   simp only [ofFinsupp_single, LinearMap.coe_mk, AddHom.coe_mk]
   rw [@Polynomial.smul_monomial, @Polynomial.smul_monomial]
 
+/-- A bivariate monimial `a * X^n * Y^m = 0` if and only if `a = 0`.-/
 @[simp, grind =]
-theorem monomialXY_eq_zero_iff {n m : ℕ} {a : F}: monomialXY n m a = 0 ↔ a = 0 := by
+theorem monomialXY_eq_zero_iff {n m : ℕ} {a : F} : monomialXY n m a = 0 ↔ a = 0 := by
   rw [monomialXY]
   simp
 
+/-- Two bivariate monomials `a * X^n * Y^m` and `b * X^p * Y^q` are equal if and only if `a = b`
+`n = p` and `m = q` or if both are zero, i.e., `a = b = 0`. -/
 @[grind =]
 theorem monomialXY_eq_monomialXY_iff {n m p q : ℕ} {a b : F} :
     monomialXY n m a = monomialXY p q b ↔ n = p ∧ m = q ∧ a = b ∨ a = 0 ∧ b = 0 := by
@@ -671,7 +690,7 @@ theorem monomialXY_eq_monomialXY_iff {n m p q : ℕ} {a b : F} :
     rw [@monomial_eq_monomial_iff, @monomial_eq_monomial_iff]
     aesop
 
-
+/-- The total degree of the monomial `a * X^n * Y^m` is `n + m`. -/
 @[simp, grind =]
 lemma totalDegree_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
   totalDegree (monomialXY n m a) = n + m := by
@@ -686,31 +705,41 @@ lemma totalDegree_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
     ] <;> simp [ha]
   rw [Nat.add_comm]
 
+/-- The `X`-degree of the monomial `a * X^n * Y^m` is `n`.
+
+KATY TODO: Check whether the `degreeX'` def is okay, if not reprove -/
 @[simp]
 lemma degreeX_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
-    degreeX (monomialXY n m a) = n := by
-  unfold degreeX
-  rw
-    [
-      monomialXY_def
-    ]
-  sorry
+    degreeX' (monomialXY n m a) = n := by
+  classical
+  unfold degreeX'
+  rw [monomialXY_def, Polynomial.support_monomial, Finset.sup_singleton]
+  · aesop
+  · simp at *
+    exact ha
 
+/-- The `Y`-degree of the monomial `a * X^n * Y^m` is `m`. -/
 @[simp]
 lemma degreeY_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
-    degreeX (monomialXY n m a) = m := by
-  sorry
+    degreeY (monomialXY n m a) = m := by
+    classical
+    unfold degreeY
+    rw [monomialXY_def]
+    rw [Polynomial.natDegree_monomial]
+    simp [ha]
 
-/-- `(a,b)`-weighted degree of a monomial `X^iY^j` -/
+/-- `(a,b)`-weighted degree of a monomial `X^i * Y^j` -/
 def weightedDegreeMonomialXY {n m : ℕ} (a b t : ℕ) : ℕ :=
   a * (degreeX (monomialXY n m t)) + b * degreeY (monomialXY n m t)
 
+/-- The total degree of the product of two bivariate polynomials is the sum of their total degrees.
+-/
 @[simp, grind _=_]
 theorem totalDegree_mul (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
     totalDegree (f * g) = totalDegree f + totalDegree g := by
-  unfold totalDegree
-  rw [@mul_eq_sum_sum]
-  sorry
+    sorry
+
+
 
 
 end
