@@ -77,7 +77,7 @@ noncomputable def consistency_check [DecidableEq F] (x₀ : F) (s₀ s₁ : F) (
   check. I.e., `(s₀, f(s₀))`, `(-s₀, f(-s₀))`, and
   `(s₀², (folda f)(x₀))` lie on the same line for nonzero `s₀`.
 -/
-lemma consistency_check_comp [DecidableEq F] { f : Polynomial F }
+lemma consistency_check_comp {f : Polynomial F}
   {x₀ : F}
   {s₀ : F}
   (h₁ : s₀ ≠ 0)
