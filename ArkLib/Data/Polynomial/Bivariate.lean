@@ -26,8 +26,81 @@ variable {F : Type} [Semiring F]
 /-- The set of coefficients of a bivariate polynomial. -/
 def coeffs [DecidableEq F] (f : F[X][Y]) : Finset F[X] := f.support.image f.coeff
 
-/-- The coefficient of `Y^n` is a polynomial in `X`. -/
-def coeff_Y_n (f : F[X][Y]) (n : ℕ) : F[X] := f.coeff n
+/-- (i, j)-coefficient of a polynomial, i.e. the coefficient
+    of `X^i Y^j`.
+-/
+def coeff (i j : ℕ) : F := (f.coeff j).coeff i
+
+/-- The coeffiecient of `Y^n`, as a polynomial in `X`. -/
+def coeff_Y_n (n : ℕ) : F[X] := f.coeff n
+
+/--
+The `Y`-degree of a bivariate polynomial, as a natural number.
+-/
+def natDegreeY : ℕ := Polynomial.natDegree f
+
+/-- `(u,v)`-weighted degree of a polynomial.
+  The maximal `u * i + v * j` such that the polynomial `p`
+  contains a monomial `x^i * y * j`.
+-/
+def weightedDegree (p : F[X][Y]) (u v : ℕ) : WithBot ℕ :=
+  Finset.max (Finset.image (fun n => u * (p.coeff n).natDegree + v * n) p.support)
+
+/-- The weighted degree forced to a natural number. -/
+def natWeightedDegree (p : F[X][Y]) (u v : ℕ) : ℕ :=
+  Option.getD (weightedDegree p u v) 0
+
+/-- The finite set of bivariate indices of non-zero coefficients of
+    a bivariate polynomial.
+-/
+def support [DecidableEq F] (p : F[X][Y]) : Finset (ℕ × ℕ) :=
+  let deg := natWeightedDegree p 1 1
+  Finset.image
+    (fun x => (x.1.val, x.2.val))
+    ({x : Fin deg.succ × Fin deg.succ | coeff p x.1 x.2 ≠ 0})
+
+
+/-- Root multiplicity of (0,0).
+    It is the minimal sum `i + j` over all `(i, j)` such that
+    the (i,j)-coefficient of `f` is not zero.
+-/
+def rootMultiplicity₀ [DecidableEq F] : Option ℕ :=
+  Finset.min (Finset.image (fun x => x.1 + x.2) (support f))
+
+/-- Multiplicity of `(x, y)`. Defined as the multiplicity of `(0, 0)`
+    w.r.t. the polynomial `f(X + x, Y + y)`.
+-/
+def rootMultiplicity
+  {F : Type}
+  [CommSemiring F]
+  [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
+  let X := (Polynomial.X : Polynomial F)
+  rootMultiplicity₀ (F := F) ((f.comp (Y + (C (C y)))).map (Polynomial.compRingHom (X + C x)))
+
+lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
+  [DecidableEq F]
+  {x y : F} (f : F[X][Y])
+  (h : some 0 < (rootMultiplicity (f := f) x y))
+  :
+  (f.eval (Polynomial.C y)).eval x = 0
+  := by
+  sorry
+
+-- Katy: The next def, lemma and def can be deleted. Just keeping for now in case we need
+-- the lemma for somethying
+def degreesYFinset : Finset ℕ :=
+  f.toFinsupp.support
+
+lemma degreesYFinset_nonempty (hf : f ≠ 0) : (degreesYFinset f).Nonempty := by
+  rw [degreesYFinset]
+  apply Finsupp.support_nonempty_iff.mpr
+  intro h
+  apply hf
+  exact Polynomial.ext (fun n => by rw [← Polynomial.toFinsupp_apply, h]; rfl)
+
+
+def degreeY' (hf : f ≠ 0) : ℕ :=
+  f.toFinsupp.support.max' (degreesYFinset_nonempty f hf)
 
 /-- The polynomial coefficient of the highest power of `Y`. This is the leading coefficient in the
 classical sense if the bivariate polynomial is interpreted as a univariate polynomial over `F[X]`.
