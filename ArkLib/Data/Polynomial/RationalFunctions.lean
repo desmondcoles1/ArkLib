@@ -35,7 +35,7 @@ def polyToRatFuncBiv : Polynomial (F[X]) →+* Polynomial (RatFunc F) :=
     Polynomial.mapRingHom (polyToRatFunc)
 
 def makeMonicBiv [DecidableEq F] [DecidableEq F[X]] (f : F[X][Y]) : Polynomial (RatFunc F) :=
-  if leadingCoeffY f ≠ (1 : F[X]) then  (C (inverseLeadingCoeffY f)) * (polyToRatFuncBiv f)
+  if leadingCoeffY f ≠ (1 : F[X]) then (C (inverseLeadingCoeffY f)) * (polyToRatFuncBiv f)
   else polyToRatFuncBiv f
 
 def makeMonicUniv [DecidableEq F] (f : F[X]) : RatFunc F :=
@@ -43,7 +43,7 @@ def makeMonicUniv [DecidableEq F] (f : F[X]) : RatFunc F :=
   else f
 
 def regular [DecidableEq F] [DecidableEq F[X]] (f : Polynomial (RatFunc F)) : Prop :=
-  ∀ n : ℕ, ∃ g : F[X], (f.coeff n) = (g :  RatFunc F)
+  ∀ n : ℕ, ∃ g : F[X], (f.coeff n) = (g : RatFunc F)
 
 /-- irreducible in the outer variable -/
 def irreducibleInY (f : F[X][Y]) : Prop := Irreducible f
@@ -61,38 +61,32 @@ def quotientByPrincipal {R : Type} [CommRing R] (f : R) : RingCon R :=
 def quotientByPrincipal' {R : Type} [CommRing R] (f : R) : Ring (R ⧸ principalIdeal f) :=
   Ideal.Quotient.ring (principalIdeal f)
 
-
 -- def quotientRing (f : F[X][Y]) : RingCon F[X][Y] := Ideal.Quotient.ringCon (principalIdeal f)
 
 def the_L [DecidableEq F] (H : F[X][Y]) : RingCon (Polynomial (RatFunc F)) :=
   quotientByPrincipal (makeMonicBiv H)
 
-def the_Ideal [DecidableEq F] (H : F[X][Y]) : Ideal (Polynomial (RatFunc F))
-  := principalIdeal (makeMonicBiv H)
+def the_Ideal [DecidableEq F] (H : F[X][Y]) : Ideal (Polynomial (RatFunc F)) :=
+  principalIdeal (makeMonicBiv H)
 
-def the_L' [DecidableEq F] (H : F[X][Y]) :
-  Ring ((Polynomial (RatFunc F)) ⧸ (the_Ideal H) ) :=
+lemma principal_ideal_nonmonic_eq_makemonic [DecidableEq F] (H : F[X][Y]) :
+  principalIdeal (makeMonicBiv H) = principalIdeal (polyToRatFuncBiv H) := by sorry
+
+def the_L' [DecidableEq F] (H : F[X][Y]) : Ring (Polynomial (RatFunc F)⧸ the_Ideal H) :=
   Ideal.Quotient.ring (the_Ideal H)
+
+-- def regular_in_L [DecidableEq F] (H : F[X][Y]) : Ring (F[X][Y] ⧸ principalIdeal H) :=
+--  {f : Ring (F[X][Y] ⧸ principalIdeal H)| ∃ g : the_L' H, polyToRatFuncBiv f = g}
 
 -- lemma the_L_is_field [DecidableEq F] (H : F[X][Y]) (H_ir : Irreducible H) :
 --   IsField (the_L' H) := by sorry
 
-def the_Ideal_proj [DecidableEq F] (H : F[X][Y]) : Ideal F[X][Y]
-  := principalIdeal H
+def the_Ideal_proj [DecidableEq F] (H : F[X][Y]) : Ideal F[X][Y] := principalIdeal H
 
 def the_O [DecidableEq F] (H : F[X][Y]) : Ring (F[X][Y] ⧸ the_Ideal_proj H) :=
   Ideal.Quotient.ring (the_Ideal_proj H)
 
 -- O is the ring of regular elements in L
 -- explain regular elements in a quotient
-
-
-
-
-
-
-
-
-
 
 end
