@@ -184,7 +184,7 @@ lemma mul_ne_zero [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
 /-- Over an integral domain, the `Y`-degree of the product of two non-zero bivariate polynomials is
 equal to the sum of their degrees. -/
 @[simp, grind _=_]
-lemma degreeY_mul [IsDomain F] (f g : F[X][Y])(hf : f ≠ 0) (hg : g ≠ 0)
+lemma degreeY_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0)
   : degreeY (f * g) = degreeY f + degreeY g := by
   unfold degreeY
   rw [←leadingCoeffY_ne_zero] at hf hg
