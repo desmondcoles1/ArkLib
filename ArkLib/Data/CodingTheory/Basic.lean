@@ -47,7 +47,6 @@ notation "‖" u "‖₀" => hammingNorm u
 
 /-- The Hamming distance of a code `C` is the minimum Hamming distance between any two distinct
   elements of the code.
-cd
 We formalize this as the infimum `sInf` over all `d : ℕ` such that there exist `u v : n → R` in the
 code with `u ≠ v` and `hammingDist u v ≤ d`. If none exists, then we define the distance to be `0`.
 -/
@@ -189,12 +188,121 @@ theorem codeDist'_subsingleton [Subsingleton C] : ‖C‖₀' = ⊤ := by
 theorem dist'_eq_dist : ‖C‖₀'.toNat = ‖C‖₀ := by
   by_cases h : Subsingleton C
   · simp
-  · simp [dist, dist']
-    have : dist' C ≠ ⊤ := by sorry
-    sorry
-    -- apply (ENat.toNat_eq_iff this).mp
-    -- apply Finset.min_eq_top.mp
-    -- simp [this]
+  · -- Extract two distinct codewords u,v ∈ C
+    simp at h
+    unfold Set.Nontrivial at h
+    obtain ⟨u, hu, v, hv, huv⟩ := h
+    -- The filtered pair set is nonempty
+    have hPairs_nonempty :
+        (((@Finset.univ (C × C) _).filter (fun p => p.1 ≠ p.2))).Nonempty := by
+      refine ⟨(⟨u, hu⟩, ⟨v, hv⟩), ?_⟩
+      simp [huv]
+
+    set pairs : Finset (C × C) :=
+      ((@Finset.univ (C × C) _).filter (fun p => p.1 ≠ p.2)) with hpairs
+    set vals : Finset ℕ :=
+      pairs.image (fun ⟨u, v⟩ => hammingDist u.1 v.1) with hvals
+
+    have hVals_nonempty : vals.Nonempty := by
+      rcases hPairs_nonempty with ⟨p, hp⟩
+      rcases p with ⟨u', v'⟩
+      exact ⟨hammingDist u'.1 v'.1, Finset.mem_image.mpr ⟨(u', v'), hp, rfl⟩⟩
+
+    -- Let d* be the minimum realized distance among distinct pairs
+    set dStar : ℕ := vals.min' (by simpa [hvals] using hVals_nonempty) with hdstar
+
+    -- Show the computable distance's toNat equals this minimum
+    have h_toNat_eq_min' : ‖C‖₀'.toNat = dStar := by
+      -- First, rewrite ‖C‖₀' as the minimum of `vals` in `ℕ∞`.
+      have hmin_coe : ‖C‖₀' = (vals.min : ℕ∞) := by
+        simp only [dist', hvals, hpairs]
+      -- Next, show `(vals.min : ℕ∞) = dStar` by sandwiching with ≤.
+      have hmem_min' : dStar ∈ vals := by
+        simpa [hdstar] using
+          (Finset.min'_mem (s := vals)
+            (by simpa [hvals] using hVals_nonempty))
+      -- `vals.min ≤ dStar` since `dStar ∈ vals`.
+      have h_le : vals.min ≤ (dStar : ℕ∞) := by
+        simpa using (Finset.min_le hmem_min')
+      -- `dStar ≤ a` for all `a ∈ vals`, hence `dStar ≤ vals.min`.
+      have h_ge : (dStar : ℕ∞) ≤ vals.min := by
+        -- Use the universal lower-bound property of `min'`.
+        refine Finset.le_min (s := vals) (m := (dStar : ℕ∞)) ?_;
+        intro a ha; exact
+          (show (dStar : ℕ∞) ≤ (a : ℕ∞) from
+            by
+              -- `dStar ≤ a` in `ℕ`, then coerce.
+              have h' : dStar ≤ a := by
+                -- `min' ≤ any element`.
+                have hleast := (Finset.isLeast_min' (s := vals)
+                                  (H := by simpa [hvals] using hVals_nonempty))
+                exact hleast.2 ha
+              simpa using h')
+      -- Conclude equality in `ℕ∞` and take `toNat`.
+      have : (vals.min : ℕ∞) = dStar := le_antisymm h_le h_ge
+      simpa only [hmin_coe, this, hdstar]
+
+    -- Now prove that the abstract distance equals the same minimum
+    -- Define the set used in sInf
+    let S : Set ℕ := {d | ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v ≤ d}
+
+    -- First inequality: dist C ≤ dStar using a minimizing pair
+    have h_le_dStar : dist C ≤ dStar := by
+      -- obtain a pair (u,v) attaining the minimum distance dStar
+      have hmem_min : dStar ∈ vals := by
+        simpa [hdstar] using
+          (Finset.min'_mem (s := vals)
+            (by simpa [hvals] using hVals_nonempty))
+      rcases Finset.mem_image.mp hmem_min with ⟨p, hpairs_mem, hp_eq⟩
+      rcases p with ⟨u', v'⟩
+      have hneq_sub : u' ≠ v' := (Finset.mem_filter.mp hpairs_mem).2
+      -- Lift inequality on subtypes to inequality on values
+      have hneq : (↑u' : n → R) ≠ ↑v' := by
+        intro h
+        apply hneq_sub
+        exact Subtype.ext (by simpa using h)
+      -- Show dStar ∈ S using the minimizing pair
+      have hdist_le_dstar : hammingDist u'.1 v'.1 ≤ dStar := by
+        simp only [hp_eq, le_refl]
+      have hmemS : dStar ∈ S := by
+        change ∃ u ∈ C, ∃ v ∈ C, u ≠ v ∧ hammingDist u v ≤ dStar
+        exact ⟨u'.1, u'.2, v'.1, v'.2, hneq, hdist_le_dstar⟩
+      -- Therefore sInf S ≤ dStar
+      have := Nat.sInf_le (s := S) hmemS
+      simpa [Code.dist, S] using this
+
+    -- Second inequality: dStar ≤ dist C using lower-bound argument
+    have h_dStar_le : dStar ≤ dist C := by
+      -- Show dStar is a lower bound of S
+      have hLB : ∀ d ∈ S, dStar ≤ d := by
+        intro d hd
+        rcases hd with ⟨u, hu, v, hv, hne, hle⟩
+        -- The realized distance appears in vals, hence ≥ dStar
+        have hmem : hammingDist u v ∈ vals := by
+          -- show (⟨u,hu⟩,⟨v,hv⟩) ∈ pairs
+          have hp : (⟨⟨u, hu⟩, ⟨v, hv⟩⟩ : C × C) ∈ pairs := by
+            simp [hpairs, hne]
+          -- then its image is in vals
+          exact Finset.mem_image.mpr ⟨⟨⟨u, hu⟩, ⟨v, hv⟩⟩, hp, rfl⟩
+        -- min' ≤ any member of vals
+        have : dStar ≤ hammingDist u v := by
+          -- Using the `IsLeast` property of `min'`.
+          have hleast := (Finset.isLeast_min' (s := vals)
+                            (H := by simpa [hvals] using hVals_nonempty))
+          have := hleast.2 hmem
+          simpa [hdstar] using this
+        exact le_trans this hle
+      -- The set S is nonempty since C is non-subsingleton
+      have hS_nonempty : S.Nonempty := by
+        refine ⟨hammingDist u v, ?_⟩
+        exact ⟨u, hu, v, hv, huv, le_rfl⟩
+      -- Greatest lower bound property on ℕ
+      have := sInf.le_sInf_of_LB (S := S) hS_nonempty hLB
+      simpa [Code.dist, S] using this
+
+    -- Assemble inequalities and replace toNat of ‖C‖₀' by dStar
+    have : ‖C‖₀ = dStar := le_antisymm h_le_dStar h_dStar_le
+    simp [this, h_toNat_eq_min']
 
 section
 
