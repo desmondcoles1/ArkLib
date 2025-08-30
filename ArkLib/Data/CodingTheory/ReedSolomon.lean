@@ -385,7 +385,50 @@ noncomputable def decode : (ReedSolomon.code domain deg) →ₗ[F] F[X] :=
 
 /- ReedSolomon codewords are decoded into degree < deg polynomials-/
 lemma decoded_polynomial_lt_deg (c : ReedSolomon.code domain deg) :
-  decode c ∈ (degreeLT F deg : Submodule F F[X]) := by sorry
+  decode c ∈ (degreeLT F deg : Submodule F F[X]) := by
+  -- Unpack the witness polynomial for this codeword
+  rcases c.property with ⟨p, hp_deg, hp_eval⟩
+  -- Two cases depending on comparison between `deg` and `|ι|`
+  by_cases hle : deg ≤ Fintype.card ι
+  · -- In this case, `p` has degree < |ι|, hence uniqueness of interpolation gives `decode c = p`.
+    have hp_lt_card : p.degree < (Fintype.card ι : WithBot ℕ) :=
+      lt_of_lt_of_le (Polynomial.mem_degreeLT.mp hp_deg) (by exact_mod_cast hle)
+    -- Interpolants of equal data are equal
+    have hinterp_eq_vals :
+      (interpolate (domain := domain)) c =
+      Lagrange.interpolate (Finset.univ : Finset ι) domain (fun i => p.eval (domain i)) := by
+      refine (Lagrange.interpolate_eq_of_values_eq_on (s := Finset.univ)
+                (v := domain) (r := (c : ι → F))
+                (r' := fun i => p.eval (domain i))) ?_
+      intro i _
+      -- From codeword property: evaluations agree on all points
+      simpa using congrArg (fun f => f i) hp_eval.symm
+    -- A polynomial of degree < |ι| equals its Lagrange interpolant on `univ`
+    have hp_eq_interp :
+      p = Lagrange.interpolate (Finset.univ : Finset ι) domain (fun i => p.eval (domain i)) :=
+        Lagrange.eq_interpolate (s := Finset.univ) (v := domain) (f := p)
+          (by intro x _ y _ hxy; exact domain.injective hxy) hp_lt_card
+    -- Chain equalities to get `decode c = p`
+    have hdecode_eq : decode c = p := by
+      -- `hinterp_eq_vals` gives: interpolate _ c = interpolate _ (eval p ∘ domain)
+      -- `hp_eq_interp` gives: p = interpolate _ (eval p ∘ domain)
+      -- Hence, decode c = p
+      have : (interpolate (domain := domain)) c = p :=
+        hinterp_eq_vals.trans hp_eq_interp.symm
+      simpa [decode, interpolate] using this
+    -- Conclude degree bound from membership of `p` in `degreeLT F deg`.
+    simpa [hdecode_eq, Polynomial.mem_degreeLT] using hp_deg
+  · -- Otherwise, `deg > |ι|`, and interpolation has degree < |ι| ≤ deg
+    have hdeg_lt_card : (decode c).degree < (Fintype.card ι : WithBot ℕ) := by
+      -- Degree bound for Lagrange interpolation over `univ`
+      have := Lagrange.degree_interpolate_lt (s := Finset.univ) (v := domain)
+        (r := (c : ι → F)) (by intro x _ y _ hxy; exact domain.injective hxy)
+      simpa [decode, interpolate] using this
+    have hcard_le_deg : (Fintype.card ι : WithBot ℕ) ≤ deg := by
+      have hlt : Fintype.card ι < deg := Nat.lt_of_not_ge hle
+      exact le_of_lt (by exact_mod_cast hlt)
+    have : (decode c).degree < deg := lt_of_lt_of_le hdeg_lt_card hcard_le_deg
+    simpa [Polynomial.mem_degreeLT] using this
 
 /-- The linear map that maps a Reed Solomon codeword to its associated polynomial
     of degree < deg -/
