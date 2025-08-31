@@ -192,91 +192,101 @@ def SkeletonNodeIndex.toSum {s : Skeleton} :
       | .inl idxRight => Sum.inl (SkeletonInternalIndex.ofRight idxRight)
       | .inr idxRight => Sum.inr (SkeletonLeafIndex.ofRight idxRight)
 
-/-- Equivalence between node indices and the sum of internal and leaf indices -/
-def FunEquivNodeSum (s : Skeleton) {α} :
-    (SkeletonNodeIndex s → α) ≃ (SkeletonInternalIndex s → α) × (SkeletonLeafIndex s → α) :=
-{ toFun := fun f =>
-    (fun i => f (SkeletonInternalIndex.toNodeIndex i),
-     fun j => f (SkeletonLeafIndex.toNodeIndex j))
-  , invFun := fun p idx => match idx.toSum with
-      | Sum.inl i => p.fst i
-      | Sum.inr j => p.snd j
-  , right_inv := by
-      intro p
-      cases p with
-      | mk f g =>
-        refine Prod.ext ?h1 ?h2
-        · funext i
+/-
+Equivalence between the sum of internal/leaf indices and node indices.
+This is the canonical bijection given by `toNodeIndex` and `toSum`.
+-/
+def SkeletonNodeIndex.SumEquiv (s : Skeleton) :
+    SkeletonInternalIndex s ⊕ SkeletonLeafIndex s ≃ SkeletonNodeIndex s :=
+{ toFun := fun x =>
+    match x with
+    | Sum.inl idx => idx.toNodeIndex
+    | Sum.inr idx => idx.toNodeIndex
+  , invFun := fun idx => idx.toSum
+  , left_inv := by
+      intro x; cases x with
+      | inl i =>
           induction i with
           | ofInternal =>
               simp [SkeletonNodeIndex.toSum, SkeletonInternalIndex.toNodeIndex]
           | ofLeft i ih =>
-              have h' := ih (fun x => f x.ofLeft) (fun y => g y.ofLeft)
               cases hSum : (i.toNodeIndex).toSum with
               | inl _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using h'
+                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using ih
               | inr _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using h'
+                  simp [hSum] at ih
           | ofRight i ih =>
-              have h' := ih (fun x => f x.ofRight) (fun y => g y.ofRight)
               cases hSum : (i.toNodeIndex).toSum with
               | inl _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using h'
+                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using ih
               | inr _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex] using h'
-        · funext j
+                  simp [hSum] at ih
+      | inr j =>
           induction j with
           | ofLeaf =>
               simp [SkeletonNodeIndex.toSum, SkeletonLeafIndex.toNodeIndex]
           | ofLeft j ih =>
-              have h' := ih (fun x => f x.ofLeft) (fun y => g y.ofLeft)
               cases hSum : (j.toNodeIndex).toSum with
               | inl _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using h'
+                  simp [hSum] at ih
               | inr _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using h'
+                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using ih
           | ofRight j ih =>
-              have h' := ih (fun x => f x.ofRight) (fun y => g y.ofRight)
               cases hSum : (j.toNodeIndex).toSum with
               | inl _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using h'
+                  simp [hSum] at ih
               | inr _ =>
-                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using h'
-  , left_inv := by
-      intro f; funext idx
+                  simpa [SkeletonNodeIndex.toSum, hSum, SkeletonLeafIndex.toNodeIndex] using ih
+  , right_inv := by
+      intro idx
       induction idx with
       | ofLeaf => simp [SkeletonNodeIndex.toSum, SkeletonLeafIndex.toNodeIndex]
       | ofInternal => simp [SkeletonNodeIndex.toSum, SkeletonInternalIndex.toNodeIndex]
       | ofLeft idx ih =>
-          have h' := ih (fun x => f x.ofLeft)
           cases hSum : idx.toSum with
           | inl _ =>
               simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex,
-                     SkeletonLeafIndex.toNodeIndex]
-                using h'
+                     SkeletonLeafIndex.toNodeIndex] using ih
           | inr _ =>
               simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex,
-                     SkeletonLeafIndex.toNodeIndex]
-                using h'
+                     SkeletonLeafIndex.toNodeIndex] using ih
       | ofRight idx ih =>
-          have h' := ih (fun x => f x.ofRight)
           cases hSum : idx.toSum with
           | inl _ =>
               simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex,
-                     SkeletonLeafIndex.toNodeIndex]
-                using h'
+                     SkeletonLeafIndex.toNodeIndex] using ih
           | inr _ =>
               simpa [SkeletonNodeIndex.toSum, hSum, SkeletonInternalIndex.toNodeIndex,
-                     SkeletonLeafIndex.toNodeIndex]
-                using h'
-}
+                     SkeletonLeafIndex.toNodeIndex] using ih }
+
+/-
+Precomposition by an equivalence on the domain.
+Given `e : α ≃ β`, this yields `(β → γ) ≃ (α → γ)`.
+-/
+def Equiv.precomp {α β γ} (e : α ≃ β) : (β → γ) ≃ (α → γ) :=
+{ toFun := fun f a => f (e a)
+  , invFun := fun g b => g (e.invFun b)
+  , left_inv := by intro f; funext b; simp
+  , right_inv := by intro g; funext a; simp }
+
+/-
+Equivalence between functions from a sum type and a product of functions.
+-/
+def SumFunEquivProd (α β γ : Type) : ((α ⊕ β) → γ) ≃ (α → γ) × (β → γ) :=
+{ toFun := fun f => (fun a => f (.inl a), fun b => f (.inr b))
+  , invFun := fun p x => match x with | .inl a => p.fst a | .inr b => p.snd b
+  , left_inv := by intro f; funext x; cases x <;> rfl
+  , right_inv := by intro p; cases p; rfl }
 
 /-- Equivalence between `FullData` and the product of `InternalData` and `LeafData` -/
 def FullData.Equiv {α} (s : Skeleton) :
     FullData α s ≃ InternalData α s × LeafData α s := by
   calc
     FullData α s ≃ (SkeletonNodeIndex s → α) := FullData.EquivIndexFun s
-    _ ≃ (SkeletonInternalIndex s → α) × (SkeletonLeafIndex s → α) := FunEquivNodeSum s
+    _ ≃ ((SkeletonInternalIndex s ⊕ SkeletonLeafIndex s) → α) :=
+      (Equiv.precomp (SkeletonNodeIndex.SumEquiv s))
+    _ ≃ (SkeletonInternalIndex s → α) × (SkeletonLeafIndex s → α) :=
+      (SumFunEquivProd (SkeletonInternalIndex s) (SkeletonLeafIndex s) α)
     _ ≃ InternalData α s × LeafData α s := by
       refine
         { toFun := (fun p => ((InternalData.EquivIndexFun s).invFun p.fst,
