@@ -147,22 +147,20 @@ theorem mulVecLin_coeff_vandermondens_eq_eval_matrixOfPolynomials
   (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) =
   fun i => p.eval (v i) := by
   ext i
-  simp only [
-    nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, eval_eq_sum
-  ]
-  refine Eq.symm (Finset.sum_of_injOn (·%n) ?p₁ ?p₂ (fun i _ h ↦ ?p₃) (fun i _ ↦ ?p₄))
-  · stop -- TODO: fix this
-    aesop (add simp [Set.InjOn])
-          (add safe forward [le_natDegree_of_mem_supp, lt_of_le_of_lt, Nat.lt_add_one_of_le])
-          (add 10% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
-                                 fun h₁ h₂ ↦ by aesop (add simp Nat.mod_eq_of_lt)))
-          (erase simp mem_support_iff)
-  · aesop (add simp Set.MapsTo) (add safe apply Nat.mod_lt) (add 1% cases Nat)
-  · aesop (add safe (by specialize h i)) (add simp [Nat.mod_eq_of_lt])
-  · have : i < n := by aesop (add safe forward le_natDegree_of_mem_supp)
-                              (erase simp mem_support_iff)
-                              (add safe (by omega))
-    aesop (add simp Nat.mod_eq_of_lt) (add safe (by ring))
+  have hLHS :
+      (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) i
+        = ∑ x ∈ Finset.range n, (if x < n then p.coeff x * v i ^ x else 0) := by
+    simp [nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, Fin.liftF'_p_coeff]
+  have hRHS :
+      p.eval (v i) = ∑ x ∈ Finset.range n, p.coeff x * v i ^ x :=
+    Polynomial.eval_eq_sum_range' (p := p) (x := v i) (n := n) h_deg
+  calc
+    (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) i
+        = ∑ x ∈ Finset.range n, (if x < n then p.coeff x * v i ^ x else 0) := hLHS
+    _ = ∑ x ∈ Finset.range n, p.coeff x * v i ^ x := by
+          refine Finset.sum_congr rfl (fun x hx => ?_)
+          simp [Finset.mem_range.mp hx]
+    _ = p.eval (v i) := by simp [hRHS]
 
 end
 
