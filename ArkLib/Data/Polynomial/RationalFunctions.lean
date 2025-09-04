@@ -86,7 +86,36 @@ def the_Ideal_proj [DecidableEq F] (H : F[X][Y]) : Ideal F[X][Y] := principalIde
 def the_O [DecidableEq F] (H : F[X][Y]) : Ring (F[X][Y] ⧸ the_Ideal_proj H) :=
   Ideal.Quotient.ring (the_Ideal_proj H)
 
+abbrev H_Y_Z (R : Type) [Semiring R] : Type := Polynomial (Polynomial R)
+
+def Hmonic_T_Z {R : Type} [CommRing R] [IsDomain R] (H : H_Y_Z R) : Type :=
+  let T : Polynomial R := Polynomial.X
+  let ToverWz : RatFunc R := RatFunc.mk T (Bivariate.leadingCoeffY H)
+  _
+-- set_option pp.notation false in
+-- def p₁ : BivariatePoly ℚ := 4
+
+-- set_option pp.notation false in
+-- def p₁' : BivariatePoly ℚ := by
+--   unfold BivariatePoly
+--   exact 4
+
+-- example : p₁ = p₁' := rfl
+
+
+
+-- def theCast := F[X] →+* RatFunc F
+
+-- example : False := by
+--   let x : RatFunc F → F[X][Y] → RatFunc F := Polynomial.eval₂ (R := Polynomial F) (S := RatFunc F) ?our_hom 
+  
+
+-- #check Polynomial.eval₂
+-- #check Bivariate.evalX
+
 -- O is the ring of regular elements in L
 -- explain regular elements in a quotient
+
+
 
 end

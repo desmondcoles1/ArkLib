@@ -541,4 +541,3 @@ lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : Lis
 end
 
 end WeightedAgreement
-
