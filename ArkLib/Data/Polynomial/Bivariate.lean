@@ -57,10 +57,13 @@ def support [DecidableEq F] (p : F[X][Y]) : Finset (ℕ × ℕ) :=
   let deg := natWeightedDegree p 1 1
   Finset.image
     (fun x => (x.1.val, x.2.val))
+  Finset.image
+    (fun x => (x.1.val, x.2.val))
     ({x : Fin deg.succ × Fin deg.succ | coeff p x.1 x.2 ≠ 0})
 
 
 /-- Root multiplicity of (0,0).
+    It is the minimal sum `i + j` over all `(i, j)` such that
     It is the minimal sum `i + j` over all `(i, j)` such that
     the (i,j)-coefficient of `f` is not zero.
 -/
@@ -630,9 +633,11 @@ lemma degreeX_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
 def evalX (a : F) (f : F[X][Y]) : Polynomial F :=
   ⟨Finsupp.mapRange (Polynomial.eval a) eval_zero f.toFinsupp⟩
 
-/-- Evaluating a bivariate polynomial in the first variable `X` on a set of points. This results in
-a set of univariate polynomials in `Y`. -/
-def evalSetX (f : F[X][Y]) (P : Finset F) [Nonempty P]: Set (Polynomial F) :=
+/--
+Evaluating a bivariate polynomial in the first variable `X` on a set of points. This results in
+a set of univariate polynomials in `Y`.
+-/
+def evalSetX (P : Finset F) [Nonempty P] : Set (Polynomial F) :=
   {h : Polynomial F | ∃ a ∈ P, evalX a f = h}
 
 /-- The evaluation at a point of a bivariate polynomial in the second variable `Y`. -/

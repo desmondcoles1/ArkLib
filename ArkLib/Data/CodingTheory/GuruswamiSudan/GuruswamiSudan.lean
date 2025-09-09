@@ -100,7 +100,7 @@ noncomputable def proximity_gap_johnson (k m : ℕ) : ℕ :=
     Given the D_X (`proximity_gap_degree_bound`) and δ₀ (`proximity_gap_johnson`),
     a solution to Guruswami-Sudan system exists.
 -/
-lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs : Fin n ↪ F} {f : Fin n → F}:
+lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs : Fin n ↪ F} {f : Fin n → F} :
   ∃ Q, Condition k m (proximity_gap_degree_bound (n := n) k m) ωs f Q := by
   sorry
 
