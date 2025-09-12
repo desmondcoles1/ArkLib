@@ -14,14 +14,13 @@ import ArkLib.ToMathlib.NumberTheory.PrattCertificate
 
 namespace Goldilocks
 
--- 2^{64} - 2^{32} + 1
 @[reducible]
-def FIELD_CARD : Nat := 18446744069414584321
+def fieldSize : Nat := 2 ^ 64 - 2 ^ 32 + 1
 
-abbrev Field := ZMod FIELD_CARD
+abbrev Field := ZMod fieldSize
 
-theorem is_prime : Nat.Prime FIELD_CARD := by
-  unfold FIELD_CARD
+theorem is_prime : Nat.Prime fieldSize := by
+  unfold fieldSize
   pratt
 
 end Goldilocks
