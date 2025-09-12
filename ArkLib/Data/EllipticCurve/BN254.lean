@@ -21,7 +21,7 @@ The BN254 curve is defined over a prime field with the equation Y² = X³ + 3.
 
 ## Main definitions
 
-* `BN254.BASE_FIELD_CARD`: The characteristic of the base field
+* `BN254.baseFieldSize`: The characteristic of the base field
 * `BN254.BaseField`: The base field F_p where the curve is defined
 * `BN254.curve`: The BN254 elliptic curve as a Weierstrass curve
 * `BN254.generator`: A generator point on the curve
@@ -38,22 +38,22 @@ namespace BN254
 
 /-- The base field characteristic (prime p) for BN254 elliptic curve -/
 @[reducible]
-def BASE_FIELD_CARD : Nat :=
+def baseFieldSize : Nat :=
   21888242871839275222246405745257275088696311157297823662689037894645226208583
 
 /-- The base field F_p over which the BN254 elliptic curve is defined -/
-abbrev BaseField := ZMod BASE_FIELD_CARD
+abbrev BaseField := ZMod baseFieldSize
 
 /-- Proof that the BN254 base field characteristic is prime -/
-theorem BaseField_is_prime : Nat.Prime BASE_FIELD_CARD := by
-  unfold BASE_FIELD_CARD
+theorem BaseField_is_prime : Nat.Prime baseFieldSize := by
+  unfold baseFieldSize
   -- This is a well-known 254-bit prime used in the BN254 curve
   -- For now we'll use sorry; in practice this would need a full primality proof
   sorry
 
-instance : Fact (Nat.Prime BASE_FIELD_CARD) := ⟨BaseField_is_prime⟩
+instance : Fact (Nat.Prime baseFieldSize) := ⟨BaseField_is_prime⟩
 
-instance : Field BaseField := ZMod.instField BASE_FIELD_CARD
+instance : Field BaseField := ZMod.instField baseFieldSize
 
 /-- The BN254 elliptic curve: Y² = X³ + 3 -/
 def curve : WeierstrassCurve BaseField := {

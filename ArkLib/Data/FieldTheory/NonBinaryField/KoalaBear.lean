@@ -7,15 +7,15 @@ Authors: Quang Dao
 import ArkLib.ToMathlib.NumberTheory.PrattCertificate
 
 /-!
-  # Mersenne prime field `2^{31} - 1`
+  # KoalaBear Field `2^{31} - 2^{24} + 1`
 
-  This is the field used in Circle STARKs.
+  This is the field used for lean Ethereum spec.
 -/
 
-namespace Mersenne31
+namespace KoalaBear
 
 @[reducible]
-def fieldSize : Nat := 2 ^ 31 - 1
+def fieldSize : Nat := 2 ^ 31 - 2 ^ 24 + 1
 
 abbrev Field := ZMod fieldSize
 
@@ -23,4 +23,4 @@ theorem is_prime : Nat.Prime fieldSize := by
   unfold fieldSize
   pratt
 
-end Mersenne31
+end KoalaBear
