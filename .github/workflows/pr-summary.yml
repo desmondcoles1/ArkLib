@@ -45,5 +45,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_DIFF: ${{ steps.diff.outputs.diff }}
         run: |
-          echo "${{ steps.diff.outputs.diff }}" | python ./pr-branch/scripts/pr-summary.py
+          python ./pr-branch/scripts/pr-summary.py

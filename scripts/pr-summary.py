@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-    diff = sys.stdin.read()
+    diff = os.environ["PR_DIFF"]
     summary = generate_summary(diff)
     sorries = count_sorries(diff)
 
