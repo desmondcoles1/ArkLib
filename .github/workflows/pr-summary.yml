@@ -27,10 +27,9 @@ jobs:
       - name: Get PR diff
         id: diff
         run: |
-          git fetch origin ${{ github.event.pull_request.base.sha }}
-          git fetch origin ${{ github.event.pull_request.head.sha }}
+          curl -L ${{ github.event.pull_request.diff_url }} > pr.diff
           echo 'diff<<EOF' >> $GITHUB_OUTPUT
-          echo "$(git diff ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }})" >> $GITHUB_OUTPUT
+          cat pr.diff >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Generate summary
