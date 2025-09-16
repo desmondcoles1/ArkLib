@@ -102,9 +102,18 @@ noncomputable def t_z {z : F} {H : Polynomial (Polynomial F)} (h_ratRoot : ratio
 def rationalRoots (H : Polynomial (Polynomial F)) (z : F) : Set F :=
   {t_z : F | evalEval z t_z H = 0}
 
+
 noncomputable def evalRingHom (a b : F) : Polynomial (Polynomial F) →+* F :=
    Polynomial.evalEvalRingHom a b
 
+def rationalRoot'' (H : Polynomial (Polynomial F)) (z : F) : Type :=
+  { t_z : F // evalEval z t_z H = 0 }
 
+noncomputable def π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot'' H z) :
+  RingHom (F[X][Y]) F := Polynomial.evalEvalRingHom z root.1
+
+
+
+-- RingHom (𝒪 H) F
 end
 end RatFunc
