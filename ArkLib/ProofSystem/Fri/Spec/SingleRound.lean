@@ -28,12 +28,10 @@ variable {k : ℕ} (s d : ℕ) [s_nz : NeZero s] [d_nz : NeZero d]
 variable (k_le_n : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) (i : Fin k)
 
 omit s_nz in
-lemma k_le_n' (k_le_n : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) : (k + 1) * s ≤ n := by
-  have : 0 < d := by
-    have := d_nz.out
-    omega
+lemma k_le_n' {n k s d : ℕ} [d_nz : NeZero d]
+  (k_le_n : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) : (k + 1) * s ≤ n := by
   have : 2 ^ ((k + 1) * s) ≤ 2 ^ n := by
-    exact le_of_mul_le_of_one_le_left k_le_n this
+    exact le_of_mul_le_of_one_le_left k_le_n (Nat.zero_lt_of_ne_zero d_nz.out)
   rw [Nat.pow_le_pow_iff_right (by decide)] at this
   exact this
 
@@ -86,7 +84,7 @@ instance : ∀ j, OracleInterface (FinalOracleStatement D x s k j) :=
            answer := cast (by simp [h, FinalOracleStatement])
                           (id (α := ↑(evalDomain D x (s * ↑j)) → F))
          }
-         
+
 /-- The oracle interface for the `j`-th oracle statement of
     the `i`-th round of the FRI protocol. --/
 def statementConsistent
@@ -235,8 +233,6 @@ instance : ∀ j, OracleInterface ((pSpec F).Message j)
       simp only [Fin.vcons_fin_zero, Nat.reduceAdd, Fin.isValue, Fin.vcons_one]
       exact OracleInterface.instFunction
 
-
-omit d in
 noncomputable def finalFoldProver :
   OracleProver []ₒ
     (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
@@ -277,7 +273,7 @@ noncomputable def finalFoldProver :
             simpa [h] using fun x => p
           else
           simpa [h, ↓reduceIte, OracleStatement, evalDomain] using
-            o ⟨j.1, by omega⟩
+            o ⟨j.1, Nat.lt_of_le_of_ne (Fin.is_le j) h⟩
       ⟩,
       p
     ⟩
@@ -326,8 +322,8 @@ noncomputable def finalFoldOracleReduction :
     (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
     (pSpec F) where
-  prover := finalFoldProver (n := n) (k := k) D x s d
-  verifier := finalFoldVerifier (k := k) D x s d
+  prover := finalFoldProver D x s
+  verifier := finalFoldVerifier D x s d
 
 end FinalFoldPhase
 
@@ -346,8 +342,7 @@ instance : ∀ j, OracleInterface ((pSpec D x l).Message j) := fun j =>
 instance : ∀ j, OracleInterface ((pSpec D x l).Challenge j) := fun j =>
   by
     unfold Challenge
-    have : j.1 = 0 := by omega
-    rw [this]
+    rw [Fin.fin_one_eq_zero j.1]
     exact OracleInterface.instFunction
 
 noncomputable def queryProver :
@@ -371,78 +366,93 @@ noncomputable def queryProver :
   output := pure
 
 @[simp]
-lemma range_lem {i : Fin (k + 1)} : [FinalOracleStatement D x s k]ₒ.range ⟨i.1, by omega⟩ = F := by
-  sorry
-
-#check Eq.mpr
-
-set_option pp.proofs true
+lemma range_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {s k : ℕ} {i : Fin (k + 1)} :
+    [FinalOracleStatement D x s k]ₒ.range ⟨i.1, Nat.lt_succ_of_lt i.2⟩ = F := by
+  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp [Nat.ne_of_lt i.2]
 
 @[simp]
-lemma domain_lem {F : Type} [NonBinaryField F] (D : Subgroup Fˣ)
-  [DIsCyclicC : IsCyclicWithGen D] (x : Fˣ) {k : ℕ} (s : ℕ) {i : Fin (k + 1)} :
-  [FinalOracleStatement D x s k]ₒ.domain ⟨i.1, by omega⟩ = evalDomain D x (s * i.1) := by
+lemma domain_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ} {i : Fin (k + 1)} :
+    [FinalOracleStatement D x s k]ₒ.domain ⟨i.1, Nat.lt_succ_of_lt i.2⟩ =
+      evalDomain D x (s * i.1) := by
   unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
   unfold OracleInterface.Query
   unfold instOracleInterfaceFinalOracleStatement
-  simp [show i.val ≠ k + 1 by omega]
+  simp [Nat.ne_of_lt i.2]
 
-def queryCodeword {i : Fin (k + 1)} (w : evalDomain D x (s * i.1)) :
-    OracleComp [FinalOracleStatement D x s k]ₒ F := OracleComp.lift <| by
-  have := @OracleSpec.query (Fin (k + 2)) [FinalOracleStatement D x s k]ₒ ⟨i.1, by omega⟩
-  have bla := @range_lem F _ _ D n _ _ x k s d _ _ i
-  rw [bla] at this
-  apply this
-  have := @domain_lem n k s d _ _ F _ D _ x k s i
-  rw [this]
-  exact w
+@[simp]
+lemma range_lem₂ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ} [DIsCyclicC : IsCyclicWithGen ↥D]
+  {x : Fˣ} {s k : ℕ} : [FinalOracleStatement D x s k]ₒ.range (Fin.last (k + 1)) = F[X] := by
+  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp
 
+@[simp]
+lemma domain_lem₂ {F : Type} [NonBinaryField F] (D : Subgroup Fˣ)
+  [DIsCyclicC : IsCyclicWithGen D] {x : Fˣ} {s k : ℕ} :
+  [FinalOracleStatement D x s k]ₒ.domain (Fin.last (k + 1)) = Unit := by
+  unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp
 
-def getConst : OracleComp [FinalOracleStatement D x s k]ₒ F[X] :=
+def queryCodeword {s : ℕ} (k : ℕ) {i : Fin (k + 1)} (w : evalDomain D x (s * i.1)) :
+    OracleComp [FinalOracleStatement D x s k]ₒ F :=
+      OracleComp.lift <| by
+        simpa using
+          OracleSpec.query
+            (spec := [FinalOracleStatement D x s k]ₒ)
+            ⟨i.1, Nat.lt_succ_of_lt i.2⟩
+            (by simpa using w)
+
+def getConst (k : ℕ) (s : ℕ) : OracleComp [FinalOracleStatement D x s k]ₒ F[X] :=
   OracleComp.lift
-    (by convert
+    (by
+        simpa using
           OracleSpec.query
             (spec := [FinalOracleStatement D x s k]ₒ)
             (Fin.last (k + 1))
-            (by convert (); sorry)
-        sorry
+            (by simpa using ())
     )
 
-noncomputable def queryVerifier [DecidableEq F] :
+noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ)  [DecidableEq F] :
   OracleVerifier []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s k)
     (FinalStatement F k) (FinalOracleStatement D x s k)
     (pSpec D x l) where
   verify := fun prevChallenges roundChallenge => do
-    let (p : F[X]) ← getConst (k := k) D x s
-    guard (p.natDegree < d)
+    let (p : F[X]) ← getConst D x k s
     for m in (List.finRange l) do
-      have : 0 < s := by
-        have := s_nz.out
-        omega
       let s₀ := roundChallenge ⟨1, by aesop⟩ m
       discard <|
         (List.finRange (k + 1)).mapM
               (fun i =>
                 do
                   let x₀ := prevChallenges i
-                  have : s * i.val ≤ n - s := by
+                  have h : s * i.val ≤ n - s := by
                     apply Nat.le_sub_of_add_le
-                    have := k_le_n' _ _ k_le_n
                     nlinarith [i.2]
                   let s₀ : evalDomain D x (s * i.1) :=
                     ⟨_, pow_2_pow_i_mem_Di_of_mem_D (s * i.1) s₀.2⟩
                   let queries : List (evalDomain D x (s * i.1)) :=
-                    List.map (fun r => ⟨_, CosetDomain.mul_root_of_unity D this s₀.2 r.2⟩)
+                    List.map (fun r => ⟨_, CosetDomain.mul_root_of_unity D h s₀.2 r.2⟩)
                       (Domain.rootsOfUnity D n s)
                   let (pts : List (F × F)) ←
-                    List.mapM (fun q => queryCodeword s q >>= fun v => pure (q.1.1, v)) queries
+                    List.mapM
+                      (fun q => queryCodeword D x k q >>= fun v => pure (q.1.1, v))
+                      queries
                   let β ←
                     if h : i.1 < k
                     then
-                      queryCodeword s (k := k) (i := ⟨i.1.succ, by omega⟩)
+                      queryCodeword D x k (i := ⟨i.1.succ, Order.lt_add_one_iff.mpr h⟩)
                         ⟨_, CosetDomain.pow_lift D x s s₀.2⟩
-                    else pure (p.eval (s₀.1.1 ^ (2 ^ s)))
+                    else
+                      pure (p.eval (s₀.1.1 ^ (2 ^ s)))
                   guard (RoundConsistency.round_consistency_check x₀ pts β)
               )
     pure prevChallenges
@@ -463,7 +473,7 @@ noncomputable def queryOracleReduction [DecidableEq F] :
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
     (pSpec D x l) where
   prover := queryProver D x s l
-  verifier := queryVerifier D x s d k_le_n l
+  verifier := queryVerifier D x s (k_le_n' k_le_n) l
 
 end QueryRound
 
