@@ -146,8 +146,7 @@ def Λ_T (H : F[X][Y]) (D : ℕ)
 -- | Polynomial.C Polynomial.X        => 1
 
 def weight (p : F[X][Y]) {H : F[X][Y]} {D : ℕ} (_ : D ≥ Bivariate.totalDegree H) : ℕ :=
-  let fs := p.toFinsupp
-  Finset.sup fs.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (fs deg).natDegree)
+  Finset.sup p.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (p.coeff deg).natDegree)
 
 end
 end RatFunc
