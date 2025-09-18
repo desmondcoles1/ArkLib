@@ -6,10 +6,20 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 
 import ArkLib.Data.Polynomial.Bivariate
 
+/-!
+  # The Statement of Polishchuk-Spielman Lemma
+
+  We state the Polishchuk-Spielman Lemma as it appears in [BCIKS20].
+
+  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes" by Eli Ben-Sasson,
+  Dan Carmon, Yuval Ishai, Swastik Kopparty, and Shubhangi Saraf.
+
+-/
+
 open Polynomial.Bivariate Polynomial
 
 /--
-Polishchuk-Spielman Lemma variant from Ben-Sasson et Al. Proximity Gaps for Reed-Solomon Codes
+Polishchuk-Spielman Lemma (Lemma 4.3 in [BCIKS20]).
 -/
 lemma Polishchuk_Spielman {F : Type} [Semiring F] [Field F]
   (P_x P_y : Finset F) [Nonempty P_x] [Nonempty P_y]

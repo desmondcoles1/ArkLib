@@ -113,7 +113,42 @@ noncomputable def π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rati
   RingHom (F[X][Y]) F := Polynomial.evalEvalRingHom z root.1
 
 
+--Katy: some version of the below will be fine once we get H_tilda working
 
--- RingHom (𝒪 H) F
+-- lemma H_tilda_eq_zero_π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot'' H z)
+--   : f ∈ H_tilda' H (π_z_lift f z root.1) = 0
+
+-- noncomputable def π_z (z : F) (H : Polynomial (Polynomial F)) (root : rationalRoot'' H z)
+--   (HI : ∀ f : H_tilda' H, π_z_lift H z f = 0) :
+--   RingHom (𝒪 H) F := Ideal.Quotient.lift (π_z_lift H z) (Ideal.span {H_tilda' H})
+
+-- change the sorry for something along the lines of (π_z z H) β = 0 when we have π_z defined
+noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
+  {z : F | ∃ t_z : F, evalEval z t_z H = 0 ∧ sorry}
+
+-- maybe add a lemma that S_β is finite if F is a finite field. Could be useful for
+-- Claim A.1
+
+
+def Λ_T_coeff (H : F[X][Y]) (D : ℕ)
+  (hD : D ≤ Bivariate.totalDegree H
+  ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
+  natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H)
+  : ℕ := D + 1 - Bivariate.natDegreeY H
+
+def Λ_T (H : F[X][Y]) (D : ℕ)
+  (hD : D ≤ Bivariate.totalDegree H
+  ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
+  natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H) : F[X] → ℕ := sorry
+
+-- def weightVar (H : F[X][Y]) (D : ℕ)
+--   (hD : D ≤ Bivariate.totalDegree H
+--   ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
+--   natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H) : Polynomial (Polynomial F) → ℕ
+-- | Polynomial.X                     => Λ_T_coeff H d hD
+-- | Polynomial.C Polynomial.X        => 1
+
+
+
 end
 end RatFunc

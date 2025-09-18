@@ -15,8 +15,6 @@ import Mathlib.FieldTheory.Separable
 open Polynomial
 open Polynomial.Bivariate
 
-namespace Polynomial
-
 namespace Bivariate
 
 noncomputable section
@@ -782,5 +780,3 @@ theorem totalDegree_mul (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
 end
 
 end Bivariate
-
-end Polynomial
