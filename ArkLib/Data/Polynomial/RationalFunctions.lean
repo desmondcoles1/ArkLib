@@ -112,7 +112,6 @@ def rationalRoot'' (H : Polynomial (Polynomial F)) (z : F) : Type :=
 noncomputable def π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot'' H z) :
   RingHom (F[X][Y]) F := Polynomial.evalEvalRingHom z root.1
 
-
 --Katy: some version of the below will be fine once we get H_tilda working
 
 -- lemma H_tilda_eq_zero_π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot'' H z)
@@ -131,9 +130,7 @@ noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
 
 
 def Λ_T_coeff (H : F[X][Y]) (D : ℕ)
-  (hD : D ≤ Bivariate.totalDegree H
-  ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
-  natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H)
+  (hD : D ≥ Bivariate.totalDegree H)
   : ℕ := D + 1 - Bivariate.natDegreeY H
 
 def Λ_T (H : F[X][Y]) (D : ℕ)
@@ -148,7 +145,9 @@ def Λ_T (H : F[X][Y]) (D : ℕ)
 -- | Polynomial.X                     => Λ_T_coeff H d hD
 -- | Polynomial.C Polynomial.X        => 1
 
-
+def weight (p : F[X][Y]) {H : F[X][Y]} {D : ℕ} (_ : D ≥ Bivariate.totalDegree H) : ℕ :=
+  let fs := p.toFinsupp
+  Finset.sup fs.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (fs deg).natDegree)
 
 end
 end RatFunc
