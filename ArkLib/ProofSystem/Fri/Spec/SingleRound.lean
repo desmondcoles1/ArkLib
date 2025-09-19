@@ -1,6 +1,6 @@
-
-
+import Mathlib.Data.NNReal.Defs
 import Mathlib.GroupTheory.SpecificGroups.Cyclic
+
 
 import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.OracleReduction.Security.Basic
@@ -18,7 +18,7 @@ codewords. f` is the sum over `a : α`
 
 namespace Fri
 
-open Polynomial MvPolynomial OracleSpec OracleComp ProtocolSpec Finset CosetDomain
+open Polynomial MvPolynomial OracleSpec OracleComp ProtocolSpec Finset CosetDomain NNReal
 
 namespace Spec
 
@@ -126,9 +126,9 @@ namespace FoldPhase
 
 def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
   [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ}
-  (cond : (k + 1) * s ≤ n) {i : Fin k} [DecidableEq F] {j : Fin i}
-    (f : OracleStatement D x s i.castSucc j.castSucc)
-    (f' : OracleStatement D x s i.castSucc j.succ)
+  (cond : (k + 1) * s ≤ n) {i : Fin (k + 1)} [DecidableEq F] {j : Fin i}
+    (f : OracleStatement D x s i j.castSucc)
+    (f' : OracleStatement D x s i j.succ)
     (x₀ : F) : Prop :=
   ∀ s₀ : evalDomain D x (s * j.1),
       let queries :
@@ -153,34 +153,82 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
 /-- The oracle interface for the `j`-th oracle statement of
     the `i`-th round of the FRI protocol. --/
 def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
-  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k s : ℕ} {i : Fin k} [DecidableEq F]
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k s : ℕ} {i : Fin (k + 1)} [DecidableEq F]
       (cond : (k + 1) * s ≤ n)
-      (stmt : Statement F i.castSucc)
-      (ostmt : ∀ j, OracleStatement D x s i.castSucc j) : Prop :=
+      (stmt : Statement F i)
+      (ostmt : ∀ j, OracleStatement D x s i j) : Prop :=
   ∀ j : Fin i,
     let f  := ostmt j.castSucc;
     let f' := ostmt j.succ;
     let x₀  := stmt j;
     roundConsistent cond f f' x₀
 
-#check ReedSolomon.code sorry (2 ^ (n - s * k))
-
 /-- This is missing the relationship between the oracle statement and the witness. Need to define a
   proximity parameter here. Completeness will be for proximity param `0`, while soundness will have
   non-zero proximity param. -/
-def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] :
+def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) × Witness F) :=
+  let ind : Fin (n + 1) :=
+    ⟨
+      s * i,
+      by
+        have := s_nz.out
+        have := i.2
+        have : s * k < (n + 1) := by
+          grind
+        refine lt_trans ?_ this
+        expose_names
+        refine Nat.mul_lt_mul_of_pos_left this_2 ?_
+        exact Nat.zero_lt_of_ne_zero this_1
+    ⟩
+  let code : Submodule F (Fin (2 ^ (n - s * i)) → F) :=
+    ReedSolomon.code
+        (Function.Embedding.trans
+          (CosetDomain.domain_enum D x ind)
+          (CosetDomain.domain_emb D x)
+        )
+        (2 ^ (n - s * i))
+  let enum : Fin (2 ^ (n - ↑ind)) → ↑(evalDomain D x (s * ↑(Fin.last ↑i))) := by
+    simpa [ind] using (CosetDomain.domain_enum D x ind).1
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
       ∀ x, ostmt (Fin.last i.1) x = p.eval x.1.1 ∧
-      Polynomial.natDegree p < (2 ^ (s * (k - i.val))) * d
+      δᵣ(ostmt (Fin.last i.1) ∘ enum, code) < δ
   }
 
 /-- Same with the above comment about input relation. -/
-def outputRelation :
+def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) × Witness F) :=
-  {⟨⟨_, _⟩, p⟩ | Polynomial.natDegree p < (2 ^ (s * (k - (i.val + 1)))) * d}
+  let ind : Fin (n + 1) :=
+    ⟨
+      s * i.succ,
+      by
+        have bla := s_nz.out
+        have := i.2
+        have cond : s * (k + 1) < n + 1 := by
+          rw [mul_comm] at cond
+          exact Order.lt_add_one_iff.mpr cond
+        refine lt_trans ?_ cond
+        apply Nat.mul_lt_mul_of_pos_left
+        · simp
+        · grind
+    ⟩
+  let code : Submodule F (Fin (2 ^ (n - s * i.succ)) → F) :=
+    ReedSolomon.code
+        (Function.Embedding.trans
+          (CosetDomain.domain_enum D x ind)
+          (CosetDomain.domain_emb D x)
+        )
+        (2 ^ (n - s * i.succ))
+  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * i.succ)) := by
+    simpa [ind] using (CosetDomain.domain_enum D x ind).1
+  {
+    ⟨⟨stmt, ostmt⟩, p⟩ |
+      statementConsistent cond stmt ostmt ∧
+      ∀ x, ostmt (Fin.last i.succ) x = p.eval x.1.1 ∧
+      δᵣ(ostmt (Fin.last i.succ) ∘ enum, code) < δ
+  }
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
   challenge to the prover, and ends with the prover sending a codeword (of the desired length) to
@@ -283,17 +331,100 @@ end FoldPhase
 
 namespace FinalFoldPhase
 
--- /-- This is missing the relationship between the oracle statement and the witness. Need to define a
---   proximity parameter here. Completeness will be for proximity param `0`, while soundness will have
---   non-zero proximity param. -/
--- def inputRelation :
---     Set ((Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) × Witness F) :=
---   {⟨⟨stmt, ostmt⟩, p⟩ | Polynomial.natDegree p < (2 ^ (s * (k - i.val))) * d}
+def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ}
+  (cond : (k + 1) * s ≤ n) [DecidableEq F]
+    (f : FinalOracleStatement D x s k (Fin.last k).castSucc)
+    (f' : FinalOracleStatement D x s k (Fin.last (k + 1)))
+    (x₀ : F) : Prop :=
+  let f : evalDomain D x (s * k) → F := by
+    unfold FinalOracleStatement at f
+    simp only [Fin.coe_castSucc, Fin.val_last, Nat.left_eq_add, one_ne_zero, ↓reduceIte] at f
+    exact f
+  let f' : F[X] := by
+    unfold FinalOracleStatement at f'
+    simp only [Fin.val_last, ↓reduceIte] at f'
+    exact f' ()
+  ∀ s₀ : evalDomain D x (s * k),
+      let queries :
+          List (evalDomain D x (s * k)) :=
+            List.map
+              (
+                fun r =>
+                  ⟨
+                    _,
+                    CosetDomain.mul_root_of_unity
+                      D
+                      (Nat.le_sub_of_add_le
+                        (by
+                          rw [Nat.add_mul, one_mul, mul_comm] at cond
+                          exact cond
+                        )
+                      )
+                      s₀.2
+                      r.2
+                  ⟩
+              )
+              (Domain.rootsOfUnity D n s);
+      let pts := List.map (fun q => (q.1.1, f q)) queries;
+      let β := f'.eval (s₀.1.1 ^ (2 ^ s));
+        RoundConsistency.round_consistency_check x₀ pts β
 
--- /-- Same with the above comment about input relation. -/
--- def outputRelation :
---     Set ((Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) × Witness F) :=
---   {⟨⟨_, _⟩, p⟩ | Polynomial.natDegree p < (2 ^ (s * (k - (i.val + 1)))) * d}
+def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
+    Set ((Statement F (Fin.last k) × (∀ j, OracleStatement D x s (Fin.last k) j)) × Witness F) :=
+  let ind : Fin (n + 1) := ⟨s * k, by linarith⟩
+  let code : Submodule F (Fin (2 ^ (n - s * k)) → F) :=
+    ReedSolomon.code
+        (Function.Embedding.trans
+          (CosetDomain.domain_enum D x ind)
+          (CosetDomain.domain_emb D x)
+        )
+        (2 ^ (n - s * (k + 1)))
+  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * k)) := by
+    simpa [ind] using (CosetDomain.domain_enum D x ind).1
+  {
+    ⟨⟨stmt, ostmt⟩, p⟩ |
+      FoldPhase.statementConsistent cond stmt ostmt ∧
+      ∀ x, ostmt (Fin.last k) x = p.eval x.1.1 ∧
+      δᵣ(ostmt (Fin.last k) ∘ enum, code) < δ
+  }
+
+def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
+    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F) :=
+  let ind : Fin (n + 1) := ⟨s * (k + 1), by linarith⟩
+  let code : Submodule F (Fin (2 ^ (n - s * (k + 1))) → F) :=
+    ReedSolomon.code
+        (Function.Embedding.trans
+          (CosetDomain.domain_enum D x ind)
+          (CosetDomain.domain_emb D x)
+        )
+        (2 ^ (n - s * (k + 1)))
+  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * (k + 1))) := by
+    simpa [ind] using (CosetDomain.domain_enum D x ind).1
+  {
+    ⟨⟨stmt, ostmt⟩, p⟩ |
+      let stmt' : Statement F (Fin.last k) := stmt ∘ Fin.castAdd 1;
+      let ostmt' : (∀ j, OracleStatement D x s (Fin.last k) j) :=
+        fun j => by
+          specialize ostmt j.castSucc
+          simp only
+            [
+              FinalOracleStatement, Fin.val_last, Fin.coe_castSucc,
+              (Nat.ne_of_lt (by simp) : j.1 ≠ k + 1), ↓reduceIte
+            ] at ostmt
+          exact ostmt
+        ;
+      let p' : FinalOracleStatement D x s k (Fin.last (k + 1)) := by
+        simpa only [FinalOracleStatement, Fin.val_last, ↓reduceIte]
+          using fun _ => p
+      let f  := ostmt (Fin.last k).castSucc;
+      let f' := ostmt (Fin.last (k + 1));
+      let x₀  := stmt (Fin.last k);
+      FoldPhase.statementConsistent cond stmt' ostmt' ∧
+      roundConsistent cond f f' x₀ ∧
+      ostmt (Fin.last (k + 1)) = p' ∧
+      δᵣ((fun x => p.eval x.1.1) ∘ enum, code) < δ
+  }
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
   challenge to the prover, and ends with the prover sending a codeword (of the desired length) to
@@ -406,6 +537,14 @@ namespace QueryRound
 
 variable (l : ℕ)
 
+def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
+    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
+  := FinalFoldPhase.outputRelation D x s cond δ
+
+def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
+    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
+  := FinalFoldPhase.outputRelation D x s cond δ
+
 @[reducible]
 def pSpec : ProtocolSpec 1 :=
   ⟨!v[.V_to_P], !v[Fin l → evalDomain D x 0]⟩
@@ -459,7 +598,7 @@ def getConst (k : ℕ) (s : ℕ) : OracleComp [FinalOracleStatement D x s k]ₒ 
             (by simpa using ())
     )
 
-noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ)  [DecidableEq F] :
+noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ) [DecidableEq F] :
   OracleVerifier []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s k)
     (FinalStatement F k) (FinalOracleStatement D x s k)

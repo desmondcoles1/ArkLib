@@ -77,10 +77,9 @@ lemma domain_surjective (i : ℕ) : i ≤ n → Function.Surjective (domain D n 
   simp only at h
   simp [h]
 
-lemma domain_injective (i : ℕ) : i ≤ n → Function.Injective (domain D n i) := by
-  intros h a b h'
-  unfold domain at h'
-  simp at h'
+lemma pow_inj {i : ℕ} {a b : Fin (2 ^ (n - i))} :
+    i ≤ n → (DIsCyclicC.gen.1 ^ 2 ^ i) ^ a.1 = (DIsCyclicC.gen.1 ^ 2 ^ i) ^ b.1 → a = b := by
+  intros h h'
   have ha := a.2
   have hb := b.2
   by_contra a_neq_b
@@ -185,6 +184,26 @@ lemma domain_injective (i : ℕ) : i ≤ n → Function.Injective (domain D n i)
       exact Nat.sub_lt_of_lt ha
     linarith
 
+lemma domain_injective (i : ℕ) : i ≤ n → Function.Injective (domain D n i) := by
+  intros h a b h'
+  unfold domain at h'
+  simp at h'
+  exact pow_inj D h h'
+
+def domain_enum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D i :=
+  ⟨domain D n i.1, domain_injective D i.1 (by have := i.2; linarith)⟩
+
+
+def domain_emb {i : ℕ} : evalDomain D i ↪ F :=
+  ⟨
+    fun x => x.1.1,
+    by
+      intros a b
+      simp only
+      intros h
+      norm_cast at h
+  ⟩
+
 omit [Finite F] in
 lemma D_def : D = evalDomain D 0 := by
   unfold evalDomain
@@ -225,6 +244,7 @@ instance {i : ℕ} : IsCyclicWithGen (evalDomain D i) := by
     simp only [h']
     rfl
 
+omit [Finite F] in
 lemma pow_2_pow_i_mem_Di_of_mem_D :
   ∀ {x : Fˣ} (i : ℕ),
     x ∈ D → x ^ (2 ^ i) ∈ evalDomain D i := by
@@ -242,6 +262,7 @@ lemma pow_2_pow_i_mem_Di_of_mem_D :
   exists a
   rw [←zpow_natCast, ←zpow_natCast, zpow_comm]
 
+omit [Finite F] in
 lemma sqr_mem_D_succ_i_of_mem_D_i : ∀ {x : Fˣ} {i : ℕ},
   x ∈ evalDomain D i → x ^ 2 ∈ evalDomain D (i + 1) := by
   intros x i h
@@ -257,6 +278,7 @@ lemma sqr_mem_D_succ_i_of_mem_D_i : ∀ {x : Fˣ} {i : ℕ},
   rw [@mul_comm ℤ _ k 2, ←mul_assoc]
   rfl
 
+omit [Finite F] in
 lemma gen_def {i : ℕ} :
     (IsCyclicWithGen.gen : evalDomain D i) =
       ⟨
@@ -293,11 +315,12 @@ instance {i : ℕ} : SmoothPowerOfTwo (n - i) (evalDomain D i) where
       rw [pow_orderOf_eq_one]
       exact one_pow _
 
-
+omit [Finite F] in
 lemma one_in_doms (i : ℕ) : 1 ∈ evalDomain D i := by
   simp only [evalDomain]
   apply OneMemClass.one_mem
 
+omit [Finite F] in
 lemma minus_one_in_doms {i : ℕ} (h : i < n) :
     -1 ∈ evalDomain D i := by
   unfold evalDomain
@@ -344,6 +367,7 @@ lemma minus_one_in_doms {i : ℕ} (h : i < n) :
     norm_cast at alg
   · assumption
 
+omit [Finite F] in
 lemma dom_n_eq_triv : evalDomain D n = ⊥ := by
   unfold evalDomain
   rw [Subgroup.zpowers_eq_bot, ←DSmooth.smooth]
@@ -375,14 +399,6 @@ namespace CosetDomain
 
 open Pointwise
 
-variable (x : Fˣ)
-
-@[simp]
-def evalDomain (i : ℕ) : Set Fˣ :=
-  (x ^ (2 ^ i)) • (Domain.evalDomain D i)
-
-lemma D_def : evalDomain D x 0 = x • D := by simp [Domain.D_def D]
-
 omit [Finite F] in
 private lemma op_der_eq : Monoid.toMulAction Fˣ = Units.mulAction' := by
   unfold Units.mulAction' Monoid.toMulAction
@@ -391,6 +407,57 @@ private lemma op_der_eq : Monoid.toMulAction Fˣ = Units.mulAction' := by
   simp only [Units.val_mul]
   unfold_projs
   rfl
+
+variable (x : Fˣ)
+
+@[simp]
+def evalDomain (i : ℕ) : Set Fˣ :=
+  (x ^ (2 ^ i)) • (Domain.evalDomain D i)
+
+def domain (n : ℕ) (i : ℕ) : Fin (2 ^ (n - i)) → evalDomain D x i :=
+  fun j =>
+    ⟨
+      x ^ 2 ^ i * (DIsCyclicC.gen ^ (2 ^ i)) ^ j.1,
+      by
+        simp
+        rw [←Domain.evalDomain]
+        have h :
+            (x ^ 2 ^ i)⁻¹ * (x ^ 2 ^ i * (DIsCyclicC.gen.1 ^ 2 ^ i) ^ j.1) ∈
+              Domain.evalDomain D i := by
+          rw [←mul_assoc]
+          simp
+        convert (mem_leftCoset_iff _).mpr h
+        expose_names
+        exact (@op_der_eq F inst).symm
+    ⟩
+
+lemma domain_injective {i : ℕ} : i ≤ n → Function.Injective (domain D x n i) := by
+  intros h
+  intros a b
+  unfold domain
+  intros h'
+  simp only [evalDomain, Domain.evalDomain, Subtype.mk.injEq, mul_right_inj] at h'
+  exact Domain.pow_inj D h h'
+
+def domain_enum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D x i :=
+  ⟨domain D x n i, domain_injective (i := i.1) D x (by have := i.2; linarith)⟩
+
+def domain_emb {i : ℕ} : evalDomain D x i ↪ F :=
+  ⟨
+    fun x => x.1.1,
+    by
+      intros a b
+      simp only
+      intros h
+      norm_cast at h
+      rcases a with ⟨a, ha⟩
+      rcases b with ⟨b, hb⟩
+      simp at h
+      simp only [h]
+  ⟩
+
+omit [Finite F] in
+lemma D_def : evalDomain D x 0 = x • D := by simp [Domain.D_def D]
 
 lemma pow_2_pow_i_mem_Di_of_mem_D {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ}
   [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} :
@@ -410,6 +477,7 @@ lemma pow_2_pow_i_mem_Di_of_mem_D {F : Type} [NonBinaryField F] [Finite F] {D : 
   convert (mem_leftCoset_iff _).mpr h
   exact op_der_eq.symm
 
+omit [Finite F] in
 lemma sqr_mem_D_succ_i_of_mem_D_i : ∀ {a : Fˣ} {i : ℕ},
     a ∈ evalDomain D x i → a ^ 2 ∈ evalDomain D x (i + 1) := by
   unfold evalDomain
@@ -431,6 +499,7 @@ lemma sqr_mem_D_succ_i_of_mem_D_i : ∀ {a : Fˣ} {i : ℕ},
   convert (mem_leftCoset_iff _).mpr h
   exact op_der_eq.symm
 
+omit [Finite F] in
 lemma pow_lift : ∀ {a : Fˣ} {i : ℕ} (s : ℕ),
     a ∈ evalDomain D x i → a ^ (2 ^ s) ∈ evalDomain D x (i + s) := by
   intros a i s
@@ -444,6 +513,7 @@ lemma pow_lift : ∀ {a : Fˣ} {i : ℕ} (s : ℕ),
     rw [←add_assoc, this]
     exact sqr_mem_D_succ_i_of_mem_D_i _ _ ih
 
+omit [Finite F] in
 lemma neg_mem_dom_of_mem_dom : ∀ {a : Fˣ} (i : Fin n),
     a ∈ evalDomain D x i → - a ∈ evalDomain D x i := by
   unfold evalDomain
@@ -465,7 +535,8 @@ lemma neg_mem_dom_of_mem_dom : ∀ {a : Fˣ} (i : Fin n),
   convert (mem_leftCoset_iff _).mpr this
   exact op_der_eq.symm
 
-lemma mul_root_of_unity {x :  Fˣ} :
+omit [Finite F] in
+lemma mul_root_of_unity {x : Fˣ} :
   ∀ {a b : Fˣ} {i j : ℕ},
     i ≤ j → a ∈ evalDomain D x i → b ∈ Domain.evalDomain D j →
       a * b ∈ evalDomain D x i := by
@@ -490,6 +561,7 @@ lemma mul_root_of_unity {x :  Fˣ} :
   convert this
   exact op_der_eq.symm
 
+omit [Finite F] in
 lemma dom_n_eq_triv : evalDomain D x n = {x ^ (2 ^ n)} := by
   unfold evalDomain
   rw [Domain.dom_n_eq_triv]
