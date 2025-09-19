@@ -1,6 +1,7 @@
 
 
 import Mathlib.GroupTheory.SpecificGroups.Cyclic
+
 import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.OracleReduction.Security.Basic
 import ArkLib.ProofSystem.Fri.Domain
@@ -25,13 +26,13 @@ variable {F : Type} [NonBinaryField F] [Finite F]
 variable (D : Subgroup Fˣ) {n : ℕ} [DIsCyclicC : IsCyclicWithGen D] [DSmooth : SmoothPowerOfTwo n D]
 variable (x : Fˣ)
 variable {k : ℕ} (s d : ℕ) [s_nz : NeZero s] [d_nz : NeZero d]
-variable (k_le_n : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) (i : Fin k)
+variable (domain_size_cond : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) (i : Fin k)
 
 omit s_nz in
-lemma k_le_n' {n k s d : ℕ} [d_nz : NeZero d]
-  (k_le_n : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) : (k + 1) * s ≤ n := by
+lemma round_bound {n k s d : ℕ} [d_nz : NeZero d]
+  (domain_size_cond : 2 ^ ((k + 1) * s) * d ≤ 2 ^ n) : (k + 1) * s ≤ n := by
   have : 2 ^ ((k + 1) * s) ≤ 2 ^ n := by
-    exact le_of_mul_le_of_one_le_left k_le_n (Nat.zero_lt_of_ne_zero d_nz.out)
+    exact le_of_mul_le_of_one_le_left domain_size_cond (Nat.zero_lt_of_ne_zero d_nz.out)
   rw [Nat.pow_le_pow_iff_right (by decide)] at this
   exact this
 
@@ -85,22 +86,96 @@ instance : ∀ j, OracleInterface (FinalOracleStatement D x s k j) :=
                           (id (α := ↑(evalDomain D x (s * ↑j)) → F))
          }
 
-/-- The oracle interface for the `j`-th oracle statement of
-    the `i`-th round of the FRI protocol. --/
-def statementConsistent
-      (stmt : Statement F i.castSucc)
-      (ostmt : ∀ j, OracleStatement D x s i.castSucc j) : Prop :=
+@[simp]
+lemma range_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {s k : ℕ} {i : Fin (k + 1)} :
+    [FinalOracleStatement D x s k]ₒ.range ⟨i.1, Nat.lt_succ_of_lt i.2⟩ = F := by
+  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp [Nat.ne_of_lt i.2]
 
-  sorry
+@[simp]
+lemma domain_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ} {i : Fin (k + 1)} :
+    [FinalOracleStatement D x s k]ₒ.domain ⟨i.1, Nat.lt_succ_of_lt i.2⟩ =
+      evalDomain D x (s * i.1) := by
+  unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp [Nat.ne_of_lt i.2]
+
+@[simp]
+lemma range_lem₂ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ} [DIsCyclicC : IsCyclicWithGen ↥D]
+  {x : Fˣ} {s k : ℕ} : [FinalOracleStatement D x s k]ₒ.range (Fin.last (k + 1)) = F[X] := by
+  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp
+
+@[simp]
+lemma domain_lem₂ {F : Type} [NonBinaryField F] (D : Subgroup Fˣ)
+  [DIsCyclicC : IsCyclicWithGen D] {x : Fˣ} {s k : ℕ} :
+  [FinalOracleStatement D x s k]ₒ.domain (Fin.last (k + 1)) = Unit := by
+  unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
+  unfold OracleInterface.Query
+  unfold instOracleInterfaceFinalOracleStatement
+  simp
 
 namespace FoldPhase
+
+def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ}
+  (cond : (k + 1) * s ≤ n) {i : Fin k} [DecidableEq F] {j : Fin i}
+    (f : OracleStatement D x s i.castSucc j.castSucc)
+    (f' : OracleStatement D x s i.castSucc j.succ)
+    (x₀ : F) : Prop :=
+  ∀ s₀ : evalDomain D x (s * j.1),
+      let queries :
+          List (evalDomain D x (s * j.1)) :=
+            List.map
+              (
+                fun r =>
+                  ⟨
+                    _,
+                    CosetDomain.mul_root_of_unity
+                      D
+                      (Nat.le_sub_of_add_le (by nlinarith [cond, j.2, i.2]))
+                      s₀.2
+                      r.2
+                  ⟩
+              )
+              (Domain.rootsOfUnity D n s);
+      let pts := List.map (fun q => (q.1.1, f q)) queries;
+      let β := f' ⟨_, CosetDomain.pow_lift D x s s₀.2⟩;
+        RoundConsistency.round_consistency_check x₀ pts β
+
+/-- The oracle interface for the `j`-th oracle statement of
+    the `i`-th round of the FRI protocol. --/
+def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
+  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k s : ℕ} {i : Fin k} [DecidableEq F]
+      (cond : (k + 1) * s ≤ n)
+      (stmt : Statement F i.castSucc)
+      (ostmt : ∀ j, OracleStatement D x s i.castSucc j) : Prop :=
+  ∀ j : Fin i,
+    let f  := ostmt j.castSucc;
+    let f' := ostmt j.succ;
+    let x₀  := stmt j;
+    roundConsistent cond f f' x₀
+
+#check ReedSolomon.code sorry (2 ^ (n - s * k))
 
 /-- This is missing the relationship between the oracle statement and the witness. Need to define a
   proximity parameter here. Completeness will be for proximity param `0`, while soundness will have
   non-zero proximity param. -/
-def inputRelation :
+def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] :
     Set ((Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) × Witness F) :=
-  {⟨⟨stmt, ostmt⟩, p⟩ | Polynomial.natDegree p < (2 ^ (s * (k - i.val))) * d}
+  {
+    ⟨⟨stmt, ostmt⟩, p⟩ |
+      statementConsistent cond stmt ostmt ∧
+      ∀ x, ostmt (Fin.last i.1) x = p.eval x.1.1 ∧
+      Polynomial.natDegree p < (2 ^ (s * (k - i.val))) * d
+  }
 
 /-- Same with the above comment about input relation. -/
 def outputRelation :
@@ -365,42 +440,6 @@ noncomputable def queryProver :
 
   output := pure
 
-@[simp]
-lemma range_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
-  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {s k : ℕ} {i : Fin (k + 1)} :
-    [FinalOracleStatement D x s k]ₒ.range ⟨i.1, Nat.lt_succ_of_lt i.2⟩ = F := by
-  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
-  unfold OracleInterface.Query
-  unfold instOracleInterfaceFinalOracleStatement
-  simp [Nat.ne_of_lt i.2]
-
-@[simp]
-lemma domain_lem₁ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ}
-  [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ} {i : Fin (k + 1)} :
-    [FinalOracleStatement D x s k]ₒ.domain ⟨i.1, Nat.lt_succ_of_lt i.2⟩ =
-      evalDomain D x (s * i.1) := by
-  unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
-  unfold OracleInterface.Query
-  unfold instOracleInterfaceFinalOracleStatement
-  simp [Nat.ne_of_lt i.2]
-
-@[simp]
-lemma range_lem₂ {F : Type} [NonBinaryField F] {D : Subgroup Fˣ} [DIsCyclicC : IsCyclicWithGen ↥D]
-  {x : Fˣ} {s k : ℕ} : [FinalOracleStatement D x s k]ₒ.range (Fin.last (k + 1)) = F[X] := by
-  unfold OracleSpec.range FinalOracleStatement OracleInterface.toOracleSpec
-  unfold OracleInterface.Query
-  unfold instOracleInterfaceFinalOracleStatement
-  simp
-
-@[simp]
-lemma domain_lem₂ {F : Type} [NonBinaryField F] (D : Subgroup Fˣ)
-  [DIsCyclicC : IsCyclicWithGen D] {x : Fˣ} {s k : ℕ} :
-  [FinalOracleStatement D x s k]ₒ.domain (Fin.last (k + 1)) = Unit := by
-  unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
-  unfold OracleInterface.Query
-  unfold instOracleInterfaceFinalOracleStatement
-  simp
-
 def queryCodeword {s : ℕ} (k : ℕ) {i : Fin (k + 1)} (w : evalDomain D x (s * i.1)) :
     OracleComp [FinalOracleStatement D x s k]ₒ F :=
       OracleComp.lift <| by
@@ -434,9 +473,8 @@ noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ)  [Decidab
               (fun i =>
                 do
                   let x₀ := prevChallenges i
-                  have h : s * i.val ≤ n - s := by
-                    apply Nat.le_sub_of_add_le
-                    nlinarith [i.2]
+                  have h : s * i.val ≤ n - s :=
+                    Nat.le_sub_of_add_le (by nlinarith [i.2])
                   let s₀ : evalDomain D x (s * i.1) :=
                     ⟨_, pow_2_pow_i_mem_Di_of_mem_D (s * i.1) s₀.2⟩
                   let queries : List (evalDomain D x (s * i.1)) :=
@@ -473,7 +511,7 @@ noncomputable def queryOracleReduction [DecidableEq F] :
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
     (pSpec D x l) where
   prover := queryProver D x s l
-  verifier := queryVerifier D x s (k_le_n' k_le_n) l
+  verifier := queryVerifier D x s (round_bound domain_size_cond) l
 
 end QueryRound
 
