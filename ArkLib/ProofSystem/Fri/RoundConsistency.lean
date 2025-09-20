@@ -9,6 +9,7 @@ namespace RoundConsistency
 
 variable {𝔽 : Type} [CommSemiring 𝔽]
 
+/- Definition of n-way polynomial split -/
 def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
   fun i =>
     let sup :=
@@ -54,6 +55,7 @@ def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
             simp [this]
       ⟩
 
+/- Proof of key identity `split` has to satisfy. -/
 lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
     f =
       ∑ i : Fin n,
@@ -200,9 +202,11 @@ lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
   · intros h
     simp at h
 
+/- Generalised n-way folding. -/
 noncomputable def foldα (n : ℕ) (f : 𝔽[X]) (α : 𝔽) [inst : NeZero n] : 𝔽[X] :=
   ∑ i : Fin n, Polynomial.C α ^ i.1 * split f n i
 
+/- Generalised round-consistency check. -/
 noncomputable def round_consistency_check [Field 𝔽] [DecidableEq 𝔽]
     (γ : 𝔽) (pts : List (𝔽 × 𝔽)) (β : 𝔽) : Bool :=
   let p := Lagrange.interpolate Finset.univ (fun i => (pts.get i).1) (fun i => (pts.get i).2)
@@ -244,6 +248,7 @@ lemma poly_eq_of [Field 𝔽] {p q : 𝔽[X]} {n : ℕ}
           · rw [Polynomial.degree_eq_natDegree p_eq, this, WithBot.coe_lt_coe] at hp
             simp [hp, hq]
 
+/- Proof of completeness of round consistency check. -/
 lemma generalised_round_consistency_completeness
   {𝔽 : Type} [inst1 : Field 𝔽] [DecidableEq 𝔽] {f : Polynomial 𝔽}
   {n : ℕ} [inst : NeZero n]

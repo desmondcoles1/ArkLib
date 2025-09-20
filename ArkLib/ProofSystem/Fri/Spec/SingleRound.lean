@@ -22,6 +22,17 @@ open Polynomial MvPolynomial OracleSpec OracleComp ProtocolSpec Finset CosetDoma
 
 namespace Spec
 
+/- FRI parameters:
+   - `F` a non-binary finite field.
+   - `D` the cyclic subgroup of order `2 ^ n` we will to construct the evaluation domains.
+   - `x` the element of `Fˣ` we will use to construct our evaluation domain.
+   - `k` the number of, non final, folding rounds the protocol will run.
+   - `s` the "folding degree", for `s = 1` this corresponds to the standard "even-odd" folding.
+   - `d` the degree bound on the final polynomial returned in the final folding round.
+   - `domain_size_cond`, a proof that the initial evaluation domain is large enough to test
+      for proximity of a polynomial of appropriate degree.
+  - `i` the index of the current folding round.
+-/
 variable {F : Type} [NonBinaryField F] [Finite F]
 variable (D : Subgroup Fˣ) {n : ℕ} [DIsCyclicC : IsCyclicWithGen D] [DSmooth : SmoothPowerOfTwo n D]
 variable (x : Fˣ)
@@ -124,6 +135,10 @@ lemma domain_lem₂ {F : Type} [NonBinaryField F] (D : Subgroup Fˣ)
 
 namespace FoldPhase
 
+/- Definition of the non-final folding rounds of the FRI protocol. -/
+
+/- Folding total round consistency predicate, checking of two subsequent code words will pass
+   the round consistency at all points. -/
 def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
   [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ}
   (cond : (k + 1) * s ≤ n) {i : Fin (k + 1)} [DecidableEq F] {j : Fin i}
@@ -150,8 +165,7 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
       let β := f' ⟨_, CosetDomain.pow_lift D x s s₀.2⟩;
         RoundConsistency.round_consistency_check x₀ pts β
 
-/-- The oracle interface for the `j`-th oracle statement of
-    the `i`-th round of the FRI protocol. --/
+/- Checks for the total Folding round consistency of all rounds up to the current one. -/
 def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
   [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k s : ℕ} {i : Fin (k + 1)} [DecidableEq F]
       (cond : (k + 1) * s ≤ n)
@@ -163,9 +177,8 @@ def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup F
     let x₀  := stmt j;
     roundConsistent cond f f' x₀
 
-/-- This is missing the relationship between the oracle statement and the witness. Need to define a
-  proximity parameter here. Completeness will be for proximity param `0`, while soundness will have
-  non-zero proximity param. -/
+/- The FRI non-final folding round input relation, with proximity parameter `δ`, f
+   for the `i`th round. -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) × Witness F) :=
   let ind : Fin (n + 1) :=
@@ -197,7 +210,8 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       δᵣ(ostmt (Fin.last i.1) ∘ enum, code) < δ
   }
 
-/-- Same with the above comment about input relation. -/
+/- The FRI non-final folding round output relation, with proximity parameter `δ`,
+   for the `i`th round. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) × Witness F) :=
   let ind : Fin (n + 1) :=
@@ -231,11 +245,13 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   }
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
-  challenge to the prover, and ends with the prover sending a codeword (of the desired length) to
-  the verifier. -/
+  challenge to the prover, and ends with the prover sending an oracle to
+  the verifier, commiting to evaluation of the witness at all points in the appropriate evaluation
+  domain. -/
 @[reducible]
 def pSpec : ProtocolSpec 2 := ⟨!v[.V_to_P, .P_to_V], !v[F, (evalDomain D x (s * (i.1 + 1))) → F]⟩
 
+/- `OracleInterface` instance for `pSpec` of the non-final folding rounds. -/
 instance {i : Fin k} : ∀ j, OracleInterface ((pSpec D x s i).Message j)
   | ⟨0, h⟩ => nomatch h
   | ⟨1, _⟩ => by
@@ -243,17 +259,16 @@ instance {i : Fin k} : ∀ j, OracleInterface ((pSpec D x s i).Message j)
       simp only [Fin.vcons_fin_zero, Nat.reduceAdd, Fin.isValue, Fin.vcons_one]
       infer_instance
 
-
-
-/-- The prover for the `i`-th round of the FRI protocol. It first receives the challenge -/
+/-- The prover for the `i`-th round of the FRI protocol. It first receives the challenge,
+    then does an `s` degree split of this polynomial. Finally, it returns the evaluation of
+    this polynomial on the next evaluation domain. -/
 noncomputable def foldProver :
   OracleProver []ₒ
     (Statement F i.castSucc) (OracleStatement D x s i.castSucc) (Witness F)
     (Statement F i.succ) (OracleStatement D x s i.succ) (Witness F)
     (pSpec D x s i) where
-  -- This may be difficult to reason about, given that the degree does get divided by 2 each round.
+  -- This may be difficult to reason about, given that the degree does get divided by `2 ^ s` each round.
   -- Might want to bake that into the type.
-  -- Also need to return all the prior oracle statements and prior challenges
   PrvState
   | 0 =>
     (Statement F i.castSucc × ((j : Fin (↑i.castSucc + 1)) → OracleStatement D x s i.castSucc j)) ×
@@ -331,6 +346,9 @@ end FoldPhase
 
 namespace FinalFoldPhase
 
+/- Definition of the final folding round of the FRI protocol. -/
+
+/- Folding total round consistency predicate, for the final round. -/
 def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
   [DIsCyclicC : IsCyclicWithGen ↥D] {x : Fˣ} {k : ℕ} {s : ℕ}
   (cond : (k + 1) * s ≤ n) [DecidableEq F]
@@ -370,6 +388,7 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
       let β := f'.eval (s₀.1.1 ^ (2 ^ s));
         RoundConsistency.round_consistency_check x₀ pts β
 
+/- Input relation for the final folding round. -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((Statement F (Fin.last k) × (∀ j, OracleStatement D x s (Fin.last k) j)) × Witness F) :=
   let ind : Fin (n + 1) := ⟨s * k, by linarith⟩
@@ -389,6 +408,7 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       δᵣ(ostmt (Fin.last k) ∘ enum, code) < δ
   }
 
+/- Output relation for the final folding round. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F) :=
   let ind : Fin (n + 1) := ⟨s * (k + 1), by linarith⟩
@@ -426,12 +446,13 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       δᵣ((fun x => p.eval x.1.1) ∘ enum, code) < δ
   }
 
-/-- Each round of the FRI protocol begins with the verifier sending a random field element as the
-  challenge to the prover, and ends with the prover sending a codeword (of the desired length) to
-  the verifier. -/
+/-- The final folding round of the FRI protocol begins with the verifier sending a random field
+  element as the challenge to the prover, then in contrast to the previous folding rounds simply
+  sends the folded polynomial to the verifier. -/
 @[reducible]
 def pSpec (F : Type) [Semiring F] : ProtocolSpec 2 := ⟨!v[.V_to_P, .P_to_V], !v[F, Unit → F[X]]⟩
 
+/- `OracleInterface` instance for the `pSpec` of the final folding round of the FRI protocol. -/
 instance : ∀ j, OracleInterface ((pSpec F).Message j)
   | ⟨0, h⟩ => nomatch h
   | ⟨1, _⟩ => by
@@ -439,14 +460,12 @@ instance : ∀ j, OracleInterface ((pSpec F).Message j)
       simp only [Fin.vcons_fin_zero, Nat.reduceAdd, Fin.isValue, Fin.vcons_one]
       exact OracleInterface.instFunction
 
+/- Prover for the final folding round of the FRI protocol. -/
 noncomputable def finalFoldProver :
   OracleProver []ₒ
     (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
     (pSpec F) where
-  -- This may be difficult to reason about, given that the degree does get divided by 2 each round.
-  -- Might want to bake that into the type.
-  -- Also need to return all the prior oracle statements and prior challenges
   PrvState
   | 0 =>
     (Statement F (Fin.last k) × ((j : Fin (k + 1)) → OracleStatement D x s (Fin.last k) j)) ×
@@ -484,6 +503,7 @@ noncomputable def finalFoldProver :
       p
     ⟩
 
+/- Used to fetch the polynomial sent by the prover. -/
 def getConst (F : Type) [NonBinaryField F] : OracleComp [(pSpec F).Message]ₒ F[X] :=
   OracleComp.lift
     (by exact
@@ -493,7 +513,8 @@ def getConst (F : Type) [NonBinaryField F] : OracleComp [(pSpec F).Message]ₒ F
             (by simpa using ())
     )
 
-/-- The oracle verifier for the `i`-th round of the FRI protocol. -/
+/-- The oracle verifier for the final folding round of the FRI protocol.
+    Checks if the returned polynomial has degree less than `d`. -/
 noncomputable def finalFoldVerifier :
   OracleVerifier []ₒ
     (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k))
@@ -522,7 +543,7 @@ noncomputable def finalFoldVerifier :
     · simp
     · rfl
 
-/-- The oracle reduction that is the `i`-th round of the FRI protocol. -/
+/-- The oracle reduction that is the final folding round of the FRI protocol. -/
 noncomputable def finalFoldOracleReduction :
   OracleReduction []ₒ
     (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
@@ -535,8 +556,13 @@ end FinalFoldPhase
 
 namespace QueryRound
 
+/- Definition of the query round of the FRI protocol. -/
+
+/-  Parameter for the number of round consistency checks to be
+    run by the query round. -/
 variable (l : ℕ)
 
+/- Input/Output relations for the query round of the FRI protocol -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
   := FinalFoldPhase.outputRelation D x s cond δ
@@ -545,10 +571,15 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
   := FinalFoldPhase.outputRelation D x s cond δ
 
+/- The query round consistens of the verifier sending `l` elements of the
+   the first evaluation domain, which will be used as a basis for the round
+   consistency checks. This makes this implementation a public-coin protocol.
+-/
 @[reducible]
 def pSpec : ProtocolSpec 1 :=
   ⟨!v[.V_to_P], !v[Fin l → evalDomain D x 0]⟩
 
+/- `OracleInterface` instances for the query round `pSpec`. -/
 instance : ∀ j, OracleInterface ((pSpec D x l).Message j) := fun j =>
   match j with
   | ⟨0, h⟩ => nomatch h
@@ -559,6 +590,10 @@ instance : ∀ j, OracleInterface ((pSpec D x l).Challenge j) := fun j =>
     rw [Fin.fin_one_eq_zero j.1]
     exact OracleInterface.instFunction
 
+/- Query round prover, does nothing. After BCS transform is applied to
+   construct the non-interactive FRI protocol, it will have to respond with
+   appropriate Merkle proofs against the commitments sent in the non final folding
+   rounds. -/
 noncomputable def queryProver :
   OracleProver []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
@@ -579,6 +614,8 @@ noncomputable def queryProver :
 
   output := pure
 
+/- Used by the verified to query the `i`th oracle at `w`, a point of the
+   appropriate evaluation domain. -/
 def queryCodeword {s : ℕ} (k : ℕ) {i : Fin (k + 1)} (w : evalDomain D x (s * i.1)) :
     OracleComp [FinalOracleStatement D x s k]ₒ F :=
       OracleComp.lift <| by
@@ -588,6 +625,7 @@ def queryCodeword {s : ℕ} (k : ℕ) {i : Fin (k + 1)} (w : evalDomain D x (s *
             ⟨i.1, Nat.lt_succ_of_lt i.2⟩
             (by simpa using w)
 
+/- Used by the verifier to fetch the polynomial sent in final folding round. -/
 def getConst (k : ℕ) (s : ℕ) : OracleComp [FinalOracleStatement D x s k]ₒ F[X] :=
   OracleComp.lift
     (by
@@ -598,6 +636,9 @@ def getConst (k : ℕ) (s : ℕ) : OracleComp [FinalOracleStatement D x s k]ₒ 
             (by simpa using ())
     )
 
+/- Verifier for query round of the FRI protocol. Runs `l` checks on uniformly
+   sampled points in the first evaluation domain against the oracles sent during
+   every folding round. -/
 noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ) [DecidableEq F] :
   OracleVerifier []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s k)
@@ -643,7 +684,7 @@ noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ) [Decidabl
     unfold FinalOracleStatement pSpec
     aesop
 
-
+/- Query round oracle reduction. -/
 noncomputable def queryOracleReduction [DecidableEq F] :
   OracleReduction []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
