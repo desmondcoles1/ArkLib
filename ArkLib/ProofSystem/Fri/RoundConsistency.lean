@@ -213,7 +213,7 @@ noncomputable def round_consistency_check [Field 𝔽] [DecidableEq 𝔽]
   p.eval γ == β
 
 omit [CommSemiring 𝔽] in
-lemma poly_eq_of [Field 𝔽] {p q : 𝔽[X]} {n : ℕ}
+private lemma poly_eq_of [Field 𝔽] {p q : 𝔽[X]} {n : ℕ}
       (hp : p.degree < .some n) (hq : q.degree < .some n) (s : Finset 𝔽) :
     s.card ≥ n → (∀ x ∈ s, p.eval x = q.eval x) → p = q := by
   intros h h'
