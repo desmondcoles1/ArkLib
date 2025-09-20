@@ -20,7 +20,6 @@ import ArkLib.Data.Classes.Initialize
 import ArkLib.Data.Classes.Serde
 import ArkLib.Data.Classes.Slice
 import ArkLib.Data.Classes.ToNat
-import ArkLib.Data.Classes.Zeroize
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.BerlekampWelch.BerlekampWelch
 import ArkLib.Data.CodingTheory.BerlekampWelch.Condition
@@ -72,6 +71,7 @@ import ArkLib.Data.Hash.DomainSep
 import ArkLib.Data.Hash.DuplexSponge
 import ArkLib.Data.Hash.Poseidon2
 import ArkLib.Data.List.BigOperators
+import ArkLib.Data.List.Find
 import ArkLib.Data.List.HList
 import ArkLib.Data.List.Lemmas
 import ArkLib.Data.List.Vector
@@ -110,6 +110,16 @@ import ArkLib.OracleReduction.Composition.Sequential.General
 import ArkLib.OracleReduction.Equiv
 import ArkLib.OracleReduction.Execution
 import ArkLib.OracleReduction.FiatShamir.Basic
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Defs
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.AbortAnalysis
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.Backtrack
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.BadEvents
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.Completeness
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.KeyLemma
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.Lookahead
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.ProverTransform
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.Soundness
+import ArkLib.OracleReduction.FiatShamir.DuplexSponge.Security.TraceTransform
 import ArkLib.OracleReduction.FiatShamir.DuplexSponge.State
 import ArkLib.OracleReduction.LiftContext.Lens
 import ArkLib.OracleReduction.LiftContext.OracleReduction
