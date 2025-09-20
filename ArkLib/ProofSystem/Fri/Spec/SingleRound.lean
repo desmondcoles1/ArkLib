@@ -307,7 +307,7 @@ noncomputable def foldProver :
     ⟩
 
 
-/-- The oracle verifier for the `i`-th round of the FRI protocol. -/
+/-- The oracle verifier for the `i`-th non-final folding round of the FRI protocol. -/
 noncomputable def foldVerifier :
   OracleVerifier []ₒ
     (Statement F i.castSucc) (OracleStatement D x s i.castSucc)
