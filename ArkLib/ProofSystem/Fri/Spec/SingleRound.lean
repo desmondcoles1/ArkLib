@@ -74,9 +74,47 @@ def FinalOracleStatement (k : ℕ) : Fin (k + 2) → Type :=
 /-- The FRI protocol has as witness the polynomial that is supposed to correspond to the codeword in
   the oracle statement. -/
 @[reducible]
-def Witness (F : Type) [Semiring F] := F[X]
+def Witness (F : Type) [Semiring F] {k : ℕ} (s d : ℕ) (i : Fin (k + 2)) :=
+  F⦃< 2^(((k + 1) - i.1) * s) * d⦄[X]
 
--- Might want to refine the witness each round to `F⦃< 2^(n - i)⦄[X]`
+omit [Finite F] s_nz d_nz in
+private lemma witness_lift {F : Type} [NonBinaryField F]
+      {k s d : ℕ} [NeZero s] {p : F[X]} {α : F} {i : Fin (k + 1)} :
+    p ∈ Witness F s d i.castSucc →
+      RoundConsistency.foldα (2 ^ s) p α ∈ Witness F s d i.succ := by
+  intro deg_bound
+  unfold Witness at deg_bound ⊢
+  rw [Polynomial.mem_degreeLT] at deg_bound ⊢
+  simp only [Fin.coe_castSucc, Nat.cast_mul, Nat.cast_pow, Nat.cast_ofNat,
+    Fin.val_succ] at deg_bound ⊢
+  by_cases h : p = 0
+  · have arith : 2 ^ ((k - i.1) * s) * ↑d = WithBot.some (2 ^ ((k - i.1) * s) * d) := by rfl
+    rw [h, RoundConsistency.foldα_zero, degree_zero, Nat.add_sub_add_right, arith]
+    exact WithBot.bot_lt_coe _
+  · have arith : 2 ^ ((k + 1 - ↑i) * s) * ↑d = WithBot.some (2 ^ ((k + 1 - ↑i) * s) * d) := by rfl
+    have cast_lemma {a} : @Nat.cast (WithBot ℕ) _ a = WithBot.some a := rfl
+    rw [Polynomial.degree_eq_natDegree h, arith, cast_lemma, WithBot.coe_lt_coe] at deg_bound
+    have h' :=
+      lt_of_le_of_lt
+        (RoundConsistency.foldα_degree_le' (n := 2 ^ s) (f := p) (α := α))
+        deg_bound
+    have : 2 ^ ((k + 1 - i.1) * s) * d = 2 ^ s * (2 ^ ((k + 1 - (i.1 + 1)) * s) * d) := by
+      have : k + 1 - i.1 = ((k + 1) - (i.1 + 1)) + 1 := by
+        refine (Nat.sub_eq_iff_eq_add ?_).mp rfl
+        exact Nat.le_sub_of_add_le' (by omega)
+      rw [this, Nat.add_mul, one_mul, pow_add]
+      grind
+    rw [this] at h'
+    have h' := Nat.lt_of_mul_lt_mul_left h'
+    have arith' :
+      2 ^ ((k + 1 - (↑i + 1)) * s) * ↑d =
+        WithBot.some (2 ^ ((k + 1 - (↑i + 1)) * s) * d) := rfl
+    rw [arith']
+    by_cases h'' : RoundConsistency.foldα (2 ^ s) p α = 0
+    · rw [h'', degree_zero]
+      exact WithBot.bot_lt_coe _
+    · rw [Polynomial.degree_eq_natDegree h'', cast_lemma, WithBot.coe_lt_coe]
+      exact h'
 
 instance {i : Fin (k + 1)} : ∀ j, OracleInterface (OracleStatement D x s i j) :=
   fun _ => inferInstance
@@ -180,7 +218,11 @@ def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup F
 /- The FRI non-final folding round input relation, with proximity parameter `δ`, f
    for the `i`th round. -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) × Witness F) :=
+    Set
+      (
+        (Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) ×
+        Witness F s d i.castSucc.castSucc
+      ) :=
   let ind : Fin (n + 1) :=
     ⟨
       s * i,
@@ -206,14 +248,18 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last i.1) x = p.eval x.1.1 ∧
+      ∀ x, ostmt (Fin.last i.1) x = p.1.eval x.1.1 ∧
       δᵣ(ostmt (Fin.last i.1) ∘ enum, code) < δ
   }
 
 /- The FRI non-final folding round output relation, with proximity parameter `δ`,
    for the `i`th round. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) × Witness F) :=
+    Set
+      (
+        (Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) ×
+        Witness F s d i.succ.castSucc
+      ) :=
   let ind : Fin (n + 1) :=
     ⟨
       s * i.succ,
@@ -240,7 +286,7 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last i.succ) x = p.eval x.1.1 ∧
+      ∀ x, ostmt (Fin.last i.succ) x = p.1.eval x.1.1 ∧
       δᵣ(ostmt (Fin.last i.succ) ∘ enum, code) < δ
   }
 
@@ -264,30 +310,31 @@ instance {i : Fin k} : ∀ j, OracleInterface ((pSpec D x s i).Message j)
     this polynomial on the next evaluation domain. -/
 noncomputable def foldProver :
   OracleProver []ₒ
-    (Statement F i.castSucc) (OracleStatement D x s i.castSucc) (Witness F)
-    (Statement F i.succ) (OracleStatement D x s i.succ) (Witness F)
+    (Statement F i.castSucc) (OracleStatement D x s i.castSucc) (Witness F s d i.castSucc.castSucc)
+    (Statement F i.succ) (OracleStatement D x s i.succ) (Witness F s d i.castSucc.succ)
     (pSpec D x s i) where
-  -- This may be difficult to reason about, given that the degree does get divided by `2 ^ s` each round.
-  -- Might want to bake that into the type.
   PrvState
   | 0 =>
     (Statement F i.castSucc × ((j : Fin (↑i.castSucc + 1)) → OracleStatement D x s i.castSucc j)) ×
-      Witness F
+      Witness F s d i.castSucc.castSucc
   | _ =>
     (Statement F i.succ × ((j : Fin (↑i.castSucc + 1)) → OracleStatement D x s i.castSucc j)) ×
-      Witness F
+      Witness F s d i.castSucc.succ
 
   input := id
 
   sendMessage
   | ⟨0, h⟩ => nomatch h
   | ⟨1, _⟩ => fun ⟨⟨chals, o⟩, p⟩ =>
-    pure ⟨fun x => p.eval x.1.1, ⟨⟨chals, o⟩, p⟩⟩
+    pure ⟨fun x => p.1.eval x.1.1, ⟨⟨chals, o⟩, p⟩⟩
 
   receiveChallenge
   | ⟨0, _⟩ => fun ⟨⟨chals, o⟩, p⟩ => pure <|
     fun (α : F) =>
-      ⟨⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩, RoundConsistency.foldα (2 ^ s) p α⟩
+      ⟨
+        ⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩,
+        ⟨RoundConsistency.foldα (2 ^ s) p.1 α, witness_lift p.2⟩
+      ⟩
   | ⟨1, h⟩ => nomatch h
 
   output := fun ⟨⟨chals, o⟩, p⟩ => pure <|
@@ -301,11 +348,10 @@ noncomputable def foldProver :
               rw [Fin.coe_castSucc]
               exact Nat.lt_add_right 1 h
             ⟩
-          else fun x => p.eval x.1.1
+          else fun x => p.1.eval x.1.1
       ⟩,
       p
     ⟩
-
 
 /-- The oracle verifier for the `i`-th non-final folding round of the FRI protocol. -/
 noncomputable def foldVerifier :
@@ -336,10 +382,10 @@ noncomputable def foldVerifier :
 /-- The oracle reduction that is the `i`-th round of the FRI protocol. -/
 noncomputable def foldOracleReduction :
   OracleReduction []ₒ
-    (Statement F i.castSucc) (OracleStatement D x s i.castSucc) (Witness F)
-    (Statement F i.succ) (OracleStatement D x s i.succ) (Witness F)
+    (Statement F i.castSucc) (OracleStatement D x s i.castSucc) (Witness F s d i.castSucc.castSucc)
+    (Statement F i.succ) (OracleStatement D x s i.succ) (Witness F s d i.succ.castSucc)
     (pSpec D x s i) where
-  prover := foldProver D x s i
+  prover := foldProver D x s d i
   verifier := foldVerifier D x s i
 
 end FoldPhase
@@ -390,7 +436,14 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
 
 /- Input relation for the final folding round. -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((Statement F (Fin.last k) × (∀ j, OracleStatement D x s (Fin.last k) j)) × Witness F) :=
+    Set
+      (
+        (
+          Statement F (Fin.last k) ×
+          (∀ j, OracleStatement D x s (Fin.last k) j)
+        ) ×
+        Witness F s d (Fin.last k).castSucc
+      ) :=
   let ind : Fin (n + 1) := ⟨s * k, by linarith⟩
   let code : Submodule F (Fin (2 ^ (n - s * k)) → F) :=
     ReedSolomon.code
@@ -404,13 +457,17 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       FoldPhase.statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last k) x = p.eval x.1.1 ∧
+      ∀ x, ostmt (Fin.last k) x = p.1.eval x.1.1 ∧
       δᵣ(ostmt (Fin.last k) ∘ enum, code) < δ
   }
 
 /- Output relation for the final folding round. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F) :=
+    Set
+      (
+        (FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) ×
+        Witness F s d (Fin.last (k + 1))
+      ) :=
   let ind : Fin (n + 1) := ⟨s * (k + 1), by linarith⟩
   let code : Submodule F (Fin (2 ^ (n - s * (k + 1))) → F) :=
     ReedSolomon.code
@@ -436,14 +493,14 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
         ;
       let p' : FinalOracleStatement D x s k (Fin.last (k + 1)) := by
         simpa only [FinalOracleStatement, Fin.val_last, ↓reduceIte]
-          using fun _ => p
+          using fun _ => p.1
       let f  := ostmt (Fin.last k).castSucc;
       let f' := ostmt (Fin.last (k + 1));
       let x₀  := stmt (Fin.last k);
       FoldPhase.statementConsistent cond stmt' ostmt' ∧
       roundConsistent cond f f' x₀ ∧
       ostmt (Fin.last (k + 1)) = p' ∧
-      δᵣ((fun x => p.eval x.1.1) ∘ enum, code) < δ
+      δᵣ((fun x => p.1.eval x.1.1) ∘ enum, code) < δ
   }
 
 /-- The final folding round of the FRI protocol begins with the verifier sending a random field
@@ -463,28 +520,38 @@ instance : ∀ j, OracleInterface ((pSpec F).Message j)
 /- Prover for the final folding round of the FRI protocol. -/
 noncomputable def finalFoldProver :
   OracleProver []ₒ
-    (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
+    (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k))
+      (Witness F s d (Fin.last k).castSucc)
+    (FinalStatement F k) (FinalOracleStatement D x s k)
+      (Witness F s d (Fin.last (k + 1)))
     (pSpec F) where
   PrvState
   | 0 =>
     (Statement F (Fin.last k) × ((j : Fin (k + 1)) → OracleStatement D x s (Fin.last k) j)) ×
-      Witness F
+      Witness F s d (Fin.last k).castSucc
   | _ =>
     (FinalStatement F k × ((j : Fin (k + 1)) → OracleStatement D x s (Fin.last k) j)) ×
-      Witness F
+      Witness F s d (Fin.last (k + 1))
 
   input := id
 
   sendMessage
   | ⟨0, h⟩ => nomatch h
   | ⟨1, _⟩ => fun ⟨⟨chals, o⟩, p⟩ =>
-    pure ⟨fun x => p, ⟨⟨chals, o⟩, p⟩⟩
+    pure ⟨fun x => p.1, ⟨⟨chals, o⟩, p⟩⟩
 
   receiveChallenge
   | ⟨0, _⟩ => fun ⟨⟨chals, o⟩, p⟩ => pure <|
     fun (α : F) =>
-      ⟨⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩, RoundConsistency.foldα (2 ^ s) p α⟩
+      ⟨
+        ⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩,
+        ⟨
+          RoundConsistency.foldα (2 ^ s) p.1 α,
+          by
+            simpa only [(rfl : (Fin.last k).succ = (Fin.last (k + 1)))] using
+              witness_lift p.2
+        ⟩
+      ⟩
   | ⟨1, h⟩ => nomatch h
 
   output := fun ⟨⟨chals, o⟩, p⟩ => pure <|
@@ -495,7 +562,7 @@ noncomputable def finalFoldProver :
           unfold FinalOracleStatement
           if h : j.1 = k + 1
           then
-            simpa [h] using fun x => p
+            simpa [h] using fun x => p.1
           else
           simpa [h, ↓reduceIte, OracleStatement, evalDomain] using
             o ⟨j.1, Nat.lt_of_le_of_ne (Fin.is_le j) h⟩
@@ -546,10 +613,12 @@ noncomputable def finalFoldVerifier :
 /-- The oracle reduction that is the final folding round of the FRI protocol. -/
 noncomputable def finalFoldOracleReduction :
   OracleReduction []ₒ
-    (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k)) (Witness F)
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
+    (Statement F (Fin.last k)) (OracleStatement D x s (Fin.last k))
+      (Witness F s d (Fin.last k).castSucc)
+    (FinalStatement F k) (FinalOracleStatement D x s k)
+      (Witness F s d (Fin.last (k + 1)))
     (pSpec F) where
-  prover := finalFoldProver D x s
+  prover := finalFoldProver D x s d
   verifier := finalFoldVerifier D x s d
 
 end FinalFoldPhase
@@ -564,12 +633,20 @@ variable (l : ℕ)
 
 /- Input/Output relations for the query round of the FRI protocol -/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
-  := FinalFoldPhase.outputRelation D x s cond δ
+    Set
+      (
+        (FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) ×
+        Witness F s d (Fin.last (k + 1))
+      )
+  := FinalFoldPhase.outputRelation D x s d cond δ
 
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
-    Set ((FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) × Witness F)
-  := FinalFoldPhase.outputRelation D x s cond δ
+    Set
+      (
+        (FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) ×
+        Witness F s d (Fin.last (k + 1))
+      )
+  := FinalFoldPhase.outputRelation D x s d cond δ
 
 /- The query round consistens of the verifier sending `l` elements of the
    the first evaluation domain, which will be used as a basis for the round
@@ -596,13 +673,13 @@ instance : ∀ j, OracleInterface ((pSpec D x l).Challenge j) := fun j =>
    rounds. -/
 noncomputable def queryProver :
   OracleProver []ₒ
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
+    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F s d (Fin.last (k + 1)))
+    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F s d (Fin.last (k + 1)))
     (pSpec D x l) where
   PrvState
   | _ =>
     (FinalStatement F k × ((i : Fin (k + 2)) → FinalOracleStatement D x s k i)) ×
-      Witness F
+      Witness F s d (Fin.last (k + 1))
 
   input := id
 
@@ -687,10 +764,10 @@ noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ) [Decidabl
 /- Query round oracle reduction. -/
 noncomputable def queryOracleReduction [DecidableEq F] :
   OracleReduction []ₒ
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
-    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F)
+    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F s d (Fin.last (k + 1)))
+    (FinalStatement F k) (FinalOracleStatement D x s k) (Witness F s d (Fin.last (k + 1)))
     (pSpec D x l) where
-  prover := queryProver D x s l
+  prover := queryProver D x s d l
   verifier := queryVerifier D x s (round_bound domain_size_cond) l
 
 end QueryRound

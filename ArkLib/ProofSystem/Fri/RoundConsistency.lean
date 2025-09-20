@@ -7,7 +7,7 @@ open Polynomial
 
 namespace RoundConsistency
 
-variable {𝔽 : Type} [CommSemiring 𝔽]
+variable {𝔽 : Type} [CommSemiring 𝔽] [NoZeroDivisors 𝔽]
 
 /- Definition of n-way polynomial split -/
 def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
@@ -56,6 +56,7 @@ def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
       ⟩
 
 /- Proof of key identity `split` has to satisfy. -/
+omit [NoZeroDivisors 𝔽] in
 lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
     f =
       ∑ i : Fin n,
@@ -202,9 +203,78 @@ lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
   · intros h
     simp at h
 
+/- Lemma bounding degree of each `n`-split polynomial. -/
+omit [NoZeroDivisors 𝔽] in
+lemma split_degree_le {n : ℕ} {f : 𝔽[X]} [inst : NeZero n] :
+  ∀ {i}, (split f n i).natDegree ≤ f.natDegree / n := by
+    intros i
+    unfold split Polynomial.natDegree Polynomial.degree
+    simp only [support_ofFinsupp]
+    rw [WithBot.unbotD_le_iff (by simp)]
+    simp only [Finset.max_le_iff, Finset.mem_filterMap, mem_support_iff, ne_eq,
+      Option.ite_none_right_eq_some, Option.some.injEq, WithBot.coe_le_coe, forall_exists_index,
+      and_imp]
+    intros _ _ h _ h'
+    rw [←h']
+    refine Nat.div_le_div ?_ (Nat.le_refl n) inst.out
+    exact le_natDegree_of_ne_zero h
+
 /- Generalised n-way folding. -/
 noncomputable def foldα (n : ℕ) (f : 𝔽[X]) (α : 𝔽) [inst : NeZero n] : 𝔽[X] :=
   ∑ i : Fin n, Polynomial.C α ^ i.1 * split f n i
+
+private lemma fold_max_lemma {ι : Type} {s : Finset ι} {f : ι → ℕ} {n : ℕ} :
+    (∀ i ∈ s, f i ≤ n) → Finset.fold max 0 f s ≤ n := by
+  intros h
+  apply Nat.le_of_lt_succ
+  rw [Finset.fold_max_lt]
+  apply And.intro (Nat.zero_lt_succ n)
+  intros x h'
+  exact Nat.lt_add_one_of_le (h x h')
+
+/- Lemma bounding degree of folded polynomial. -/
+omit [NoZeroDivisors 𝔽] in
+lemma foldα_degree_le {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
+    (foldα n f α).natDegree ≤ f.natDegree / n := by
+  unfold foldα
+  by_cases h : α = 0
+  · have : ∑ i, C α ^ i.1 * split f n i = split f n 0 := by
+      rw [h]
+      simp only [map_zero]
+      have : split f n 0 = (0 ^ ((0 : Fin n) : ℕ)) * split f n 0 := by
+        simp
+      rw [this]
+      apply Finset.sum_eq_single (ι := Fin n) 0
+      · intros b _ h
+        simp [h]
+      · simp
+    rw [this]
+    exact split_degree_le
+  · transitivity
+    · exact Polynomial.natDegree_sum_le _ _
+    · rw [Function.comp_def]
+      apply fold_max_lemma
+      intros i _
+      transitivity
+      · exact Polynomial.natDegree_mul_le
+      · rw [←Polynomial.C_pow, Polynomial.natDegree_C, zero_add]
+        exact split_degree_le
+
+/- Lemma bounding degree of folded polynomial. -/
+omit [NoZeroDivisors 𝔽] in
+lemma foldα_degree_le' {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
+    n * (foldα n f α).natDegree ≤ f.natDegree := by
+  rw [mul_comm]
+  apply (Nat.le_div_iff_mul_le (Nat.zero_lt_of_ne_zero inst.out)).mp
+  exact foldα_degree_le
+
+omit [NoZeroDivisors 𝔽] in
+lemma foldα_zero {s : ℕ} {α : 𝔽} : foldα (2 ^ s) 0 α = 0 := by
+  unfold foldα split
+  have :
+    { toFinsupp := { support := ∅, toFun := fun e ↦ 0, mem_support_toFun := (by simp) } } =
+      (0 : 𝔽[X]) := by rfl
+  simp [this]
 
 /- Generalised round-consistency check. -/
 noncomputable def round_consistency_check [Field 𝔽] [DecidableEq 𝔽]
