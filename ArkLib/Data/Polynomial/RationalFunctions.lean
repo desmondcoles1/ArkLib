@@ -38,7 +38,7 @@ open Polynomial.Bivariate
 open ToRatFunc
 open Ideal
 
-namespace RatFunc
+namespace AppendixA
 
 section
 
@@ -53,7 +53,7 @@ noncomputable def H_tilde (H : Polynomial (Polynomial F)) : Polynomial (RatFunc 
   let H' := Polynomial.eval₂ (RingHom.comp Polynomial.C univPolyHom) S H
   W ^ (d - 1) * H'
 
-/-- The monisized version H tilda is irreducible if the originial polynomial H is irreducible. -/
+/-- The monisized version H tilde is irreducible if the originial polynomial H is irreducible. -/
 lemma irreducibleHTilderOfIrreducible {H : Polynomial (Polynomial F)} :
     (Irreducible H → Irreducible (H_tilde H)) := by
   -- have bla := @Polynomial.Monic.irreducible_of_irreducible_map
@@ -87,15 +87,10 @@ def H_tilde' (H : Polynomial (Polynomial F)) : Polynomial (Polynomial F) := sorr
 abbrev 𝒪 (H : Polynomial (Polynomial F)) : Type :=
   (Polynomial (Polynomial F)) ⧸ (Ideal.span {H_tilde' H})
 
--- KH : when/if we have maps ι : 𝒪 → 𝕃 and φ : 𝕃 → 𝒪
-
 /-- The ring of regular elements field `𝒪` is a indeed a ring. -/
 noncomputable instance {H : Polynomial (Polynomial F)} : Ring (𝒪 H) := by
   exact Ideal.Quotient.ring (Ideal.span {H_tilde' H})
 
--- change the sorry for something along the lines of (π_z z H) β = 0 when we have π_z defined
-noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
-  {z : F | ∃ t_z : F, evalEval z t_z H = 0 ∧ sorry}
 
 -- maybe add a lemma that S_β is finite if F is a finite field. Could be useful for
 -- Claim A.1
@@ -109,8 +104,6 @@ noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
 --   ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
 --   natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H) : F[X] → ℕ := sorry
 
-def weight (p : F[X][Y]) {H : F[X][Y]} {D : ℕ} (_ : D ≥ Bivariate.totalDegree H) : ℕ :=
-  Finset.sup p.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (p.coeff deg).natDegree)
 
 noncomputable def myHom (H : F[X][Y]) : 𝒪 H →+* 𝕃 H :=
   Ideal.quotientMap
@@ -127,11 +120,38 @@ def rationalRoot (H : Polynomial (Polynomial F)) (z : F) : Type :=
   { t_z : F // evalEval z t_z H = 0 }
 
 noncomputable def π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot H z) :
-  RingHom (F[X][Y]) F := Polynomial.evalEvalRingHom z root.1
+   F[X][Y] →+* F := Polynomial.evalEvalRingHom z root.1
 
 noncomputable def π_z (z : F) (H : Polynomial (Polynomial F)) (root : rationalRoot H z) :
                     𝒪 H →+* F :=
   Ideal.Quotient.lift (Ideal.span {H_tilde' H}) (π_z_lift H z root) sorry
 
+def quotientReps (a : F) (I : Ideal F) : Set F :=
+  {b : F | (Ideal.Quotient.mk I) a = (Ideal.Quotient.mk I) b}
+
+def polyReps (f : F[X][Y]) (H : F[X][Y]) : Set F[X][Y] :=
+  {g : F[X][Y] | (Ideal.Quotient.mk (Ideal.span {H})) f = (Ideal.Quotient.mk (Ideal.span {H})) g}
+
+def canonicalRep𝒪H (f : F[X][Y]) (H : F[X][Y]) : Set F[X][Y] :=
+  {g ∈ polyReps f H | Polynomial.natDegree g < H.natDegree}
+
+noncomputable def canonicalRep𝒪H' (f : F[X][Y]) (H : F[X][Y]) : F[X][Y] :=
+  Polynomial.modByMonic f H
+
+def weight (p : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H) : ℕ :=
+  Finset.sup p.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (p.coeff deg).natDegree)
+
+noncomputable def weight𝒪H (f : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
+  : ℕ := weight (canonicalRep𝒪H' f H) H D hD
+
+noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
+  {z : F | ∃ root : rationalRoot H z, (π_z z H root) β = 0}
+
+lemma A_1 (H : Polynomial (Polynomial F)) (β : 𝒪 H)
+  (f : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
+  (S_β_ne : (S_β H β).Nonempty)
+  (S_β_card : Set.ncard (S_β H β) > (weight𝒪H f H D hD) * H.natDegree) :
+  (myHom H) β = 0 := by sorry
+
 end
-end RatFunc
+end AppendixA
