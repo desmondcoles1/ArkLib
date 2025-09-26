@@ -153,5 +153,29 @@ lemma A_1 (H : Polynomial (Polynomial F)) (β : 𝒪 H)
   (S_β_card : Set.ncard (S_β H β) > (weight𝒪H f H D hD) * H.natDegree) :
   (myHom H) β = 0 := by sorry
 
+
+
+variable (R : F[X][X][X]) (R_irreducible : Irreducible R)
+variable (x₀ : F) {H : F[X][Y]} [H_irreducible : Fact (Irreducible H)]
+variable (H_fac : H ∣ Bivariate.evalX (Polynomial.C x₀) R)
+
+def liftToFunctionField : F[X] →+* 𝕃 H := sorry
+
+noncomputable def ζ (α₀ : 𝕃 H) : 𝕃 H :=
+    Polynomial.eval₂ liftToFunctionField α₀
+      (Bivariate.evalX (Polynomial.C x₀) R.derivative)
+
+noncomputable def ξ : regularElms H :=
+  let d := R.natDegree
+  let W  : 𝕃 H := liftToFunctionField (H.leadingCoeff)
+  let α₀ : 𝕃 H := liftToFunctionField (Polynomial.X) / W
+  ⟨W ^ (d - 2) * ζ R x₀ α₀, sorry⟩
+
+def β : ℕ → regularElms H := sorry
+
+noncomputable def henselLiftCoeffs (t : ℕ) : 𝕃 H :=
+  let W  : 𝕃 H := liftToFunctionField (H.leadingCoeff)
+  (β t).1 / (W ^ (t + 1) * (ξ R x₀).1 ^ (2*t - 1))
+
 end
 end AppendixA
