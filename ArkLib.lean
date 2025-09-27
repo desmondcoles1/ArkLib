@@ -20,6 +20,7 @@ import ArkLib.Data.Classes.Initialize
 import ArkLib.Data.Classes.Serde
 import ArkLib.Data.Classes.Slice
 import ArkLib.Data.Classes.ToNat
+import ArkLib.Data.CodingTheory
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.BerlekampWelch.BerlekampWelch
 import ArkLib.Data.CodingTheory.BerlekampWelch.Condition
