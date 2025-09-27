@@ -11,10 +11,16 @@ import ArkLib.ProofSystem.Fri.RoundConsistency
 /-!
 # The FRI protocol
 
-We describe the FRI oracle reduction as a composition of many single rounds, and a final
-(zero-interaction) query round where the oracle verifier makes all queries to all received oracle
-codewords. f` is the sum over `a : α`
-  of the probability of `a` under `p` times the measure of the set under `f a`. -/
+  We describe the FRI oracle reduction as a composition of many single rounds, and a final
+  (zero-interaction) query round where the oracle verifier makes all queries to all received oracle
+  codewords.
+
+  This formalisation tries to encompass all of the generalisations of the FRI
+  low-degree test covered in the "A summary on the {FRI} low degree test" paper
+  by Ulrich Haböck (Cryptology ePrint Archive, Paper 2022/1216), see:
+  https://eprint.iacr.org/2022/1216
+
+ -/
 
 namespace Fri
 
@@ -248,9 +254,14 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last i.1) x = p.1.eval x.1.1 ∧
-      δᵣ(ostmt (Fin.last i.1) ∘ enum, code) < δ
+      δᵣ(ostmt (Fin.last i.1) ∘ enum, code) ≤ δ
   }
+
+  /-
+      statementConsistent cond stmt ostmt ∧
+      ∀ x, ostmt 0 x = p.1.eval x.1.1 ∧
+      δᵣ(ostmt 0 ∘ enum, code) ≤ δ
+  -/
 
 /- The FRI non-final folding round output relation, with proximity parameter `δ`,
    for the `i`th round. -/
@@ -286,8 +297,7 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last i.succ) x = p.1.eval x.1.1 ∧
-      δᵣ(ostmt (Fin.last i.succ) ∘ enum, code) < δ
+      δᵣ(ostmt (Fin.last i.succ) ∘ enum, code) ≤ δ
   }
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
@@ -457,8 +467,7 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       FoldPhase.statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt (Fin.last k) x = p.1.eval x.1.1 ∧
-      δᵣ(ostmt (Fin.last k) ∘ enum, code) < δ
+      δᵣ(ostmt (Fin.last k) ∘ enum, code) ≤ δ
   }
 
 /- Output relation for the final folding round. -/
@@ -499,8 +508,7 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       let x₀  := stmt (Fin.last k);
       FoldPhase.statementConsistent cond stmt' ostmt' ∧
       roundConsistent cond f f' x₀ ∧
-      ostmt (Fin.last (k + 1)) = p' ∧
-      δᵣ((fun x => p.1.eval x.1.1) ∘ enum, code) < δ
+      δᵣ((fun x => p.1.eval x.1.1) ∘ enum, code) ≤ δ
   }
 
 /-- The final folding round of the FRI protocol begins with the verifier sending a random field
