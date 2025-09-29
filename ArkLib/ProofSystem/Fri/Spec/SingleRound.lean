@@ -242,19 +242,12 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
         refine Nat.mul_lt_mul_of_pos_left this_2 ?_
         exact Nat.zero_lt_of_ne_zero this_1
     ⟩
-  let code : Submodule F (Fin (2 ^ (n - s * i)) → F) :=
-    ReedSolomon.code
-        (Function.Embedding.trans
-          (CosetDomain.domain_enum D x ind)
-          (CosetDomain.domain_emb D x)
-        )
-        (2 ^ (n - s * i))
   let enum : Fin (2 ^ (n - ↑ind)) → ↑(evalDomain D x (s * ↑(Fin.last ↑i))) := by
     simpa [ind] using (CosetDomain.domain_enum D x ind).1
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last i.1) ∘ enum, code) ≤ δ
+      δᵣ(ostmt (Fin.last i.1) ∘ enum, fun j => p.1.eval (enum j).1.1) ≤ δ
   }
 
   /-
@@ -285,19 +278,12 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
         · simp
         · grind
     ⟩
-  let code : Submodule F (Fin (2 ^ (n - s * i.succ)) → F) :=
-    ReedSolomon.code
-        (Function.Embedding.trans
-          (CosetDomain.domain_enum D x ind)
-          (CosetDomain.domain_emb D x)
-        )
-        (2 ^ (n - s * i.succ))
   let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * i.succ)) := by
     simpa [ind] using (CosetDomain.domain_enum D x ind).1
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last i.succ) ∘ enum, code) ≤ δ
+      δᵣ(ostmt (Fin.last i.1.succ) ∘ enum, fun j => p.1.eval (enum j).1.1) ≤ δ
   }
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
@@ -467,7 +453,7 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
   {
     ⟨⟨stmt, ostmt⟩, p⟩ |
       FoldPhase.statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last k) ∘ enum, code) ≤ δ
+      δᵣ(ostmt (Fin.last k) ∘ enum, fun i => p.1.eval (enum i).1.1) ≤ δ
   }
 
 /- Output relation for the final folding round. -/
