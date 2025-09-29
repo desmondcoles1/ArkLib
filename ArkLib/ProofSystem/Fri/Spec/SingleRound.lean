@@ -228,33 +228,7 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       (
         (Statement F i.castSucc × (∀ j, OracleStatement D x s i.castSucc j)) ×
         Witness F s d i.castSucc.castSucc
-      ) :=
-  let ind : Fin (n + 1) :=
-    ⟨
-      s * i,
-      by
-        have := s_nz.out
-        have := i.2
-        have : s * k < (n + 1) := by
-          grind
-        refine lt_trans ?_ this
-        expose_names
-        refine Nat.mul_lt_mul_of_pos_left this_2 ?_
-        exact Nat.zero_lt_of_ne_zero this_1
-    ⟩
-  let enum : Fin (2 ^ (n - ↑ind)) → ↑(evalDomain D x (s * ↑(Fin.last ↑i))) := by
-    simpa [ind] using (CosetDomain.domain_enum D x ind).1
-  {
-    ⟨⟨stmt, ostmt⟩, p⟩ |
-      statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last i.1) ∘ enum, fun j => p.1.eval (enum j).1.1) ≤ δ
-  }
-
-  /-
-      statementConsistent cond stmt ostmt ∧
-      ∀ x, ostmt 0 x = p.1.eval x.1.1 ∧
-      δᵣ(ostmt 0 ∘ enum, code) ≤ δ
-  -/
+      ) := sorry
 
 /- The FRI non-final folding round output relation, with proximity parameter `δ`,
    for the `i`th round. -/
@@ -263,28 +237,7 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       (
         (Statement F i.succ × (∀ j, OracleStatement D x s i.succ j)) ×
         Witness F s d i.succ.castSucc
-      ) :=
-  let ind : Fin (n + 1) :=
-    ⟨
-      s * i.succ,
-      by
-        have bla := s_nz.out
-        have := i.2
-        have cond : s * (k + 1) < n + 1 := by
-          rw [mul_comm] at cond
-          exact Order.lt_add_one_iff.mpr cond
-        refine lt_trans ?_ cond
-        apply Nat.mul_lt_mul_of_pos_left
-        · simp
-        · grind
-    ⟩
-  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * i.succ)) := by
-    simpa [ind] using (CosetDomain.domain_enum D x ind).1
-  {
-    ⟨⟨stmt, ostmt⟩, p⟩ |
-      statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last i.1.succ) ∘ enum, fun j => p.1.eval (enum j).1.1) ≤ δ
-  }
+      ) := sorry
 
 /-- Each round of the FRI protocol begins with the verifier sending a random field element as the
   challenge to the prover, and ends with the prover sending an oracle to
@@ -439,22 +392,7 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
           (∀ j, OracleStatement D x s (Fin.last k) j)
         ) ×
         Witness F s d (Fin.last k).castSucc
-      ) :=
-  let ind : Fin (n + 1) := ⟨s * k, by linarith⟩
-  let code : Submodule F (Fin (2 ^ (n - s * k)) → F) :=
-    ReedSolomon.code
-        (Function.Embedding.trans
-          (CosetDomain.domain_enum D x ind)
-          (CosetDomain.domain_emb D x)
-        )
-        (2 ^ (n - s * (k + 1)))
-  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * k)) := by
-    simpa [ind] using (CosetDomain.domain_enum D x ind).1
-  {
-    ⟨⟨stmt, ostmt⟩, p⟩ |
-      FoldPhase.statementConsistent cond stmt ostmt ∧
-      δᵣ(ostmt (Fin.last k) ∘ enum, fun i => p.1.eval (enum i).1.1) ≤ δ
-  }
+      ) := sorry
 
 /- Output relation for the final folding round. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
@@ -462,40 +400,7 @@ def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
       (
         (FinalStatement F k × ∀ j, FinalOracleStatement D x s k j) ×
         Witness F s d (Fin.last (k + 1))
-      ) :=
-  let ind : Fin (n + 1) := ⟨s * (k + 1), by linarith⟩
-  let code : Submodule F (Fin (2 ^ (n - s * (k + 1))) → F) :=
-    ReedSolomon.code
-        (Function.Embedding.trans
-          (CosetDomain.domain_enum D x ind)
-          (CosetDomain.domain_emb D x)
-        )
-        (2 ^ (n - s * (k + 1)))
-  let enum : Fin (2 ^ (n - ind)) → ↑(evalDomain D x (s * (k + 1))) := by
-    simpa [ind] using (CosetDomain.domain_enum D x ind).1
-  {
-    ⟨⟨stmt, ostmt⟩, p⟩ |
-      let stmt' : Statement F (Fin.last k) := stmt ∘ Fin.castAdd 1;
-      let ostmt' : (∀ j, OracleStatement D x s (Fin.last k) j) :=
-        fun j => by
-          specialize ostmt j.castSucc
-          simp only
-            [
-              FinalOracleStatement, Fin.val_last, Fin.coe_castSucc,
-              (Nat.ne_of_lt (by simp) : j.1 ≠ k + 1), ↓reduceIte
-            ] at ostmt
-          exact ostmt
-        ;
-      let p' : FinalOracleStatement D x s k (Fin.last (k + 1)) := by
-        simpa only [FinalOracleStatement, Fin.val_last, ↓reduceIte]
-          using fun _ => p.1
-      let f  := ostmt (Fin.last k).castSucc;
-      let f' := ostmt (Fin.last (k + 1));
-      let x₀  := stmt (Fin.last k);
-      FoldPhase.statementConsistent cond stmt' ostmt' ∧
-      roundConsistent cond f f' x₀ ∧
-      δᵣ((fun x => p.1.eval x.1.1) ∘ enum, code) ≤ δ
-  }
+      ) := sorry
 
 /-- The final folding round of the FRI protocol begins with the verifier sending a random field
   element as the challenge to the prover, then in contrast to the previous folding rounds simply
