@@ -60,6 +60,35 @@ def count_sorries(diff):
                 new_sorries += 1
     return new_sorries
 
+def generate_build_summary(base_log, pr_log):
+    """
+    Generate a summary of new warnings and errors from the build logs.
+    """
+    def parse_log(log):
+        issues = set()
+        for line in log.splitlines():
+            if "warning:" in line or "error:" in line:
+                # Normalize the path by removing the branch directory prefix
+                line = line.replace("pr-branch/", "").replace("base-branch/", "")
+                issues.add(line)
+        return issues
+
+    base_issues = parse_log(base_log)
+    pr_issues = parse_log(pr_log)
+
+    new_issues = pr_issues - base_issues
+
+    if not new_issues:
+        return ""
+
+    summary = "\n\n**New Warnings/Errors:**\n"
+    summary += "```\n"
+    for issue in sorted(list(new_issues)):
+        summary += f"{issue}\n"
+    summary += "```\n"
+
+    return summary
+
 if __name__ == "__main__":
     # Ensure Gemini API key is available
     if "GEMINI_API_KEY" not in os.environ:
@@ -72,8 +101,11 @@ if __name__ == "__main__":
         diff = f.read()
     summary = generate_summary(diff)
     sorries = count_sorries(diff)
-
     summary += f"\n\n**New 'sorry's:** {sorries}\n"
+
+    base_build_log = os.environ.get("BASE_BUILD_LOG", "")
+    pr_build_log = os.environ.get("PR_BUILD_LOG", "")
+    summary += generate_build_summary(base_build_log, pr_build_log)
 
     # Ensure GitHub token and other variables are available for posting the comment
     if "GITHUB_TOKEN" not in os.environ or "GITHUB_REPOSITORY" not in os.environ or "PR_NUMBER" not in os.environ:
