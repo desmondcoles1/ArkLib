@@ -26,7 +26,7 @@ def generate_summary(diff):
     """
     Generate a summary of the changes from a diff.
     """
-    summary = "### 🤖 AI-Generated PR Summary\n\n"
+    summary = "### 🤖 AI-Generated PR Summary\n\n<!-- AI-Generated PR Summary -->\n\n"
     summary += "**Files Changed:**\n"
     files = set()
     # A simple parser for changed files from the diff
@@ -84,4 +84,15 @@ if __name__ == "__main__":
         g = Github(auth=auth)
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         pr = repo.get_pull(int(os.environ["PR_NUMBER"]))
-        pr.create_issue_comment(summary)
+
+        # Find and update existing comment, or create a new one
+        existing_comment = None
+        for comment in pr.get_issue_comments():
+            if "<!-- AI-Generated PR Summary -->" in comment.body:
+                existing_comment = comment
+                break
+
+        if existing_comment:
+            existing_comment.edit(summary)
+        else:
+            pr.create_issue_comment(summary)
