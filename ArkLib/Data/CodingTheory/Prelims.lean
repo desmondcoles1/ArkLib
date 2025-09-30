@@ -9,6 +9,10 @@ import Mathlib.Data.Matrix.Rank
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import ArkLib.Data.Fin.Basic
 
+import Mathlib.Data.Matrix.Basic --I added
+
+
+
 noncomputable section
 
 variable {F : Type*}
@@ -37,6 +41,7 @@ def colSpan : Submodule F (ι → F) :=
 def colRank : ℕ :=
   Module.finrank F (colSpan U)
 
+
 end
 
 section
@@ -50,17 +55,46 @@ def subLeftFull (U : Matrix (Fin m) (Fin n) F) (c_reindex : Fin m → Fin n) :
 variable [CommRing F]
          {U : Matrix (Fin m) (Fin n) F}
 
+--myown below
+
+
+--prove that this column rank is equal to the usual column rank in mathlib, my own lemma
+lemma colSpan_eq_column_span (U : Matrix (Fin m) (Fin n) F) :
+  Submodule.span F (Set.range U.col) =
+  Submodule.span F { U.transpose i | i : Fin n } := by
+  rw[Set.range]
+  simp [Matrix.col, Matrix.transpose]
+
+
+lemma rank_eq_col_rank :
+  U.rank = colRank U := by
+  rw [Matrix.rank_eq_finrank_span_cols, colSpan_eq_column_span]
+  rfl
+  -- use theorem matrix.rank_eq_finrank_span_cols, and just make sure the sets of columnbs are equal
+
+--this is decidedly not in mathlib and actually isn't obvious!
+lemma rank_eq_row_rank :
+  U.rank = rowRank U := by sorry
+-- rw [Matrix.rank_eq_finrank_span_rows, colSpan_eq_column_span]
+--  rfl
+
+-- myown above
+
 lemma rank_eq_min_row_col_rank  :
   U.rank = min (rowRank U) (colRank U) := by sorry
+  --consequence of above
+
 
 lemma rank_eq_iff_det_ne_zero {U : Matrix (Fin n) (Fin n) F} :
   U.rank = n ↔ Matrix.det U ≠ 0 := by sorry
+  --this has to be in the determinant file or rank file in mathlib
 
 lemma rank_eq_iff_subUpFull_eq (h : n ≤ m) :
-  U.rank = n ↔ (subUpFull U (Fin.castLE h)).rank = n := sorry
+  U.rank = n ↔ (subUpFull U (Fin.castLE h)).rank = n := sorry --this statement is the transpose of the below statement and is also false as stated I think...
 
 lemma full_row_rank_via_rank_subLeftFull (h : m ≤ n) :
-  U.rank = m ↔ (subLeftFull U (Fin.castLE h)).rank = m := by sorry
+  U.rank = m ↔ (subLeftFull U (Fin.castLE h)).rank = m := by sorry --I think this statement is false
+
 
 end
 
