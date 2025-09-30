@@ -2,7 +2,7 @@
 name: PR Summary
 
 on:
-  pull_request:
+  pull_request_target:
 
 permissions:
   pull-requests: write
@@ -29,15 +29,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r ./pr-branch/scripts/requirements.txt
+        run: pip install -r ./base-branch/scripts/requirements.txt
 
       - name: Get PR diff
-        id: diff
         run: |
           diff -uprN base-branch pr-branch > pr.diff || true
-          echo 'diff<<EOF' >> $GITHUB_OUTPUT
-          cat pr.diff >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Generate summary
         env:
@@ -45,6 +41,5 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_DIFF: ${{ steps.diff.outputs.diff }}
         run: |
-          python ./pr-branch/scripts/pr-summary.py
+          python ./base-branch/scripts/pr-summary.py

@@ -1,7 +1,7 @@
 import os
 import sys
 import google.generativeai as genai
-from github import Github
+from github import Github, Auth
 
 def generate_ai_summary(diff):
     """
@@ -68,7 +68,8 @@ if __name__ == "__main__":
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-    diff = os.environ["PR_DIFF"]
+    with open("pr.diff", "r") as f:
+        diff = f.read()
     summary = generate_summary(diff)
     sorries = count_sorries(diff)
 
@@ -79,7 +80,8 @@ if __name__ == "__main__":
         # If we're not in the GitHub Actions context, just print the summary
         print(summary)
     else:
-        g = Github(os.environ["GITHUB_TOKEN"])
+        auth = Auth.Token(os.environ["GITHUB_TOKEN"])
+        g = Github(auth=auth)
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         pr = repo.get_pull(int(os.environ["PR_NUMBER"]))
         pr.create_issue_comment(summary)
