@@ -96,6 +96,7 @@ import ArkLib.Data.Polynomial.Frobenius
 import ArkLib.Data.Polynomial.Interface
 import ArkLib.Data.Polynomial.MonomialBasis
 import ArkLib.Data.Polynomial.PolynomialLike
+import ArkLib.Data.Polynomial.SplitFold
 import ArkLib.Data.Probability.Instances
 import ArkLib.Data.Probability.Notation
 import ArkLib.Data.RingTheory.TowerOfAlgebra
