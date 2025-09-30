@@ -44,8 +44,10 @@ section
 
 variable {F : Type} [CommRing F] [IsDomain F]
 
-/-- Construction of the monisized polynomial `H_tilde` in Appendix A.1 of [BCIKS20]. -/
-noncomputable def H_tilde (H : Polynomial (Polynomial F)) : Polynomial (RatFunc F) :=
+/-- Construction of the monisized polynomial `H_tilde` in Appendix A.1 of [BCIKS20].
+Note: Here `H ∈ F[X][Y]` translates to `H ∈ F[Z][Y]` in [BCIKS20] and H_tilde in
+`Polynomial (RatFunc F)` translates to `H_tilde ∈ F(Z)[T]` in [BCIKS20]. -/
+noncomputable def H_tilde (H : F[X][Y]) : Polynomial (RatFunc F) :=
   let hᵢ (i : ℕ) := H.coeff i
   let d := H.natDegree
   let W := (RingHom.comp Polynomial.C univPolyHom) (hᵢ d)
@@ -60,12 +62,12 @@ lemma irreducibleHTilderOfIrreducible {H : Polynomial (Polynomial F)} :
   sorry
 
 /-- The function field `𝕃 ` from Appendix A.1 of [BCIKS20]. -/
-abbrev 𝕃 (H : Polynomial (Polynomial F)) : Type :=
+abbrev 𝕃 (H : F[X][Y]) : Type :=
   (Polynomial (RatFunc F)) ⧸ (Ideal.span {H_tilde H})
 
 /-- The function field `𝕃 ` is indeed a field if and only if the generator of the ideal we quotient
 by is an irreducible polynomial. -/
-lemma isField_of_irreducible {H : Polynomial (Polynomial F)} : Irreducible H → IsField (𝕃 H) := by
+lemma isField_of_irreducible {H : F[X][Y]} : Irreducible H → IsField (𝕃 H) := by
   intros h
   unfold 𝕃
   erw
@@ -75,91 +77,101 @@ lemma isField_of_irreducible {H : Polynomial (Polynomial F)} : Irreducible H →
     ]
   exact irreducibleHTilderOfIrreducible h
 
-noncomputable instance {H : Polynomial (Polynomial F)} [inst : Fact (Irreducible H)]
-  : Field (𝕃 H) := by
+noncomputable instance {H : F[X][Y]} [inst : Fact (Irreducible H)] : Field (𝕃 H) := by
   unfold 𝕃
   apply IsField.toField
   exact isField_of_irreducible inst.out
 
-def H_tilde' (H : Polynomial (Polynomial F)) : Polynomial (Polynomial F) := sorry
+def H_tilde' (H : F[X][Y]) : F[X][Y] := sorry
 
 /-- The ring of regular elements `𝒪` from Appendix A.1 of [BCIKS20]. -/
-abbrev 𝒪 (H : Polynomial (Polynomial F)) : Type :=
+abbrev 𝒪 (H : F[X][Y]) : Type :=
   (Polynomial (Polynomial F)) ⧸ (Ideal.span {H_tilde' H})
 
 /-- The ring of regular elements field `𝒪` is a indeed a ring. -/
-noncomputable instance {H : Polynomial (Polynomial F)} : Ring (𝒪 H) := by
+noncomputable instance {H : F[X][Y]} : Ring (𝒪 H) := by
   exact Ideal.Quotient.ring (Ideal.span {H_tilde' H})
 
-
--- maybe add a lemma that S_β is finite if F is a finite field. Could be useful for
--- Claim A.1
-
--- def Λ_T_coeff (H : F[X][Y]) (D : ℕ)
---   (hD : D ≥ Bivariate.totalDegree H)
---   : ℕ := D + 1 - Bivariate.natDegreeY H
-
--- def Λ_T (H : F[X][Y]) (D : ℕ)
---   (hD : D ≤ Bivariate.totalDegree H
---   ∧ ∀ k : ℕ, k ≤ (Bivariate.natDegreeY H) ∧
---   natDegree (H.coeff k) ≤  D + k - Bivariate.totalDegree H) : F[X] → ℕ := sorry
-
-
-noncomputable def myHom (H : F[X][Y]) : 𝒪 H →+* 𝕃 H :=
+noncomputable def embeddingOf𝒪Into𝕃 (H : F[X][Y]) : 𝒪 H →+* 𝕃 H :=
   Ideal.quotientMap
         (I := Ideal.span {H_tilde' H}) (Ideal.span {H_tilde H})
         BivPolyHom sorry
 
-def regularElms_set (H : Polynomial (Polynomial F)) : Set (𝕃 H) :=
-  {a : 𝕃 H | ∃ b : 𝒪 H, a = myHom H b}
+/-- The set of regular elements inside `𝕃 H`, i.e. the set of elements of `𝕃 H`
+that in fact lie in `𝒪 H`. -/
+def regularElms_set (H : F[X][Y]) : Set (𝕃 H) :=
+  {a : 𝕃 H | ∃ b : 𝒪 H, a = embeddingOf𝒪Into𝕃 H b}
 
-def regularElms (H : Polynomial (Polynomial F)) : Type :=
-  {a : 𝕃 H // ∃ b : 𝒪 H, a = myHom H b}
+/-- The regular elements inside `𝕃 H`, i.e. the set of elements of `𝕃 H`
+that in fact lie in `𝒪 H` as Type. -/
+def regularElms (H : F[X][Y]) : Type :=
+  {a : 𝕃 H // ∃ b : 𝒪 H, a = embeddingOf𝒪Into𝕃 H b}
 
-def rationalRoot (H : Polynomial (Polynomial F)) (z : F) : Type :=
-  { t_z : F // evalEval z t_z H = 0 }
+/-- Given an element `z ∈ F`, `t_z ∈ F` is a rational root of a bivariate polynomial if the pair
+`(z, t_z)` is a root of the bivariate polynomial.
+-/
+def rationalRoot (H : F[X][Y]) (z : F) : Type :=
+  { t_z : F // evalEval z t_z (H_tilde' H) = 0 }
 
-noncomputable def π_z_lift (H : Polynomial (Polynomial F)) (z : F) (root : rationalRoot H z) :
-   F[X][Y] →+* F := Polynomial.evalEvalRingHom z root.1
+--KH: do we consider the H_tilde for that def as an elt of F[Z][Y] or F(Z)[Y]?
+--I think F[Z][Y] since we want to define a homomorphism from 𝒪, but
+-- if the latter, need a new def, somethign along the lines of the below with the correct
+--coersion
+-- def rationalRoot' (H : Polynomial (RatFunc F)) (z : F) : Type :=
+--   { t_z : F // eval z (RatFunc.eval (C t_z) H) = 0 }
 
-noncomputable def π_z (z : F) (H : Polynomial (Polynomial F)) (root : rationalRoot H z) :
-                    𝒪 H →+* F :=
+/-- The rational substitution `π_z` from Appendix A.3 defined on the whole ring of
+bivariate polynomials. -/
+noncomputable def π_z_lift (H : F[X][Y]) (z : F) (root : rationalRoot H z) : F[X][Y] →+* F :=
+  Polynomial.evalEvalRingHom z root.1
+
+/-- The rational substitution `π_z` from Appendix A.3 of [BCIKS20] is a well-defined map on the
+quotient ring`𝒪`. -/
+noncomputable def π_z (H : F[X][Y]) (z : F) (root : rationalRoot H z) : 𝒪 H →+* F :=
   Ideal.Quotient.lift (Ideal.span {H_tilde' H}) (π_z_lift H z root) sorry
 
-def quotientReps (a : F) (I : Ideal F) : Set F :=
-  {b : F | (Ideal.Quotient.mk I) a = (Ideal.Quotient.mk I) b}
 
-def polyReps (f : F[X][Y]) (H : F[X][Y]) : Set F[X][Y] :=
-  {g : F[X][Y] | (Ideal.Quotient.mk (Ideal.span {H})) f = (Ideal.Quotient.mk (Ideal.span {H})) g}
-
-def canonicalRep𝒪H (f : F[X][Y]) (H : F[X][Y]) : Set F[X][Y] :=
-  {g ∈ polyReps f H | Polynomial.natDegree g < H.natDegree}
-
-noncomputable def canonicalRep𝒪H' (f : F[X][Y]) (H : F[X][Y]) : F[X][Y] :=
+/-- The canonical representative of an element of `F[X][Y]` inside
+the ring of regular elements `𝒪`.
+KH-to-KH: Now I'm not so sure about this.. do we not need a lift instead? but that's not unique.. -/
+noncomputable def canonicalRepOf𝒪 (f H : F[X][Y]) : F[X][Y] :=
   Polynomial.modByMonic f H
 
-def weight (p : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H) : ℕ :=
-  Finset.sup p.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (p.coeff deg).natDegree)
+/--
+`Λ` is a weight function on the ring of bivariate polynomials `F[X][Y]`. The weight of
+a polynomial is the maximal weight of all monomials appearing in it with non-zero coefficients.
+The weight of the zero polynomial is `−∞`.
+KH: is this true for our def?? -> "The weight of the zero polynomial is −∞."
+-/
+def weight_Λ (f H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H) : ℕ :=
+  Finset.sup f.support (fun deg => deg * (D + 1 - Bivariate.natDegreeY H) + (f.coeff deg).natDegree)
 
-noncomputable def weight𝒪H (f : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
-  : ℕ := weight (canonicalRep𝒪H' f H) H D hD
+/-- The weight function `Λ` on the ring of regular elements `𝒪` is defined as the weight their
+canonical representatives in `F[X][Y]`. -/
+noncomputable def weight_Λ_over_𝒪 (f H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
+  : ℕ := weight_Λ (canonicalRepOf𝒪 f H) H D hD
 
-noncomputable def S_β (H : Polynomial (Polynomial F)) (β : 𝒪 H) : Set F :=
-  {z : F | ∃ root : rationalRoot H z, (π_z z H root) β = 0}
+/-- The set `S_β` from the statement of Lemma A.1 in Appendix A of [BCIKS20].
+Note: Here `F[X][Y]` is `F[Z][T]`. -/
+noncomputable def S_β (H : F[X][Y]) (β : 𝒪 H) : Set F :=
+  {z : F | ∃ root : rationalRoot H z, (π_z H z root) β = 0}
 
-lemma A_1 (H : Polynomial (Polynomial F)) (β : 𝒪 H)
-  (f : F[X][Y]) (H : F[X][Y]) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
+/-- The statement of Lemma A.1 in Appendix A.3 of [BCIKS20]. -/
+lemma Lemma_A_1 (f H : F[X][Y]) (β : 𝒪 H) (D : ℕ) (hD : D ≥ Bivariate.totalDegree H)
   (S_β_ne : (S_β H β).Nonempty)
-  (S_β_card : Set.ncard (S_β H β) > (weight𝒪H f H D hD) * H.natDegree) :
-  (myHom H) β = 0 := by sorry
-
+  (S_β_card : Set.ncard (S_β H β) > (weight_Λ_over_𝒪 f H D hD) * H.natDegree) :
+  (embeddingOf𝒪Into𝕃 H) β = 0 := by sorry
 
 
 variable (R : F[X][X][X]) (R_irreducible : Irreducible R)
 variable (x₀ : F) {H : F[X][Y]} [H_irreducible : Fact (Irreducible H)]
 variable (H_fac : H ∣ Bivariate.evalX (Polynomial.C x₀) R)
 
-def liftToFunctionField : F[X] →+* 𝕃 H := sorry
+noncomputable def coeffAsRatFunc : F[X] →+* Polynomial (RatFunc F) :=
+  RingHom.comp BivPolyHom Polynomial.C
+
+noncomputable def liftToFunctionField : F[X] →+* 𝕃 H :=
+  RingHom.comp (Ideal.Quotient.mk (Ideal.span {H_tilde H})) coeffAsRatFunc
 
 noncomputable def ζ (α₀ : 𝕃 H) : 𝕃 H :=
     Polynomial.eval₂ liftToFunctionField α₀
@@ -176,6 +188,8 @@ def β : ℕ → regularElms H := sorry
 noncomputable def henselLiftCoeffs (t : ℕ) : 𝕃 H :=
   let W  : 𝕃 H := liftToFunctionField (H.leadingCoeff)
   (β t).1 / (W ^ (t + 1) * (ξ R x₀).1 ^ (2*t - 1))
+
+
 
 end
 end AppendixA
