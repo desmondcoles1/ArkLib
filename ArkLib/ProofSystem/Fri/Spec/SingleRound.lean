@@ -207,7 +207,7 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
               (Domain.rootsOfUnity D n s);
       let pts := List.map (fun q => (q.1.1, f q)) queries;
       let β := f' ⟨_, CosetDomain.pow_lift D x s s₀.2⟩;
-        RoundConsistency.round_consistency_check x₀ pts β
+        RoundConsistency.roundConsistencyCheck x₀ pts β
 
 /- Checks for the total Folding round consistency of all rounds up to the current one. -/
 def statementConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} {n : ℕ}
@@ -309,7 +309,7 @@ noncomputable def foldVerifier :
     (Statement F i.succ) (OracleStatement D x s i.succ)
     (pSpec D x s i) where
   verify := fun prevChallenges roundChallenge =>
-    pure (Fin.append prevChallenges (fun _ => roundChallenge ⟨0, by simp⟩))
+    pure (Fin.vappend prevChallenges (fun _ => roundChallenge ⟨0, by simp⟩))
   embed :=
     ⟨
       fun j =>
@@ -381,9 +381,10 @@ def roundConsistent {F : Type} [NonBinaryField F] [Finite F] {D : Subgroup Fˣ} 
               (Domain.rootsOfUnity D n s);
       let pts := List.map (fun q => (q.1.1, f q)) queries;
       let β := f'.eval (s₀.1.1 ^ (2 ^ s));
-        RoundConsistency.round_consistency_check x₀ pts β
+        RoundConsistency.roundConsistencyCheck x₀ pts β
 
-/- Input relation for the final folding round. -/
+/- Input relation for the final folding round. This is currently sorried out, to be filled in later.
+-/
 def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set
       (
@@ -394,7 +395,8 @@ def inputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
         Witness F s d (Fin.last k).castSucc
       ) := sorry
 
-/- Output relation for the final folding round. -/
+/- Output relation for the final folding round. This is currently sorried out, to be filled in
+later. -/
 def outputRelation (cond : (k + 1) * s ≤ n) [DecidableEq F] (δ : ℝ≥0) :
     Set
       (
@@ -443,7 +445,7 @@ noncomputable def finalFoldProver :
   | ⟨0, _⟩ => fun ⟨⟨chals, o⟩, p⟩ => pure <|
     fun (α : F) =>
       ⟨
-        ⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩,
+        ⟨Fin.vappend chals !v[α], o⟩,
         ⟨
           RoundConsistency.foldα (2 ^ s) p.1 α,
           by
@@ -647,7 +649,7 @@ noncomputable def queryVerifier (k_le_n : (k + 1) * s ≤ n) (l : ℕ) [Decidabl
                         ⟨_, CosetDomain.pow_lift D x s s₀.2⟩
                     else
                       pure (p.eval (s₀.1.1 ^ (2 ^ s)))
-                  guard (RoundConsistency.round_consistency_check x₀ pts β)
+                  guard (RoundConsistency.roundConsistencyCheck x₀ pts β)
               )
     pure prevChallenges
   embed :=

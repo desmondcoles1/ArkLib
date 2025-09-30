@@ -9,8 +9,14 @@ namespace RoundConsistency
 
 variable {𝔽 : Type} [CommSemiring 𝔽] [NoZeroDivisors 𝔽]
 
-/- Definition of n-way polynomial split -/
-def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
+/--
+Splits a polynomial into `n` component polynomials based on coefficient indices modulo `n`.
+
+For a polynomial `f = ∑ⱼ aⱼ Xʲ` and index `i : Fin n`, returns the polynomial whose
+coefficients are extracted from positions `j ≡ i (mod n)`, reindexed by `j / n`.
+Formally: `splitNth f n i = ∑_{j ≡ i (mod n)} aⱼ X^(j/n)`.
+-/
+def splitNth (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
   fun i =>
     let sup :=
       Finset.filterMap (fun x => if x % n = i.1 then .some (x / n) else .none)
@@ -55,13 +61,13 @@ def split (f : 𝔽[X]) (n : ℕ) [inst : NeZero n] : Fin n → 𝔽[X] :=
             simp [this]
       ⟩
 
-/- Proof of key identity `split` has to satisfy. -/
+/- Proof of key identity `splitNth` has to satisfy. -/
 omit [NoZeroDivisors 𝔽] in
-lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
+lemma splitNth_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
     f =
       ∑ i : Fin n,
         (Polynomial.X ^ i.1) *
-          Polynomial.eval₂ Polynomial.C (Polynomial.X ^ n) (split f n i) := by
+          Polynomial.eval₂ Polynomial.C (Polynomial.X ^ n) (splitNth f n i) := by
   ext e
   rw [Polynomial.finset_sum_coeff]
   have h₀ {b e : ℕ} {f : 𝔽[X]} : (X ^ b * f).coeff e = if e < b then 0 else f.coeff (e - b) := by
@@ -111,7 +117,7 @@ lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
     · skip
     · ext b
       rw [h₀, h₁]
-  unfold split
+  unfold splitNth
   simp
   rw [Finset.sum_eq_single ⟨e % n, by refine Nat.mod_lt e (by have := inst.out; omega)⟩]
   · simp only
@@ -205,10 +211,10 @@ lemma split_def (n : ℕ) (f : 𝔽[X]) [inst : NeZero n] :
 
 /- Lemma bounding degree of each `n`-split polynomial. -/
 omit [NoZeroDivisors 𝔽] in
-lemma split_degree_le {n : ℕ} {f : 𝔽[X]} [inst : NeZero n] :
-  ∀ {i}, (split f n i).natDegree ≤ f.natDegree / n := by
+lemma splitNth_degree_le {n : ℕ} {f : 𝔽[X]} [inst : NeZero n] :
+  ∀ {i}, (splitNth f n i).natDegree ≤ f.natDegree / n := by
     intros i
-    unfold split Polynomial.natDegree Polynomial.degree
+    unfold splitNth Polynomial.natDegree Polynomial.degree
     simp only [support_ofFinsupp]
     rw [WithBot.unbotD_le_iff (by simp)]
     simp only [Finset.max_le_iff, Finset.mem_filterMap, mem_support_iff, ne_eq,
@@ -221,7 +227,7 @@ lemma split_degree_le {n : ℕ} {f : 𝔽[X]} [inst : NeZero n] :
 
 /- Generalised n-way folding. -/
 noncomputable def foldα (n : ℕ) (f : 𝔽[X]) (α : 𝔽) [inst : NeZero n] : 𝔽[X] :=
-  ∑ i : Fin n, Polynomial.C α ^ i.1 * split f n i
+  ∑ i : Fin n, Polynomial.C α ^ i.1 * splitNth f n i
 
 private lemma fold_max_lemma {ι : Type} {s : Finset ι} {f : ι → ℕ} {n : ℕ} :
     (∀ i ∈ s, f i ≤ n) → Finset.fold max 0 f s ≤ n := by
@@ -238,10 +244,10 @@ lemma foldα_degree_le {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
     (foldα n f α).natDegree ≤ f.natDegree / n := by
   unfold foldα
   by_cases h : α = 0
-  · have : ∑ i, C α ^ i.1 * split f n i = split f n 0 := by
+  · have : ∑ i, C α ^ i.1 * splitNth f n i = splitNth f n 0 := by
       rw [h]
       simp only [map_zero]
-      have : split f n 0 = (0 ^ ((0 : Fin n) : ℕ)) * split f n 0 := by
+      have : splitNth f n 0 = (0 ^ ((0 : Fin n) : ℕ)) * splitNth f n 0 := by
         simp
       rw [this]
       apply Finset.sum_eq_single (ι := Fin n) 0
@@ -249,7 +255,7 @@ lemma foldα_degree_le {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
         simp [h]
       · simp
     rw [this]
-    exact split_degree_le
+    exact splitNth_degree_le
   · transitivity
     · exact Polynomial.natDegree_sum_le _ _
     · rw [Function.comp_def]
@@ -258,7 +264,7 @@ lemma foldα_degree_le {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
       transitivity
       · exact Polynomial.natDegree_mul_le
       · rw [←Polynomial.C_pow, Polynomial.natDegree_C, zero_add]
-        exact split_degree_le
+        exact splitNth_degree_le
 
 /- Lemma bounding degree of folded polynomial. -/
 omit [NoZeroDivisors 𝔽] in
@@ -270,14 +276,18 @@ lemma foldα_degree_le' {n : ℕ} {f : 𝔽[X]} {α : 𝔽} [inst : NeZero n] :
 
 omit [NoZeroDivisors 𝔽] in
 lemma foldα_zero {s : ℕ} {α : 𝔽} : foldα (2 ^ s) 0 α = 0 := by
-  unfold foldα split
+  unfold foldα splitNth
   have :
     { toFinsupp := { support := ∅, toFun := fun e ↦ 0, mem_support_toFun := (by simp) } } =
       (0 : 𝔽[X]) := by rfl
   simp [this]
 
-/- Generalised round-consistency check. -/
-noncomputable def round_consistency_check [Field 𝔽] [DecidableEq 𝔽]
+/--
+The generalized round consistency check: checks that the Lagrange-interpolating polynomial through
+`pts` evaluates to `β` at the challenge `γ`. Used in FRI to verify that the next-round value equals
+the fold evaluated at the challenge.
+-/
+noncomputable def roundConsistencyCheck [Field 𝔽] [DecidableEq 𝔽]
     (γ : 𝔽) (pts : List (𝔽 × 𝔽)) (β : 𝔽) : Bool :=
   let p := Lagrange.interpolate Finset.univ (fun i => (pts.get i).1) (fun i => (pts.get i).2)
   p.eval γ == β
@@ -328,21 +338,21 @@ lemma generalised_round_consistency_completeness
   (h : ∀ i, (ω i) ^ n = 1)
   (h₁ : s₀ ≠ 0)
   :
-    round_consistency_check
+    roundConsistencyCheck
       γ
       (List.map (fun i => (ω i * s₀, f.eval (ω i * s₀))) (List.finRange n))
       ((foldα n f γ).eval (s₀^n)) = true := by
-  unfold round_consistency_check
+  unfold roundConsistencyCheck
   simp only [List.get_eq_getElem, List.getElem_map, List.getElem_finRange, Fin.cast_mk,
     beq_iff_eq]
   unfold foldα
   conv =>
     left
-    rw [split_def n f]
+    rw [splitNth_def n f]
   rw [Polynomial.eval_finset_sum]
   simp only [eval_mul, eval_C, eval_pow]
   have eval_eval₂_pow_eq_eval_pow {s : 𝔽} (i) :
-      eval s (eval₂ C (X ^ n) (split f n i)) = (split f n i).eval (s ^ n) := by
+      eval s (eval₂ C (X ^ n) (splitNth f n i)) = (splitNth f n i).eval (s ^ n) := by
     rw [eval₂_eq_sum]
     unfold Polynomial.eval
     rw [Polynomial.eval₂_sum, eval₂_eq_sum]
@@ -365,7 +375,7 @@ lemma generalised_round_consistency_completeness
     rw [mul_pow, h, one_mul]
   generalize heq : @Lagrange.interpolate 𝔽 inst1 (Fin _) _ _ _ _ = p'
   have :
-    p' = ∑ j, Polynomial.X ^ j.1 * Polynomial.C (eval (s₀ ^ n) (split f n j)) := by
+    p' = ∑ j, Polynomial.X ^ j.1 * Polynomial.C (eval (s₀ ^ n) (splitNth f n j)) := by
     have p'_deg : p'.degree < .some n := by
       rw [←heq]
       have : n = (Finset.univ : Finset (Fin n)).card := by simp
@@ -383,7 +393,7 @@ lemma generalised_round_consistency_completeness
                       if h : i_1 < n
                       then
                         (ω i * s₀) ^ i_1 *
-                        eval (s₀ ^ (Finset.univ : Finset (Fin n)).card) (split f n ⟨i_1, h⟩)
+                        eval (s₀ ^ (Finset.univ : Finset (Fin n)).card) (splitNth f n ⟨i_1, h⟩)
                       else 0
           )
           (by
@@ -396,7 +406,7 @@ lemma generalised_round_consistency_completeness
           )
       have :
         (List.map
-          (fun i ↦ (ω i * s₀, eval (ω i * s₀) (∑ i, X ^ i.1 * eval₂ C (X ^ n) (split f n i))))
+          (fun i ↦ (ω i * s₀, eval (ω i * s₀) (∑ i, X ^ i.1 * eval₂ C (X ^ n) (splitNth f n i))))
           (List.finRange n)
         ).length = n := by simp
       convert interp_deg
@@ -409,14 +419,14 @@ lemma generalised_round_consistency_completeness
       rw [this]
       exact (Fin.heq_fun_iff this).mpr (congrFun rfl)
       exact (Fin.heq_fun_iff this).mpr (congrFun rfl)
-    have h₂ : (∑ (j : Fin n), X ^ j.1 * C (eval (s₀ ^ n) (split f n j))).degree < .some n := by
+    have h₂ : (∑ (j : Fin n), X ^ j.1 * C (eval (s₀ ^ n) (splitNth f n j))).degree < .some n := by
       apply lt_of_le_of_lt
       exact Polynomial.degree_sum_le Finset.univ
-            (fun j => X ^ j.1 * C (eval (s₀ ^ n) (split f n j)))
+            (fun j => X ^ j.1 * C (eval (s₀ ^ n) (splitNth f n j)))
       simp only [X_pow_mul_C, degree_mul, degree_pow, degree_X, nsmul_eq_mul, mul_one,
         WithBot.bot_lt_coe, Finset.sup_lt_iff, Finset.mem_univ, forall_const]
       intros b
-      by_cases h' : (eval (s₀ ^ n) (split f n b)) = 0
+      by_cases h' : (eval (s₀ ^ n) (splitNth f n b)) = 0
       · simp [h']
       · simp only [ne_eq, h', not_false_eq_true, degree_C, zero_add]
         erw [WithBot.coe_lt_coe]
@@ -444,7 +454,7 @@ lemma generalised_round_consistency_completeness
       rw [eval_mul, eval_C, eval_pow, eval_mul, eval_C, eval_C]
     have sum_eq :=
       Finset.sum_eq_single (s := Finset.univ)
-        (f := fun x => (∑ i, (ω x * s₀) ^ i.1 * eval (s₀ ^ n) (split f n i)) *
+        (f := fun x => (∑ i, (ω x * s₀) ^ i.1 * eval (s₀ ^ n) (splitNth f n i)) *
       eval (ω a * s₀) (Lagrange.basis Finset.univ (fun (i : Fin n) ↦ ω i * s₀) x)) a
     rw
       [
@@ -466,7 +476,8 @@ lemma generalised_round_consistency_completeness
     rw [←sum_eq]
     have eq :
       (List.map
-        (fun i ↦ (ω i * s₀, eval (ω i * s₀) (∑ i : Fin n, X ^ i.1 * eval₂ C (X ^ n) (split f n i))))
+        (fun i ↦
+          (ω i * s₀, eval (ω i * s₀) (∑ i : Fin n, X ^ i.1 * eval₂ C (X ^ n) (splitNth f n i))))
         (List.finRange n)
       ).length = n := by simp
     rw [Finset.sum_fin_eq_sum_range]; conv_rhs => rw [Finset.sum_fin_eq_sum_range]

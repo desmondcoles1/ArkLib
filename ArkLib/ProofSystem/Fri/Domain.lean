@@ -199,11 +199,11 @@ lemma domain_injective (i : ℕ) : i ≤ n → Function.Injective (domain D n i)
 
 /-- This embedding will be used to construct the appropriate Reed-Solomon code against
     which we test codewords for proximity. -/
-def domain_enum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D i :=
+def domainEnum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D i :=
   ⟨domain D n i.1, domain_injective D i.1 (by have := i.2; linarith)⟩
 
 /- Embedding of elements of these subgroups into the field `F`. -/
-def domain_emb {i : ℕ} : evalDomain D i ↪ F :=
+def domainEmb {i : ℕ} : evalDomain D i ↪ F :=
   ⟨
     fun x => x.1.1,
     by
@@ -395,8 +395,6 @@ instance {i : Fin (n + 1)} : OfNat (evalDomain D i) 1 where
 instance domain_neg_inst {i : Fin n} : Neg (evalDomain D i.1) where
   neg := fun x => ⟨_, minus_one_in_doms D i.2⟩ * x
 
-#check domain
-
 /- Enumerates the `2^s` roots of unity of `Fˣ`, which corresponds to the
    elemens of the `(n - s)`th subgroup (for `s ≤ n`). -/
 def rootsOfUnity (n s : ℕ) : List (Domain.evalDomain D (n - s)) :=
@@ -462,10 +460,10 @@ lemma domain_injective {i : ℕ} : i ≤ n → Function.Injective (domain D x n 
   exact Domain.pow_inj D h h'
 
 /- Used to construct Reed-Solomon codes with respect to which we are testing proximity. -/
-def domain_enum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D x i :=
+def domainEnum (i : Fin (n + 1)) : Fin (2 ^ (n - i)) ↪ evalDomain D x i :=
   ⟨domain D x n i, domain_injective (i := i.1) D x (by have := i.2; linarith)⟩
 
-def domain_emb {i : ℕ} : evalDomain D x i ↪ F :=
+def domainEmb {i : ℕ} : evalDomain D x i ↪ F :=
   ⟨
     fun x => x.1.1,
     by
