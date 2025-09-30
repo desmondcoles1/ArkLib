@@ -1,6 +1,5 @@
 import ArkLib.OracleReduction.Composition.Sequential.General
 import ArkLib.ProofSystem.Fri.Spec.SingleRound
-import ArkLib.ProofSystem.Fri.Domain
 
 namespace Fri
 

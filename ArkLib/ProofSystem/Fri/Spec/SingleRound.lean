@@ -1,12 +1,6 @@
-import Mathlib.Data.NNReal.Defs
-import Mathlib.GroupTheory.SpecificGroups.Cyclic
-
-
-import ArkLib.Data.CodingTheory.ReedSolomon
-import ArkLib.OracleReduction.Security.Basic
+import ArkLib.OracleReduction.Basic
 import ArkLib.ProofSystem.Fri.Domain
 import ArkLib.ProofSystem.Fri.RoundConsistency
-
 
 /-!
 # The FRI protocol
@@ -87,7 +81,7 @@ omit [Finite F] s_nz d_nz in
 private lemma witness_lift {F : Type} [NonBinaryField F]
       {k s d : ℕ} [NeZero s] {p : F[X]} {α : F} {i : Fin (k + 1)} :
     p ∈ Witness F s d i.castSucc →
-      RoundConsistency.foldα (2 ^ s) p α ∈ Witness F s d i.succ := by
+      p.foldNth (2 ^ s) α ∈ Witness F s d i.succ := by
   intro deg_bound
   unfold Witness at deg_bound ⊢
   rw [Polynomial.mem_degreeLT] at deg_bound ⊢
@@ -95,14 +89,14 @@ private lemma witness_lift {F : Type} [NonBinaryField F]
     Fin.val_succ] at deg_bound ⊢
   by_cases h : p = 0
   · have arith : 2 ^ ((k - i.1) * s) * ↑d = WithBot.some (2 ^ ((k - i.1) * s) * d) := by rfl
-    rw [h, RoundConsistency.foldα_zero, degree_zero, Nat.add_sub_add_right, arith]
+    rw [h, foldNth_zero, degree_zero, Nat.add_sub_add_right, arith]
     exact WithBot.bot_lt_coe _
   · have arith : 2 ^ ((k + 1 - ↑i) * s) * ↑d = WithBot.some (2 ^ ((k + 1 - ↑i) * s) * d) := by rfl
     have cast_lemma {a} : @Nat.cast (WithBot ℕ) _ a = WithBot.some a := rfl
     rw [Polynomial.degree_eq_natDegree h, arith, cast_lemma, WithBot.coe_lt_coe] at deg_bound
     have h' :=
       lt_of_le_of_lt
-        (RoundConsistency.foldα_degree_le' (n := 2 ^ s) (f := p) (α := α))
+        (foldNth_degree_le' (n := 2 ^ s) (f := p) (α := α))
         deg_bound
     have : 2 ^ ((k + 1 - i.1) * s) * d = 2 ^ s * (2 ^ ((k + 1 - (i.1 + 1)) * s) * d) := by
       have : k + 1 - i.1 = ((k + 1) - (i.1 + 1)) + 1 := by
@@ -116,7 +110,7 @@ private lemma witness_lift {F : Type} [NonBinaryField F]
       2 ^ ((k + 1 - (↑i + 1)) * s) * ↑d =
         WithBot.some (2 ^ ((k + 1 - (↑i + 1)) * s) * d) := rfl
     rw [arith']
-    by_cases h'' : RoundConsistency.foldα (2 ^ s) p α = 0
+    by_cases h'' : p.foldNth (2 ^ s) α = 0
     · rw [h'', degree_zero]
       exact WithBot.bot_lt_coe _
     · rw [Polynomial.degree_eq_natDegree h'', cast_lemma, WithBot.coe_lt_coe]
@@ -282,7 +276,7 @@ noncomputable def foldProver :
     fun (α : F) =>
       ⟨
         ⟨Fin.append chals (fun (_ : Fin 1) => α), o⟩,
-        ⟨RoundConsistency.foldα (2 ^ s) p.1 α, witness_lift p.2⟩
+        ⟨p.1.foldNth (2 ^ s) α, witness_lift p.2⟩
       ⟩
   | ⟨1, h⟩ => nomatch h
 
@@ -447,7 +441,7 @@ noncomputable def finalFoldProver :
       ⟨
         ⟨Fin.vappend chals !v[α], o⟩,
         ⟨
-          RoundConsistency.foldα (2 ^ s) p.1 α,
+          p.1.foldNth (2 ^ s) α,
           by
             simpa only [(rfl : (Fin.last k).succ = (Fin.last (k + 1)))] using
               witness_lift p.2
