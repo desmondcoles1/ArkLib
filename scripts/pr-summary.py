@@ -36,7 +36,7 @@ def generate_ai_summary(diff):
 
 # --- Diff Analysis ---
 def analyze_diff(diff):
-    """Parses a git diff to extract statistics and track 'sorry's."""
+    """Parses a git diff to extract statistics and track 'sorry's using stable identifiers."""
     files_changed = set()
     lines_added = 0
     lines_removed = 0
@@ -47,86 +47,99 @@ def analyze_diff(diff):
     current_file = ""
     old_line_num = 0
     new_line_num = 0
-    context_line = ""
+    current_decl_header = ""
+    current_decl_name = ""
 
-    # Regex to capture file paths from the diff header
     file_path_regex = re.compile(r'diff --git a/(.+) b/(.+)')
-    # Regex to capture line numbers from the hunk header
     hunk_header_regex = re.compile(r'@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@')
+    name_extract_regex = re.compile(
+        r".*?(?:theorem|lemma|def|instance|example|opaque|abbrev|inductive|structure)\s+"
+        r"([^\s\(\{:]+)"
+    )
 
-    raw_added = []
-    raw_removed = []
+    raw_added = {}
+    raw_removed = {}
 
     for line in diff.splitlines():
         file_match = file_path_regex.match(line)
         if file_match:
             current_file = file_match.group(2)
             files_changed.add(current_file)
-            context_line = ""
+            current_decl_header = ""
+            current_decl_name = ""
             continue
 
         hunk_match = hunk_header_regex.match(line)
         if hunk_match:
             old_line_num = int(hunk_match.group(1))
             new_line_num = int(hunk_match.group(3))
-            context_line = ""
+            current_decl_header = ""
+            current_decl_name = ""
             continue
 
         if line.startswith("---") or line.startswith("+++"):
             continue
 
-        # --- General Stats (for all files) ---
         if line.startswith('+'):
             lines_added += 1
         elif line.startswith('-'):
             lines_removed += 1
 
-        # --- Sorry Tracking (for .lean files only) ---
         if current_file.endswith(".lean"):
-            # Track the last relevant definition line as context for sorries
             stripped_line = line.lstrip('+- ')
             if any(stripped_line.startswith(keyword + ' ') for keyword in SORRY_KEYWORDS):
-                context_line = re.sub(r"^[+-]\s*", "", line)
+                current_decl_header = re.sub(r"^[+-]\s*", "", line)
+                name_match = name_extract_regex.match(current_decl_header)
+                if name_match:
+                    current_decl_name = name_match.group(1)
 
-            if 'sorry' in line:
-                # Ignore sorries that are in comments
+            if 'sorry' in line and current_decl_name:
                 comment_pos = line.find("--")
                 sorry_pos = line.find("sorry")
                 if comment_pos != -1 and sorry_pos > comment_pos:
                     continue
 
-                if line.startswith('+'):
-                    raw_added.append({'file': current_file, 'context': context_line.strip(), 'line': new_line_num})
-                elif line.startswith('-'):
-                    raw_removed.append({'file': current_file, 'context': context_line.strip(), 'line': old_line_num})
+                stable_id = f"{current_decl_name}@{current_file}"
+                sorry_info = {
+                    'id': stable_id,
+                    'file': current_file,
+                    'name': current_decl_name,
+                    'header': current_decl_header.split(":=")[0].strip()
+                }
 
-            # Update line numbers for sorry tracking
+                if line.startswith('+'):
+                    sorry_info['line'] = new_line_num
+                    raw_added[stable_id] = sorry_info
+                elif line.startswith('-'):
+                    sorry_info['line'] = old_line_num
+                    raw_removed[stable_id] = sorry_info
+
             if line.startswith('+'):
                 new_line_num += 1
             elif line.startswith('-'):
                 old_line_num += 1
-            else: # Unchanged line
+            else:
                 old_line_num += 1
                 new_line_num += 1
 
-    # Correlate added and removed sorries to find 'affected' ones
-    removed_contexts = {f"{s['file']}:{s['context']}": s for s in raw_removed}
+    added_ids = set(raw_added.keys())
+    removed_ids = set(raw_removed.keys())
 
-    for sorry in raw_added:
-        key = f"{sorry['file']}:{sorry['context']}"
-        if key in removed_contexts and sorry['context']:
-            removed_sorry = removed_contexts.pop(key)
-            affected_sorries.append({
-                'file': sorry['file'],
-                'context': sorry['context'],
-                'old_line': removed_sorry['line'],
-                'new_line': sorry['line']
-            })
-        else:
-            added_sorries.append(f'`{sorry["context"]}` in `{sorry["file"]}`' if sorry["context"] else f'in `{sorry["file"]}`')
+    affected_ids = added_ids.intersection(removed_ids)
+    
+    for sid in affected_ids:
+        affected_sorries.append({
+            'file': raw_added[sid]['file'],
+            'context': raw_added[sid]['header'],
+            'old_line': raw_removed[sid]['line'],
+            'new_line': raw_added[sid]['line']
+        })
 
-    for key, sorry in removed_contexts.items():
-        removed_sorries.append(f'`{sorry["context"]}` in `{sorry["file"]}`' if sorry["context"] else f'in `{sorry["file"]}`')
+    for sid in added_ids - affected_ids:
+        added_sorries.append(f"`{raw_added[sid]['header']}` in `{raw_added[sid]['file']}`")
+
+    for sid in removed_ids - affected_ids:
+        removed_sorries.append(f"`{raw_removed[sid]['header']}` in `{raw_removed[sid]['file']}`")
 
     stats = {
         "files_changed": len(files_changed),
