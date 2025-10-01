@@ -261,6 +261,7 @@ if __name__ == "__main__":
         g = Github(auth=auth)
         repo = g.get_repo(repo_name)
         issues = find_sorry_issues(repo)
+        print(f"Found {issues.totalCount} issues with 'proof wanted' label.") # DEBUG
 
     final_summary = format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_sorries, truncated, issues)
     
