@@ -538,6 +538,27 @@ lemma claim_5_10
     (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X  
   := by sorry
 
+lemma claim_5_11
+  [Finite F]
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  {x₀ : F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  {δ : ℚ}
+  {x : Fin n}
+  {D : ℕ}
+  (hD : D ≥ Bivariate.totalDegree (H k (x₀ := x₀) (δ := δ) h_gs))
+  :
+  ∃ Dtop : Finset (Fin n), 
+    Dtop.card = k + 1 ∧ 
+    ∀ x ∈ Dtop, 
+      (the_S'x k ωs δ u₀ u₁ h_gs x).card >
+        (2 * k + 1) 
+        * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
+        * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
+        * D := by sorry
+
 end ProximityGapSection5
 end
 end ProximityGap
