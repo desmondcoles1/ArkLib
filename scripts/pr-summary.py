@@ -129,6 +129,7 @@ def analyze_diff(diff):
     
     for sid in affected_ids:
         affected_sorries.append({
+            'id': sid,
             'file': raw_added[sid]['file'],
             'context': raw_added[sid]['header'],
             'old_line': raw_removed[sid]['line'],
@@ -180,11 +181,12 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_s
     if affected_sorries:
         summary += f"*   ✏️ **Affected:** {len(affected_sorries)} `sorry`(s) (line number changed)\n"
         for sorry in affected_sorries:
-            # Find the corresponding issue
+            # Find the corresponding issue by searching for the stable ID in the issue body
             issue_link = ""
+            stable_id_comment = f"<!-- sorry-tracker-id: {sorry['id']} -->"
             for issue in issues:
-                if f"`{sorry['context']}` in `{sorry['file']}`" in issue.title:
-                    issue_link = f" (closes #{issue.number})"
+                if issue.body and stable_id_comment in issue.body:
+                    issue_link = f" (Issue #{issue.number})"
                     break
             summary += f"    *   `{sorry['context']}` in `{sorry['file']}` moved from L{sorry['old_line']} to L{sorry['new_line']}{issue_link}\n"
 
