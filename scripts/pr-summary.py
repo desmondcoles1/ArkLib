@@ -86,7 +86,7 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, truncated)
     summary = f"### 🤖 Gemini PR Summary\n\n{COMMENT_IDENTIFIER}\n\n"
     summary += f"{ai_summary}\n"
     if truncated:
-        summary += "> *Note: The diff was too large to be fully analyzed and was truncated.*
+        summary += "> *Note: The diff was too large to be fully analyzed and was truncated.*\\n"
 "
     
     summary += "\n---\n\n"
