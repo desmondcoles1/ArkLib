@@ -1,27 +1,20 @@
 import Mathlib.Algebra.Field.Basic
-import Mathlib.Algebra.Polynomial.Basic
-import Mathlib.Algebra.Group.Irreducible.Defs
-import Mathlib.Data.Real.Sqrt
-import Mathlib.FieldTheory.RatFunc.Defs
-import Mathlib.FieldTheory.RatFunc.Basic
-import Mathlib.FieldTheory.Separable
-
-import ArkLib.Data.CodingTheory.Basic
-import ArkLib.Data.CodingTheory.GuruswamiSudan
-import ArkLib.Data.CodingTheory.ReedSolomon
-import ArkLib.Data.Polynomial.Bivariate
-import Mathlib.FieldTheory.RatFunc.AsPolynomial
-import ArkLib.Data.CodingTheory.ReedSolomon
-import ArkLib.Data.CodingTheory.Prelims
-import Mathlib.Probability.Distributions.Uniform
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Sqrt
-import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
-import Mathlib.Data.Finset.BooleanAlgebra
-import Mathlib.Data.Set.Defs
 import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Algebra.Polynomial.Basic
+import Mathlib.Algebra.Module.Submodule.Defs
+import Mathlib.Data.Finset.BooleanAlgebra
+import Mathlib.Data.Real.Sqrt
+import Mathlib.Data.Set.Defs
+import Mathlib.FieldTheory.RatFunc.AsPolynomial
+import Mathlib.FieldTheory.Separable
+import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.RingTheory.Henselian
+
+import ArkLib.Data.CodingTheory.GuruswamiSudan
+import ArkLib.Data.CodingTheory.Prelims
+import ArkLib.Data.CodingTheory.ReedSolomon
+import ArkLib.Data.Polynomial.Bivariate
 
 
 /-!
@@ -68,16 +61,13 @@ def proximityGap (d : ℕ) (bound : ℕ) : Prop :=
   for all `i`. -/
 def correlatedAgreement (C : Set (n → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → n → F) : Prop :=
   ∃ S : Finset n, #(S) ≥ (1 - δ) * (Fintype.card n) ∧
-    ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ {j | v i j = W i j} ⊆ S
-
-end
+    ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ {j | v i j = W i j} = S
 
 section
 variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*}
 
-/--
-  Definition 1.1 in [BCIKS20].
+/-- Definition 1.1 in [BCIKS20].
 -/
 noncomputable def generalProximityGap {α : Type*} [DecidableEq α] [Nonempty α]
   (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (δ ε : ℝ≥0) : Prop :=
@@ -89,8 +79,7 @@ end
 section
 variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [Field F] [Fintype F] [DecidableEq F]
-/--
-  The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
+/-- The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
   defined up to the Johnson bound. More precisely, let `ρ` be the rate of the Reed-Solomon code.
   Then for `δ ∈ (0, 1 - √ρ)`, we define the relevant error parameter `ε` for the unique decoding
   bound, i.e. `δ ∈ [0, (1-√ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-√ρ)/2 , 1 - √ρ]`.
@@ -103,8 +92,7 @@ noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : �
             ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
        else 0
 
-/--
-  Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
+/-- Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
 -/
 theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] {deg : ℕ} {domain : ι ↪ F}
   (C : Fin t → (Fin k → (ι → F))) {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
@@ -114,8 +102,7 @@ theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] {deg : ℕ} {dom
     δ
     (errorBound δ deg domain) := by sorry
 
-/--
-  Theorem 1.4 (Main Theorem — Correlated agreement over lines) in [BCIKS20].
+/-- Theorem 1.4 (Main Theorem — Correlated agreement over lines) in [BCIKS20].
 -/
 theorem correlatedAgreement_lines {u : Fin 2 → ι → F} {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
@@ -125,8 +112,7 @@ theorem correlatedAgreement_lines {u : Fin 2 → ι → F} {deg : ℕ} {domain :
       errorBound δ deg domain) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
-/--
-  Theorem 1.5 (Correlated agreement for low-degree parameterised curves) in [BCIKS20].
+/-- Theorem 1.5 (Correlated agreement for low-degree parameterised curves) in [BCIKS20].
 -/
 theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
@@ -151,393 +137,263 @@ theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin k → ι
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 end
-end ProximityGap
 
-variable {F : Type} [Field F]
+namespace Trivariate
+section Trivariate
 
+variable {F : Type} [Field F] [DecidableEq F] [DecidableEq (RatFunc F)]
 
-open Polynomial in
-lemma proximity_gap_claim_5_4 [DecidableEq (RatFunc F)] {n k m : ℕ} {ωs u₀ u₁ : Fin n → F}
-  :
-  ∃ Q : Polynomial (Polynomial (RatFunc F)) , Q ≠ 0
-    ∧ ∀ i, Bivariate.rootMultiplicity (F := RatFunc F)
-      (Polynomial.C (Polynomial.C (RatFunc.mk (Polynomial.C (ωs i)) 1)) : Polynomial (Polynomial (RatFunc F)))
-      (RatFunc.mk (Polynomial.C <| ωs i) 1 : RatFunc F)
-      ((RatFunc.mk (Polynomial.C <| u₀ i) 1 +
-        (RatFunc.mk (Polynomial.X) 1) *
-          (RatFunc.mk (Polynomial.C <| u₁ i) 1)): RatFunc F) ≥ m := by sorry
-
-open GuruswamiSudan
-
-variable {n : ℕ}
-variable {F : Type} [Field F] [DecidableEq F]
-
-/-- Lemma 5.3 from the Proximity gap paper -/
-lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs f : Fin n ↪ F} :
-  ∃ Q, GuruswamiSudan.Condition k m (proximity_gap_degree_bound (n := n) k m) ωs f Q := by
-  sorry
-
-open Polynomial
-
-lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs f : Fin n → F}
-  {Q : F[X][X]} {p : F[X]}
-  (h : Δ₀(f, p.eval ∘ f) ≤ proximity_gap_johnson (n := n) k m)
-  :
-  ((X : F[X][X]) - Polynomial.C p) ∣ Q := by sorry
+open Polynomial Bivariate
 
 
-def the_S [Field F] (δ : ℚ) (V : LinearCode (ι := Fin n) (F := F)) (u₀ u₁ : Fin n → F)
-  : Finset F :=
-    @Set.toFinset _ { z | ∀ v ∈ V.carrier, Δ₀(u₀ + (fun _ => z) * u₁, v) ≤ δ} sorry
+noncomputable def eval_on_Z₀ (p : (RatFunc F)) (z : F) : F :=
+  RatFunc.eval (RingHom.id _) z p
 
-opaque eval_on_Z₀ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X]) (z : F) : F :=
-  sorry
-
-opaque eval_on_Z₁ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X]) (z : F) : F[X] :=
-  sorry
-
-opaque eval_on_Z₂ [Field F] [DecidableEq (RatFunc F)] (p : (RatFunc F)[X][X]) (z : F) : F[X][X] :=
-  sorry
-
-noncomputable def D_X (rho : ℚ) (m : ℕ) : ℕ := Nat.floor <| (m + (1 : ℚ)/2) * Real.sqrt rho * n
-def D_Y (Q : F[X][X]) : ℕ := Bivariate.degreeY Q
-def D_YZ (Q : F[X][X]) : ℕ := Bivariate.totalDegree Q
-
-namespace abc
 
 notation3:max R "[Z][X]" => Polynomial (Polynomial R)
 
 notation3:max R "[Z][X][Y]" => Polynomial (Polynomial (Polynomial (R)))
 
-notation3:max "Y" => Polynomial.X (R := Polynomial _)
+notation3:max "Y" => Polynomial.X
+notation3:max "X" => Polynomial.C Polynomial.X
+notation3:max "Z" => Polynomial.C (Polynomial.C Polynomial.X)
 
-notation3:max "Z" => Polynomial.X (R := Polynomial (Polynomial _))
+noncomputable opaque eval_on_Z (p : F[Z][X][Y]) (z : F) : F[X][Y] :=
+  p.map (Polynomial.mapRingHom (Polynomial.evalRingHom z))
 
-opaque C₀ (Q : F[Z][X][Y]) : F[Z][X] := sorry
-opaque R₀ (Q : F[Z][X][Y]) : List F[Z][X][Y] := sorry
-opaque f₀ (Q : F[Z][X][Y]) : List ℕ := sorry
-opaque e₀ (Q : F[Z][X][Y]) : List ℕ := sorry
+open Polynomial.Bivariate in
+noncomputable def toRatFuncPoly (p : F[Z][X][Y]) : (RatFunc F)[X][Y] :=
+  p.map (Polynomial.mapRingHom (algebraMap F[X] (RatFunc F)))
 
-lemma eq_5_12 {Q : F[Z][X][Y]} :
-  let C := C₀ Q
-  let R := R₀ Q
-  let f := f₀ Q
-  let e := e₀ Q
-  R.length = f.length ∧
-  f.length = e.length ∧
-  ∀ eᵢ∈ e, 1 ≤ eᵢ∧
-  ∀ Rᵢ ∈ R, Rᵢ.Separable ∧
-  ∀ Rᵢ ∈ R, Irreducible Rᵢ ∧
-  Q = (Polynomial.C C) *
-    (List.prod <| List.map (fun ((R, f), e) => (R.comp ((Y : F[Z][X][Y]) ^ f))^e) (List.zip (List.zip R f) e))
-    := sorry
+end Trivariate
+end Trivariate
 
-lemma lemma_5_6
-  {Q  : F[Z][X][Y]}
+section ProximityGapSection5
+variable {F : Type} [Field F] [DecidableEq F] [DecidableEq (RatFunc F)]
+variable {n : ℕ}
+
+section
+
+open GuruswamiSudan
+open Polynomial.Bivariate
+open RatFunc
+
+/-- The degree bound (a.k.a. `D_X`) for instantiation of Guruswami-Sudan
+    in lemma 5.3 of the Proximity Gap paper.
+    D_X(m) = (m + 1/2)√ρn.
+-/
+noncomputable def D_X (ρ : ℚ) (n m : ℕ) : ℝ := (m + 1/2) * (Real.sqrt ρ) * n
+
+open Classical in
+noncomputable def proximity_gap_degree_bound (ρ : ℚ) (m n : ℕ) : ℕ :=
+  let b := D_X ρ m n
+  if h : ∃ n : ℕ, b = n
+  then (Classical.choose h) - 1
+  else Nat.floor b
+
+/-- The ball radius from lemma 5.3 of the Proximity Gap paper,
+    which follows from the Johnson bound.
+    δ₀(ρ, m) = 1 - √ρ - √ρ/2m.
+-/
+noncomputable def proximity_gap_johnson (ρ : ℚ) (m : ℕ) : ℝ :=
+  (1 : ℝ) - Real.sqrt ρ - Real.sqrt ρ / (2 * m)
+
+
+/-- The first part of lemma 5.3 from the Proximity gap paper.
+    Given the D_X (`proximity_gap_degree_bound`) and δ₀ (`proximity_gap_johnson`),
+    a solution to Guruswami-Sudan system exists.
+-/
+lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs : Fin n ↪ F} {f : Fin n → F} :
+  ∃ Q, Condition (k + 1) m ((proximity_gap_degree_bound ((k + 1 : ℚ) / n) m n)) ωs f Q := by
+  sorry
+
+open Polynomial in
+/-- The second part of lemma 5.3 from the Proximity gap paper.
+    For any solution Q of the Guruswami-Sudan system, and for any
+    polynomial P ∈ RS[n, k, ρ] such that δᵣ(w, P) ≤ δ₀(ρ, m),
+    we have that Y - P(X) divides Q(X, Y) in the polynomial ring
+    F[X][Y]. Note that in F[X][Y], the term X actually refers to
+    the outer variable, Y.
+-/
+lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs : Fin n ↪ F}
+  {w : Fin n → F}
+  {Q : F[X][Y]}
+  (cond : Condition (k + 1) m (proximity_gap_degree_bound ((k + 1 : ℚ) / n) m n) ωs w Q)
+  {p : ReedSolomon.code ωs n}
+  (h : δᵣ(w, p) ≤ proximity_gap_johnson ((k + 1 : ℚ) / n) m)
   :
-  ∃ x₀,
-  ∀ R ∈ R₀ Q,
-  Bivariate.evalX x₀ (Bivariate.discr_y R) ≠ 0 := by sorry
+  (X - Polynomial.C (ReedSolomon.codewordToPoly p)) ∣ Q := by sorry
 
-lemma lemma_5_7
-  {k m : ℕ} [Field F] [DecidableEq (RatFunc F)]
-  {V : LinearCode (ι := Fin n) F} {δ: ℚ} {x₀ : F} {f u₀ u₁ : Fin n → F}
-  {Q : (RatFunc F)[X][X]} {p : (RatFunc F)[X]}
+
+section
+
+open Polynomial
+
+-- { i |
+--         ∃ j ∈ Q.support, ∃ k ∈ (Q.coeff j).support,
+--           i = j + (Bivariate.coeff Q j k).natDegree }
+def D_Y (Q : F[Z][X][Y]) : ℕ := Bivariate.natDegreeY Q
+def D_YZ (Q : F[Z][X][Y]) : ℕ :=
+  Option.getD (dflt := 0) <| Finset.max
+    (Finset.image
+            (
+              fun j =>
+                Option.getD (
+                  Finset.max (
+                    Finset.image
+                      (fun k => j + (Bivariate.coeff Q j k).natDegree)
+                      (Q.coeff j).support
+                  )
+                ) 0
+            )
+            Q.support
+    )
+
+end
+
+structure ModifiedGuruswami
+  (m n k : ℕ)
+  (ωs : Fin n ↪ F)
+  (Q : F[Z][X][Y])
+  (u₀ u₁ : Fin n → F)
+  where
+  Q_ne_0 : Q ≠ 0
+  /-- Degree of the polynomial. -/
+  Q_deg : natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
+  /-- Multiplicity of the roots is at least r. -/
+  Q_multiplicity : ∀ i,  Polynomial.Bivariate.rootMultiplicity Q
+              (Polynomial.C <| ωs i)
+              ((Polynomial.C <| u₀ i) + Polynomial.X * (Polynomial.C <| u₁ i))
+            ≥ m
+  Q_deg_X :
+    Polynomial.Bivariate.degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
+  Q_D_Y :
+    D_Y Q < D_X (k + 1 / (n : ℚ)) n m / k
+  Q_D_YZ :
+    D_YZ Q ≤ n * (m + 1/(2 : ℚ))^3 / (6 * Real.sqrt ((k + 1) / n))
+
+-- Definition of D_YZ needs a fix, in particular, currently definition is "D_XY".
+lemma proximity_gap_claim_5_4
+  {m n k : ℕ}
+  {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
   :
-  ∃ R H, R ∣ Q ∧ Irreducible H ∧ H ∣ (Bivariate.evalX (RatFunc.mk (Polynomial.C x₀) 1) R) ∧
-   ({ z ∈ the_S (F := F) δ V u₀ u₁ |
-      (eval_on_Z₂ R z).comp (Polynomial.C (eval_on_Z₁ p z)) = 0
-      ∧ (eval_on_Z₁ H z).comp (eval_on_Z₁ p z) = 0 }).card ≥ (the_S (F := F) δ V u₀ u₁).card
-        / (Bivariate.degreeY Q)
-      ∧ (the_S (F := F) δ V u₀ u₁).card
-        / (Bivariate.degreeY Q) > 2 * D_Y Q ^ 2 * (D_X (n := n) (rho := k/n) m) * D_YZ Q
+  ∃ Q : F[Z][X][Y], ModifiedGuruswami m n k ωs Q u₀ u₁
     := by sorry
 
-def curve [Field F] (u : List (Fin n → F)) (z : F) : Fin n → F :=
-    List.zip u (List.map (fun i => z ^ i) (List.range u.length))
-    |> List.map (fun (u, z) i => (u i) * z)
-    |> List.sum
-
-def the_S_multi [Field F] [Finite F] (δ : ℚ) (u : List (Fin n → F)) (V : Finset (Fin n → F)) : Finset F :=
-  @Set.toFinset _ { z | ∀ v ∈ V, Δ₀(curve u z, v) ≤ δ} sorry
-
-theorem theorem_6_1
-  [Field F]
-  [Finite F]
-  {rho : ℚ}
-  {δ : ℚ}
-  {V : Finset (Fin n → F)}
-  (hδ : δ ≤ (1 - rho)/2)
-  {u : List (Fin n → F)}
-  (hS : n * u.length < (the_S_multi δ u V).card)
-  :
-  the_S_multi δ u V = F ∧
-  ∃ (v : List (Fin n → F)) (z : F),
-    v.length = u.length ∧
-    Δ₀(curve u z, curve v z) ≤ δ ∧
-    ({ x : Fin n |
-      List.map (fun el => el x) u
-      ≠ List.map (fun el => el x) v } : Finset _).card ≤ δ * n := sorry
-
-noncomputable def δ₀ (rho : ℚ) (m : ℕ) : ℝ :=
-  1 - Real.sqrt rho - Real.sqrt rho / (2 * m)
-
-theorem theorem_6_2
-  [Field F]
-  [Finite F]
-  {m : ℕ}
-  {rho : ℚ}
-  {δ : ℚ}
-  (hm : 3 ≤ m)
-  {V : Finset (Fin n → F)}
-  (hδ : δ ≤ δ₀ rho m)
-  {u : List (Fin n → F)}
-  (hS : ((1 + 1 / (2 * m)) ^ 7 * m ^ 7) / (3 * (Real.sqrt rho) ^ 3)
-    * n ^ 2 * u.length < (the_S_multi δ u V).card)
-  :
-  ∃ (v : List (Fin n → F)),
-  ∀ i ≤ v.length, v.getD (fallback := fun _ => 0) i ∈ V ∧ v.length = u.length ∧
-  (1 - δ) * n ≤ ({x : Fin n | ∀ i ≤ u.length, u.getD i (fun _ => 0)
-    = v.getD i (fun _ => 0) } : Finset _).card := sorry
-
-section
-open NNReal Finset Function
-
-open scoped BigOperators
-
-variable {ι : Type*} [Fintype ι] [Nonempty ι]
-         {F : Type*} [Field F] [Fintype F] [DecidableEq F]
-
-open Uniform in
-theorem lemma_6_3 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
-  (hproximity :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-      (s := (AffineSubspace.carrier
-        <| affineSpan F
-          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-            set
-            )))) (hs := sorry)).toOuterMeasure
-      {y : ι → F | Code.relHammingDistToCode y (ReedSolomon.code domain deg) ≤ δ} >
-      (ProximityGap.errorBound δ deg domain)) :
-  ∀ x ∈ (AffineSubspace.carrier
-  <| affineSpan F
-    (let set := { x  | ∃ v ∈ (List.tail u), x = v };
-      set
-      )), Code.relHammingDistToCode x (ReedSolomon.code domain deg) ≤ δ
-  := by sorry
-
 end
 
-end abc
+variable {m : ℕ} (k : ℕ)
 
-namespace WeightedAgreement
+instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s where
+  elems := sorry
+  complete := by
+    sorry
 
-open NNReal Finset Function
+def the_S [Finite F] (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
+  : Finset F := Set.toFinset { z | ∃ v : ReedSolomon.code ωs (k + 1), δᵣ(u₀ + z • u₁, v) ≤ δ}
 
-open scoped BigOperators
+open Polynomial
 
-section
-
-variable {n : Type*} [Fintype n] [DecidableEq n]
-
-variable {ι : Type*} [Fintype ι] [Nonempty ι]
-variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
-
-variable (C : Submodule F (n → F)) [DecidablePred (· ∈ C)]
-
-noncomputable def agree (μ : ι → Set.Icc (0 : ℝ) 1) (u v : ι → F) : ℝ :=
-  1 / (Fintype.card ι) * ∑ i ∈ { i | u i = v i }, (μ i).1
-
-noncomputable def agree_set (μ : ι → Set.Icc (0 : ℝ) 1) (u : ι → F) (V : Finset (ι → F)) : ℝ :=
-  sSup (Finset.map ⟨fun v ↦ (Δ₀(u, v) : ℝ), by sorry⟩ V)
-
-noncomputable def mu_set.{u} {ι : Type u} (μ : ι → Set.Icc (0 : ℝ) 1) (V : Finset.{u} ι) : ℝ :=
-  1/V.card * ∑ i ∈ V, (μ i).1
-
-noncomputable def weightedCorrelatedAgreement.{u} {ι : Type u} [Fintype ι] (μ : ι → Set.Icc (0 : ℝ) 1)
-    (C : Set (ι → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k → ι → F) : ℝ :=
-  sSup { x | ∃ D ⊆ (Finset.univ.{u} (α := ι)), x = mu_set.{u} μ D ∧
-    ∃ v : Fin k → ι → F, ∀ i, v i ∈ C ∧ ∀ j ∈ D,  v i j = W i j }
-
-theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {M : ℕ}
-  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  {α : ℝ}
-  (hα : (ReedSolomonCode.sqrtRate deg domain) < α)
-  (hα₁ : α < 1)
-  (hproximity :
-    (PMF.uniformOfFinset
-      (@Set.toFinset _
-        { z : List F |  z.length = u.length } sorry)
-      (hs := sorry)).toOuterMeasure
-      { z : List F | agree_set μ
-        (∑ i < z.length, fun ι => z.getD i 0 * u.getD i 0 ι)
-        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
-      u.length * (ProximityGap.errorBound δ deg domain))
-  (h_additionally :
-    (PMF.uniformOfFinset
-      (@Set.toFinset _
-        { z : List F |  z.length = u.length } sorry)
-      (hs := sorry)).toOuterMeasure
-      { z : List F | agree_set μ
-        (∑ i < z.length, fun ι => z.getD i 0 * u.getD i 0 ι)
-        (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } ≥
-      (ENNReal.ofReal <|
-      (u.length * (M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
-      * (1 / min
-        (α - ReedSolomonCode.sqrtRate deg domain)
-        (3 / ReedSolomonCode.sqrtRate deg domain))))
-      :
-  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F),
-    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-    mu_set μ ι' ≥ α ∧
-    u.length = v.length ∧
-    ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
-  := by sorry
-
-theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {M m : ℕ}
-  (hm : 3 ≤ m)
-  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  {α : ℝ}
-  (hα : (ReedSolomonCode.sqrtRate deg domain) * (1 + 1/(2 * m : ℝ)) < α)
-  (hS : { z : F | agree_set μ (fun i => ∑ j < u.length, z ^ j * u.getD j 0 i)
-          (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) >
-          max
-            ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2 * u.length
-              / (3 * (ReedSolomonCode.sqrtRate deg domain)^2))
-            ((2 * m + 1) * (M * (Fintype.card ι) + 1) * u.length / (ReedSolomonCode.sqrtRate deg domain
-              |> NNReal.toReal))
-          })
+omit [DecidableEq (RatFunc F)] in
+lemma Pz_exists_for_the_S
+  [Finite F]
+  {k : ℕ}
+  {z : F}
+  {ωs : Fin n ↪ F}
+  {δ : ℚ} {u₀ u₁ : Fin n → F}
+  (hS : z ∈ the_S (k := k) ωs δ u₀ u₁)
   :
-  ∃ v : List (ι → F), v.length = u.length ∧
-  (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-  mu_set μ (@Set.toFinset _ { i ∈ (Finset.univ (α := ι))
-    | ∀ j ≤ u.length, u.getD j 0 i = v.getD j 0 i  } sorry) ≥ α
-  := by sorry
+  ∃ Pz : F[X], Pz.natDegree ≤ k ∧ δᵣ(u₀ + z • u₁, Pz.eval ∘ ωs) ≤ δ := by
+    unfold the_S at hS
+    simp only [Subtype.exists, exists_prop, Set.mem_toFinset, Set.mem_setOf_eq] at hS
+    rcases hS with ⟨w, hS, dist⟩
+    unfold ReedSolomon.code at hS
+    rw [Submodule.mem_map] at hS
+    rcases hS with ⟨p, hS⟩
+    exists p
+    apply And.intro
+    · have hS := hS.1
+      rw [Polynomial.mem_degreeLT] at hS
+      by_cases h : p = 0
+      · rw [h]; simp
+      · rw [Polynomial.degree_eq_natDegree h, Nat.cast_lt] at hS
+        linarith
+    · unfold ReedSolomon.evalOnPoints at hS
+      simp only [LinearMap.coe_mk, AddHom.coe_mk] at hS
+      rw [Function.comp_def, hS.2]
+      exact dist
 
-open Uniform in
-theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {α : ℝ}
-  (hα : (ReedSolomonCode.sqrtRate deg domain) < α)
-  (hα₁ : α < 1)
-  {M : ℕ}
-  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  (hproximity :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-      (s := (AffineSubspace.carrier
-        <| affineSpan F
-          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-            set
-            )))) (hs := sorry)).toOuterMeasure
-      {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
-      (ProximityGap.errorBound (Real.toNNReal α) deg domain))
-  (h_additionally :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-    (s := (AffineSubspace.carrier
-      <| affineSpan F
-        (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-          set
-          )))) (hs := sorry)).toOuterMeasure
-    {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α }
-      ≥
-      (ENNReal.ofReal <|
-      ((M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
-      * (1 / min
-        (α - ReedSolomonCode.sqrtRate deg domain)
-        (3 / ReedSolomonCode.sqrtRate deg domain))))
+noncomputable def Pz
+  [Finite F]
+  {k : ℕ}
+  {z : F}
+  {ωs : Fin n ↪ F}
+  {δ : ℚ} {u₀ u₁ : Fin n → F}
+  (hS : z ∈ the_S k ωs δ u₀ u₁)
   :
-  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F),
-    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-    mu_set μ ι' ≥ α ∧
-    u.length = v.length ∧
-    ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
-  := by sorry
+  F[X]
+  := Classical.choose
+      (Pz_exists_for_the_S (n := n) (k := k) hS)
 
-open Uniform in
-theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {α : ℝ}
-  {M m : ℕ}
-  (hm : 3 ≤ m)
-  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  (hα : (ReedSolomonCode.sqrtRate deg domain) * (1 + 1/(2 * m : ℝ)) < α)
-  (hproximity :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-      (s := (AffineSubspace.carrier
-        <| affineSpan F
-          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-            set
-            )))) (hs := sorry)).toOuterMeasure
-      {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
-      (ProximityGap.errorBound (Real.toNNReal α) deg domain))
-  (h_additionally :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-    (s := (AffineSubspace.carrier
-      <| affineSpan F
-        (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-          set
-          )))) (hs := sorry)).toOuterMeasure
-    {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α }
-      ≥
-          (Real.toEReal <| max
-            ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2
-              / (3 * (ReedSolomonCode.sqrtRate deg domain)^2))
-            ((2 * m + 1) * (M * (Fintype.card ι) + 1) / (ReedSolomonCode.sqrtRate deg domain
-              |> NNReal.toReal)))
-          )
+lemma lemma_5_5
+  [Finite F]
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  {δ : ℚ} {u₀ u₁ : Fin n → F}
   :
-  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F),
-    (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-    mu_set μ ι' ≥ α ∧
-    u.length = v.length ∧
-    ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
-  := by sorry
+  ∃ S', ∃ (h_sub : S' ⊆ the_S k ωs δ u₀ u₁), ∃ P : F[Z][X],
+    S'.card > (the_S k ωs δ u₀ u₁).card / (2 * D_Y Q) ∧
+    ∀ z : S', Pz (h_sub z.2) = P.map (Polynomial.evalRingHom z.1) ∧
+    P.natDegree ≤ k ∧
+    Bivariate.degreeX P ≤ 1 := by sorry
 
-lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {α : ℝ}
-  (hα : 0 ≤ α)
-  {v : List (ι → F)}
-  (hv : ∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg))
-  (h_len : u.length = v.length)
-  {S' : Finset F}
-  (hS'_card : S'.card > u.length)
-  (hS'_agree : ∀ z ∈ S', agree μ (fun x => ∑ i < u.length, z ^ i * u.getD i 0 x)
-    (fun x => ∑ i < v.length, z ^ i * v.getD i 0 x) ≥ α)
+lemma eq_5_12
+  {m n k : ℕ}
+  {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁) :
+  ∃ (C : F[Z][X]) (R : List F[Z][X][Y]) (f : List ℕ) (e : List ℕ),
+    R.length = f.length ∧
+    f.length = e.length ∧
+    ∀ eᵢ ∈ e, 1 ≤ eᵢ ∧
+    ∀ Rᵢ ∈ R, Rᵢ.Separable ∧
+    ∀ Rᵢ ∈ R, Irreducible Rᵢ ∧
+    Q = (Polynomial.C C) *
+      (List.prod
+        <| List.map
+          (fun ((R, f), e) => (R.comp ((Y : F[Z][X][Y]) ^ f))^e) (List.zip (List.zip R f) e))
+  := sorry
+
+lemma lemma_5_6
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  : ∃ x₀,
+      ∀ R ∈ Classical.choose (Classical.choose_spec (eq_5_12 h_gs)),
+      Bivariate.evalX x₀ (Bivariate.discr_y R) ≠ 0 := by sorry
+
+open Trivariate in
+open Bivariate in
+lemma lemma_5_7 [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  mu_set μ (@Set.toFinset _ { x : ι | ∀ i < u.length, u.getD i 0 x = v.getD i 0 x} sorry)
-    ≥ α - (u.length : ℝ) / (S'.card - u.length) := by sorry
+  ∃ R H, R ∈ Classical.choose (Classical.choose_spec (eq_5_12 h_gs)) ∧
+    Irreducible H ∧ H ∣ (Bivariate.evalX (Polynomial.C x₀) R) ∧
+   (@Set.toFinset _ { z : the_S (F := F) k ωs δ u₀ u₁ |
+        let Pz := Pz z.2
+        (Trivariate.eval_on_Z R z.1).eval Pz = 0 ∧
+        (Bivariate.evalX z.1 H).eval (Pz.eval x₀) = 0} sorry).card
+    ≥ (the_S k ωs δ u₀ u₁).card / (Bivariate.natDegreeY Q)
+    ∧ (the_S k ωs δ u₀ u₁).card
+        / (Bivariate.natDegreeY Q) > 2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q
+    := by sorry
 
-
-lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
-  {α : ℝ}
-  {M : ℕ}
-  (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  (hα : 0 ≤ α)
-  {v : List (ι → F)}
-  (hv : ∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg))
-  (h_len : u.length = v.length)
-  {S' : Finset F}
-  (hS'_card : S'.card > u.length)
-  (hS'_card₁ : S'.card > (M * Fintype.card ι + 1) * u.length)
-  (hS'_agree : ∀ z ∈ S', agree μ (fun x => ∑ i < u.length, z ^ i * u.getD i 0 x)
-    (fun x => ∑ i < v.length, z ^ i * v.getD i 0 x) ≥ α)
-  :
-  mu_set μ (@Set.toFinset _ { x : ι | ∀ i < u.length, u.getD i 0 x = v.getD i 0 x} sorry)
-    ≥ α := by sorry
+end ProximityGapSection5
 end
+end ProximityGap
 
-end WeightedAgreement
