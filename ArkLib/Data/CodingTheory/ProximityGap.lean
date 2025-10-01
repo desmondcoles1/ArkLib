@@ -426,7 +426,7 @@ noncomputable def H [Finite F]
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : F[Z][X] := Classical.choose <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
 
-lemma H_is_irreducible [Finite F]  
+lemma H_is_irreducible [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
@@ -443,8 +443,8 @@ lemma Claim_5_8
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  :  ∀ t ≥ k, 
-  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+  :  ∀ t ≥ k,
+  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
     ⟨H_is_irreducible k h_gs⟩
   @α _ _ _ (R (x₀ := x₀) (δ := δ) k h_gs) x₀ (H k h_gs) (H_irr_fact) t = 0 := by
   sorry
@@ -456,18 +456,28 @@ lemma Claim_5_8'
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
       ⟨H_is_irreducible k h_gs⟩
     @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-        PowerSeries.mk (fun t => 
-          if t ≥ k 
-          then 0 
-          else PowerSeries.coeff _ t 
-            (@γ _ _ _ 
-              (R k (x₀ := x₀) (δ := δ) h_gs) 
-              x₀ 
-              (H k h_gs) 
+        PowerSeries.mk (fun t =>
+          if t ≥ k
+          then 0
+          else PowerSeries.coeff _ t
+            (@γ _ _ _
+              (R k (x₀ := x₀) (δ := δ) h_gs)
+              x₀
+              (H k h_gs)
               (H_irr_fact))) := by
+  extract_lets H_irr_fact
+  ext n
+  unfold γ
+  simp only [map_neg, ge_iff_le, PowerSeries.coeff_mk, right_eq_ite_iff]
+  intros h
+  -- have bla := @Claim_5_8
+  -- erw [PowerSeries.coeff_subst]
+
+
+
   sorry
 
 open AppendixA.ClaimA2 in
@@ -477,12 +487,15 @@ lemma Claim_5_9
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  ∃ (v₀ v₁ : F[X]), 
-    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+  ∃ (v₀ v₁ : F[X]),
+    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
       ⟨H_is_irreducible k h_gs⟩
     @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-        @AppendixA.polyToPowerSeries𝕃 _ _ _ _ 
-          H_irr_fact (Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁)) := by sorry
+        @AppendixA.polyToPowerSeries𝕃 _ _ _ _
+          H_irr_fact (
+            (Polynomial.map Polynomial.C v₀) +
+            (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
+          ) := by sorry
 
 noncomputable def P [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
@@ -492,7 +505,10 @@ noncomputable def P [Finite F]
   F[Z][X] :=
   let v₀ := Classical.choose (Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
   let v₁ := Classical.choose (Classical.choose_spec <| Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
-  Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁) 
+  (
+    (Polynomial.map Polynomial.C v₀) +
+    (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
+  )
 
 open AppendixA.ClaimA2 in
 lemma P_eq_gamma
@@ -501,11 +517,11 @@ lemma P_eq_gamma
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
     ⟨H_is_irreducible k h_gs⟩
   @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-  @AppendixA.polyToPowerSeries𝕃 _ _ _ _ 
-    H_irr_fact (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry 
+  @AppendixA.polyToPowerSeries𝕃 _ _ _ _
+    H_irr_fact (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry
 
 noncomputable def the_S'x
   [Finite F]
@@ -534,8 +550,8 @@ lemma claim_5_10
       * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
       * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
       * D)
-  : (P k (x₀ := x₀) (δ := δ) h_gs).eval (Polynomial.C (ωs x)) = 
-    (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X  
+  : (P k (x₀ := x₀) (δ := δ) h_gs).eval (Polynomial.C (ωs x)) =
+    (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X
   := by sorry
 
 lemma claim_5_11
@@ -550,11 +566,11 @@ lemma claim_5_11
   {D : ℕ}
   (hD : D ≥ Bivariate.totalDegree (H k (x₀ := x₀) (δ := δ) h_gs))
   :
-  ∃ Dtop : Finset (Fin n), 
-    Dtop.card = k + 1 ∧ 
-    ∀ x ∈ Dtop, 
+  ∃ Dtop : Finset (Fin n),
+    Dtop.card = k + 1 ∧
+    ∀ x ∈ Dtop,
       (the_S'x k ωs δ u₀ u₁ h_gs x).card >
-        (2 * k + 1) 
+        (2 * k + 1)
         * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
         * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
         * D := by sorry
@@ -562,4 +578,3 @@ lemma claim_5_11
 end ProximityGapSection5
 end
 end ProximityGap
-
