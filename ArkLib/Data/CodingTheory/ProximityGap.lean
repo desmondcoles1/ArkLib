@@ -80,9 +80,9 @@ section
 variable {ι : Type*} [Fintype ι] [Nonempty ι]
          {F : Type*} [Field F] [Fintype F] [DecidableEq F]
 /-- The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
-  defined up to the Johnson bound. More precisely, let `ρ` be the rate of the Reed-Solomon code.
-  Then for `δ ∈ (0, 1 - √ρ)`, we define the relevant error parameter `ε` for the unique decoding
-  bound, i.e. `δ ∈ [0, (1-√ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-√ρ)/2 , 1 - √ρ]`.
+  defined up to the Johnson bound. More precisely, let `rho` be the rate of the Reed-Solomon code.
+  Then for `δ ∈ (0, 1 - √rho)`, we define the relevant error parameter `ε` for the unique decoding
+  bound, i.e. `δ ∈ [0, (1-√rho)/2]` and Johnson bound, i.e. `δ ∈ [(1-√rho)/2 , 1 - √rho]`.
 -/
 noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
   letI j := ReedSolomonCode.sqrtRate deg domain
@@ -180,23 +180,23 @@ open RatFunc
 
 /-- The degree bound (a.k.a. `D_X`) for instantiation of Guruswami-Sudan
     in lemma 5.3 of the Proximity Gap paper.
-    D_X(m) = (m + 1/2)√ρn.
+    D_X(m) = (m + 1/2)√rhon.
 -/
-noncomputable def D_X (ρ : ℚ) (n m : ℕ) : ℝ := (m + 1/2) * (Real.sqrt ρ) * n
+noncomputable def D_X (rho : ℚ) (n m : ℕ) : ℝ := (m + 1/2) * (Real.sqrt rho) * n
 
 open Classical in
-noncomputable def proximity_gap_degree_bound (ρ : ℚ) (m n : ℕ) : ℕ :=
-  let b := D_X ρ m n
+noncomputable def proximity_gap_degree_bound (rho : ℚ) (m n : ℕ) : ℕ :=
+  let b := D_X rho m n
   if h : ∃ n : ℕ, b = n
   then (Classical.choose h) - 1
   else Nat.floor b
 
 /-- The ball radius from lemma 5.3 of the Proximity Gap paper,
     which follows from the Johnson bound.
-    δ₀(ρ, m) = 1 - √ρ - √ρ/2m.
+    δ₀(rho, m) = 1 - √rho - √rho/2m.
 -/
-noncomputable def proximity_gap_johnson (ρ : ℚ) (m : ℕ) : ℝ :=
-  (1 : ℝ) - Real.sqrt ρ - Real.sqrt ρ / (2 * m)
+noncomputable def proximity_gap_johnson (rho : ℚ) (m : ℕ) : ℝ :=
+  (1 : ℝ) - Real.sqrt rho - Real.sqrt rho / (2 * m)
 
 
 /-- The first part of lemma 5.3 from the Proximity gap paper.
@@ -210,7 +210,7 @@ lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs : Fin n ↪ F
 open Polynomial in
 /-- The second part of lemma 5.3 from the Proximity gap paper.
     For any solution Q of the Guruswami-Sudan system, and for any
-    polynomial P ∈ RS[n, k, ρ] such that δᵣ(w, P) ≤ δ₀(ρ, m),
+    polynomial P ∈ RS[n, k, rho] such that δᵣ(w, P) ≤ δ₀(rho, m),
     we have that Y - P(X) divides Q(X, Y) in the polynomial ring
     F[X][Y]. Note that in F[X][Y], the term X actually refers to
     the outer variable, Y.
