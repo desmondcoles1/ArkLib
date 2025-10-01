@@ -11,6 +11,7 @@ import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Eval.Defs
 import Mathlib.Data.Fintype.Defs
 import Mathlib.FieldTheory.Separable
+import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
 open Polynomial
 open Polynomial.Bivariate
@@ -23,14 +24,6 @@ variable {F : Type} [Semiring F]
 
 /-- The set of coefficients of a bivariate polynomial. -/
 def coeffs [DecidableEq F] (f : F[X][Y]) : Finset F[X] := f.support.image f.coeff
-
-/-- (i, j)-coefficient of a polynomial, i.e. the coefficient
-    of `X^i Y^j`.
--/
-def coeff_i_j (i j : ℕ) (f : F[X][Y]) : F := (f.coeff j).coeff i
-
-/-- The coeffiecient of `Y^n`, as a polynomial in `X`. -/
-def coeff_Y_n (n : ℕ) (f : F[X][Y]) : F[X] := f.coeff n
 
 /--
 The `Y`-degree of a bivariate polynomial, as a natural number.
@@ -53,28 +46,18 @@ classical sense if the bivariate polynomial is interpreted as a univariate polyn
 -/
 def leadingCoeffY (f : F[X][Y]) : F[X] := f.coeff (natDegree f)
 
-def monicInY (f : F[X][Y]) : Prop := leadingCoeffY f = (1 : F[X])
-
-/-- `(i, j)`-coefficient of a polynomial. -/
+/-- (i, j)-coefficient of a polynomial, i.e. the coefficient
+    of `X^i Y^j`.
+-/
 def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
-
--- /-- The coefficient of `Y^n` is a polynomial in `X`. -/
--- def coeff_Y_n (n : ℕ) : F[X] := f.coeff n
 
 /-- The `Y`-degree of a bivariate polynomial. -/
 def degreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
 
-/-- The `X`-degree of a bivariate polynomial. -/
-def degreeX (f : F[X][Y]) : ℕ := f.toFinsupp.support.sup (fun n => (f.coeff n).natDegree)
-
-def degreeX' (f : F[X][Y]) : ℕ := f.support.sup (fun n => (f.coeff n).natDegree)
+def degreeX (f : F[X][Y]) : ℕ := f.support.sup (fun n => (f.coeff n).natDegree)
 
 def totalDegree (f : F[X][Y]) : ℕ :=
   f.support.sup (fun m => (f.coeff m).natDegree + m)
-
-/-- Katy: another version similar to the total degree -/
-def weightedDegree' (f : F[X][Y]) (a b : ℕ) : ℕ :=
-  f.support.sup (fun m => a * (f.coeff m).natDegree + b * m)
 
 /-- `(u,v)`-weighted degree of a polynomial.
 The maximal `u * i + v * j` such that the polynomial `p`
@@ -83,27 +66,29 @@ def weightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : Opt
   List.max? <|
     List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
 
-def natWeightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : ℕ :=
-  Option.getD (weightedDegree p u v) 0
+def natWeightedDegree.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (u v : ℕ) : ℕ :=
+  f.support.sup (fun m => u * (f.coeff m).natDegree + v * m)
 
-
+lemma weightedDegree_eq_natWeightedDegree {f : F[X][Y]} {u v : ℕ} :
+  f ≠ 0 → weightedDegree f u v = natWeightedDegree f u v := by
+  sorry
 
 /-- The total degree of a bivariate polynomial is equal to the `(1,1)`-weighted degree -/
 lemma total_deg_as_weighted_deg (f : F[X][Y]) :
-  totalDegree f = weightedDegree' f 1 1 := by
-  unfold weightedDegree' totalDegree
+  totalDegree f = natWeightedDegree f 1 1 := by
+  unfold natWeightedDegree totalDegree
   simp
 
 /-- The `X`-degree of a bivariate polynomial is equal to the `(1,0)`-weighted degree. -/
 lemma degreeX_as_weighted_deg (f : F[X][Y]) :
-  degreeX f = weightedDegree' f 1 0 := by
-  unfold degreeX weightedDegree'
+  degreeX f = natWeightedDegree f 1 0 := by
+  unfold degreeX natWeightedDegree
   aesop
 
 /-- The `Y`-degree of a bivariate polynomial is equal to the `(0,1)`-weighted degree. -/
 lemma degreeY_as_weighted_deg (f : F[X][Y]) (hf : f ≠ 0) :
-  degreeY f = weightedDegree' f 0 1 := by
-  unfold degreeY weightedDegree'
+  degreeY f = natWeightedDegree f 0 1 := by
+  unfold degreeY natWeightedDegree
   simp only [zero_mul, one_mul, zero_add]
   rw[Polynomial.natDegree_eq_support_max' (p := f) hf, Finset.max'_eq_sup']
   simp
@@ -135,47 +120,8 @@ lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
   := by
   sorry
 
-/-- Pad a list `l` with zeros on the right to length `n` -/
-def padRight (l : List F) (n : Nat) : List F :=
-  l ++ List.replicate (n - l.length) 0
-
-/-- Rotate a list to the right by 1 position -/
-def rotateRight (l : List F) : List F :=
-  match l.reverse with
-  | [] => []
-  | x::xs => x :: xs.reverse
-
-/-- Build the Sylvester matrix of two polynomials -/
-def sylvesterMatrix {F : Type} [Semiring F]
-    [Inhabited F]
-    (p q : Polynomial F)
-    : Matrix (Fin ((p.natDegree + q.natDegree) - 1)) (Fin ((p.natDegree + q.natDegree) - 1)) F :=
-  let coeffs1 := p.coeffs.toList.reverse
-  let coeffs2 := q.coeffs.toList.reverse
-  let l1 := coeffs1.length
-  let l2 := coeffs2.length
-  let N := l1 + l2 - 2
-  let rowP : List (List F) :=
-    List.range (l2 - 1) |>.map (fun i =>
-      let padded := padRight coeffs1 N
-      let iterated := List.iterate rotateRight padded i
-      (List.getD iterated iterated.length.pred padded))
-  let rowQ : List (List F) :=
-    List.range (l1 - 1) |>.map (fun i =>
-      let padded := padRight coeffs2 N
-      let iterated := List.iterate rotateRight padded i
-      (List.getD iterated iterated.length.pred padded))
-  let rows := rowP ++ rowQ
-  Matrix.of (fun i j => (rows[i]!)[j]!)
-where
-  m := p.natDegree + 1
-  n := q.natDegree + 1
-
-def resultant {F : Type} [CommRing F] [Inhabited F] (f g : F[X]) : F :=
-  (sylvesterMatrix f g).det
-
 def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
-  1/f.leadingCoeff * resultant f (Polynomial.derivative f)
+  1/f.leadingCoeff * Polynomial.resultant f (Polynomial.derivative f)
 
 opaque discr_y {F : Type} [CommSemiring F] (f : F[X][Y]) : F[X] :=
   sorry
@@ -287,6 +233,8 @@ equal to the sum of their degrees. -/
 lemma degreeX_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
   degreeX (f * g) = degreeX f + degreeX g := by
   unfold degreeX
+  have (f : F[X][Y]) : f.support = f.toFinsupp.support := by rfl
+  rw [this, this, this]
   generalize h_fdegx : (f.toFinsupp.support.sup fun n ↦ (f.coeff n).natDegree) = fdegx
   generalize h_gdegx : (g.toFinsupp.support.sup fun n ↦ (g.coeff n).natDegree) = gdegx
   have f_support_nonempty : f.toFinsupp.support.Nonempty := by
@@ -364,9 +312,9 @@ lemma degreeX_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
         {n ∈ f.toFinsupp.support | (f.coeff n).natDegree = fdegx} f_mdeg_nonempty id
       with ⟨n, h'⟩
     rw [h'.2] at h
-    simp only [id_eq, mmfx] at h
+    simp only [id_eq] at h
     rw [h] at h'
-    simp only [Finset.mem_filter, Finsupp.mem_support_iff, ne_eq, id_eq, mmfx] at h'
+    simp only [Finset.mem_filter, Finsupp.mem_support_iff, ne_eq, id_eq] at h'
     exact h'.1.1
   have mmgx_neq_0 : g.coeff mmgx ≠ 0 := by
     rw [←Polynomial.toFinsupp_apply, ←Finsupp.mem_support_iff, g.toFinsupp.mem_support_toFun]
@@ -564,17 +512,17 @@ lemma degreeX_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
   · exact this
   · intros x h
     transitivity
-    exact Polynomial.natDegree_sum_le (Finset.antidiagonal x) (fun x ↦ f.coeff x.1 * g.coeff x.2)
-    rw [Finset.fold_max_le]
-    simp only [zero_le, Finset.mem_antidiagonal, Function.comp_apply, Prod.forall, true_and]
-    intros a b h'
-    transitivity
-    exact Polynomial.natDegree_mul_le
-    specialize h₁ a
-    rw [mmfx_def] at h₁
-    specialize h₂ b
-    rw [mmgx_def] at h₂
-    linarith
+    · exact Polynomial.natDegree_sum_le (Finset.antidiagonal x) (fun x ↦ f.coeff x.1 * g.coeff x.2)
+    · rw [Finset.fold_max_le]
+      simp only [zero_le, Finset.mem_antidiagonal, Function.comp_apply, Prod.forall, true_and]
+      intros a b h'
+      transitivity
+      · exact Polynomial.natDegree_mul_le
+      · specialize h₁ a
+        rw [mmfx_def] at h₁
+        specialize h₂ b
+        rw [mmgx_def] at h₂
+        linarith
 
 /-- The evaluation at a point of a bivariate polynomial in the first variable `X`. -/
 def evalX (a : F) (f : F[X][Y]) : Polynomial F :=
@@ -584,16 +532,16 @@ def evalX (a : F) (f : F[X][Y]) : Polynomial F :=
 Evaluating a bivariate polynomial in the first variable `X` on a set of points. This results in
 a set of univariate polynomials in `Y`.
 -/
-def evalSetX (f : F[X][Y]) (P : Finset F) [Nonempty P] : Set (Polynomial F) :=
-  {h : Polynomial F | ∃ a ∈ P, evalX a f = h}
+def evalSetX [DecidableEq F] (f : F[X][Y]) (P : Finset F) [Nonempty P] : Finset (Polynomial F) :=
+  P.image (fun a => evalX a f)
 
 /-- The evaluation at a point of a bivariate polynomial in the second variable `Y`. -/
 def evalY (a : F) (f : F[X][Y]) : Polynomial F := Polynomial.eval (Polynomial.C a) f
 
 /-- Evaluating a bivariate polynomial in the second variable `Y` on a set of points resulting
 in a set of univariate polynomials in `X`. -/
-def evalSetY (f : F[X][Y]) (P : Finset F) [Nonempty P] : Set (Polynomial F) :=
-  {h : Polynomial F | ∃ a ∈ P, evalY a f = h}
+def evalSetY [DecidableEq F] (f : F[X][Y]) (P : Finset F) [Nonempty P] : Finset (Polynomial F) :=
+  P.image (fun a => evalY a f)
 
 /-- The bivariate quotient polynomial. -/
 def quotient (f g : F[X][Y]) : Prop := ∃ q : F[X][Y], g = q * f
@@ -735,9 +683,9 @@ lemma totalDegree_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
 KATY TODO: Check whether the `degreeX'` def is okay, if not reprove -/
 @[simp]
 lemma degreeX_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
-    degreeX' (monomialXY n m a) = n := by
+    degreeX (monomialXY n m a) = n := by
   classical
-  unfold degreeX'
+  unfold degreeX
   rw [monomialXY_def, Polynomial.support_monomial, Finset.sup_singleton]
   · aesop
   · simp at *
@@ -763,9 +711,6 @@ def weightedDegreeMonomialXY {n m : ℕ} (a b t : ℕ) : ℕ :=
 theorem totalDegree_mul (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
     totalDegree (f * g) = totalDegree f + totalDegree g := by
     sorry
-
-
-
 
 end
 
