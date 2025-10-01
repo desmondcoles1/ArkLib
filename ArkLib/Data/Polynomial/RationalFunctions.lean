@@ -238,15 +238,6 @@ def γ (H : F[X][Y])
   PowerSeries.subst (PowerSeries.mk subst) (PowerSeries.mk (α R x₀ H))
 
 
----NEED TO MOVE THE NEXT TWO LEMMAS TO SECTION 5
-lemma Claim_5_8 : ∃ k, ∀ t ≥ k, α R x₀ H t = 0 := by
-  sorry
-
-lemma Claim_5_8' :
-    ∃ k,
-      γ R x₀ H =
-        PowerSeries.mk (fun t => if t ≥ k then 0 else PowerSeries.coeff _ t (γ R x₀ H)) := by
-  sorry
 
 end ClaimA2
 end

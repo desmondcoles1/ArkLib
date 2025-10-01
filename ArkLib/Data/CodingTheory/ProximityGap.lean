@@ -10,11 +10,14 @@ import Mathlib.FieldTheory.Separable
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.RingTheory.Henselian
+import Mathlib.RingTheory.PowerSeries.Basic
+import Mathlib.RingTheory.PowerSeries.Substitution
 
 import ArkLib.Data.CodingTheory.GuruswamiSudan
 import ArkLib.Data.CodingTheory.Prelims
 import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.Data.Polynomial.Bivariate
+import ArkLib.Data.Polynomial.RationalFunctions
 
 
 /-!
@@ -392,6 +395,63 @@ lemma lemma_5_7 [Finite F]
     ∧ (the_S k ωs δ u₀ u₁).card
         / (Bivariate.natDegreeY Q) > 2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q
     := by sorry
+
+noncomputable def R [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  : F[Z][X][Y] := Classical.choose (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+
+noncomputable def H [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  : F[Z][X] := Classical.choose <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+
+lemma H_is_irreducible [Finite F]  
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :
+  Irreducible (H k (x₀ := x₀) (δ := δ) h_gs) := by
+  have h := Classical.choose_spec <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+  simp [H]
+  rcases h with ⟨_, h, _⟩
+  sorry
+
+open AppendixA.ClaimA2 in
+lemma Claim_5_8
+  [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :  ∀ t ≥ k, 
+  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+    ⟨H_is_irreducible k h_gs⟩
+  @α _ _ _ (R (x₀ := x₀) (δ := δ) k h_gs) x₀ (H k h_gs) (H_irr_fact) t = 0 := by
+  sorry
+
+open AppendixA.ClaimA2 in
+lemma Claim_5_8'
+  [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :
+    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+      ⟨H_is_irreducible k h_gs⟩
+    @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
+        PowerSeries.mk (fun t => 
+          if t ≥ k 
+          then 0 
+          else PowerSeries.coeff _ t 
+            (@γ _ _ _ 
+              (R k (x₀ := x₀) (δ := δ) h_gs) 
+              x₀ 
+              (H k h_gs) 
+              (H_irr_fact))) := by
+  sorry
+
 
 end ProximityGapSection5
 end
