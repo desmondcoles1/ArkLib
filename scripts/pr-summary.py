@@ -174,6 +174,14 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_s
     return summary
 
 
+def find_sorry_issues(repo):
+    """Finds all open issues with the 'proof wanted' label."""
+    try:
+        return repo.get_issues(state="open", labels=["proof wanted"])
+    except Exception as e:
+        print(f"Warning: Could not fetch issues. {e}")
+        return []
+
 # --- GitHub Interaction ---
 def post_github_comment(summary):
     """Finds and updates an existing comment or creates a new one."""
