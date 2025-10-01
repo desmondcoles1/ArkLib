@@ -344,13 +344,31 @@ lemma lemma_5_5
   {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  {δ : ℚ} {u₀ u₁ : Fin n → F}
+  {δ : ℚ}
   :
   ∃ S', ∃ (h_sub : S' ⊆ the_S k ωs δ u₀ u₁), ∃ P : F[Z][X],
     S'.card > (the_S k ωs δ u₀ u₁).card / (2 * D_Y Q) ∧
     ∀ z : S', Pz (h_sub z.2) = P.map (Polynomial.evalRingHom z.1) ∧
     P.natDegree ≤ k ∧
     Bivariate.degreeX P ≤ 1 := by sorry
+
+noncomputable def the_S'
+  [Finite F]
+  (ωs : Fin n ↪ F)
+  (δ : ℚ)
+  (u₀ u₁ : Fin n → F)
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  : Finset F := Classical.choose (lemma_5_5 k h_gs (δ := δ))
+
+lemma the_S'_sub_the_S
+  [Finite F]
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  {δ : ℚ}
+  : the_S' k ωs δ u₀ u₁ h_gs ⊆ the_S k ωs δ u₀ u₁ := by sorry
 
 lemma eq_5_12
   {m n k : ℕ}
@@ -465,6 +483,60 @@ lemma Claim_5_9
     @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
         @AppendixA.polyToPowerSeries𝕃 _ _ _ _ 
           H_irr_fact (Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁)) := by sorry
+
+noncomputable def P [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :
+  F[Z][X] :=
+  let v₀ := Classical.choose (Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
+  let v₁ := Classical.choose (Classical.choose_spec <| Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
+  Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁) 
+
+open AppendixA.ClaimA2 in
+lemma P_eq_gamma
+  [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :
+  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+    ⟨H_is_irreducible k h_gs⟩
+  @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
+  @AppendixA.polyToPowerSeries𝕃 _ _ _ _ 
+    H_irr_fact (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry 
+
+noncomputable def the_S'x
+  [Finite F]
+  (ωs : Fin n ↪ F)
+  (δ : ℚ)
+  (u₀ u₁ : Fin n → F)
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  (x : Fin n)
+  : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ the_S' k ωs δ u₀ u₁ h_gs,
+    u₀ x + z * u₁ x = (Pz (the_S'_sub_the_S k h_gs h)).eval (ωs x)} sorry
+
+lemma claim_5_10
+  [Finite F]
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  {x₀ : F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  {δ : ℚ}
+  {x : Fin n}
+  {D : ℕ}
+  (hD : D ≥ Bivariate.totalDegree (H k (x₀ := x₀) (δ := δ) h_gs))
+  (hx : (the_S'x k ωs δ u₀ u₁ h_gs x).card >
+    (2 * k + 1)
+      * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
+      * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
+      * D)
+  : (P k (x₀ := x₀) (δ := δ) h_gs).eval (Polynomial.C (ωs x)) = 
+    (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X  
+  := by sorry
 
 end ProximityGapSection5
 end
