@@ -463,9 +463,8 @@ lemma Claim_5_9
     let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
       ⟨H_is_irreducible k h_gs⟩
     @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-      (PowerSeries.mk <|
-      fun n => (AppendixA.liftBivariate <|
-        (Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁)).coeff n)) := by sorry
+        @AppendixA.polyToPowerSeries𝕃 _ _ _ _ 
+          H_irr_fact (Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁)) := by sorry
 
 end ProximityGapSection5
 end

@@ -173,6 +173,13 @@ noncomputable def liftBivariate {H : F[X][Y]} : F[X][Y] →+* 𝕃 H :=
 noncomputable def fieldTo𝕃 {H : F[X][Y]} : F →+* 𝕃 H :=
   RingHom.comp liftToFunctionField Polynomial.C
 
+noncomputable def polyToPowerSeries𝕃 (H : F[X][Y])
+  [Fact (Irreducible H)] (P : F[X][Y])
+    : PowerSeries (𝕃 H) :=
+  PowerSeries.mk <| fun n =>
+    liftToFunctionField (P.coeff n)
+
+
 end
 
 noncomputable section
