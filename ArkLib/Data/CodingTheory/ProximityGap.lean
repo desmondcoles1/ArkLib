@@ -173,8 +173,8 @@ variable {n : ℕ}
 variable {F : Type} [Field F] [DecidableEq F]
 
 /-- Lemma 5.3 from the Proximity gap paper -/
-lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs f : Fin n → F} :
-  ∃ Q, GuruswamiSudanCondition k m (proximity_gap_degree_bound (n := n) k m) ωs f Q := by
+lemma guruswami_sudan_for_proximity_gap_existence {k m : ℕ} {ωs f : Fin n ↪ F} :
+  ∃ Q, GuruswamiSudan.Condition k m (proximity_gap_degree_bound (n := n) k m) ωs f Q := by
   sorry
 
 open Polynomial
