@@ -27,7 +27,7 @@ def coeffs [DecidableEq F] (f : F[X][Y]) : Finset F[X] := f.support.image f.coef
 /-- (i, j)-coefficient of a polynomial, i.e. the coefficient
     of `X^i Y^j`.
 -/
-def coeff (i j : ℕ) (f : F[X][Y]) : F := (f.coeff j).coeff i
+def coeff_i_j (i j : ℕ) (f : F[X][Y]) : F := (f.coeff j).coeff i
 
 /-- The coeffiecient of `Y^n`, as a polynomial in `X`. -/
 def coeff_Y_n (n : ℕ) (f : F[X][Y]) : F[X] := f.coeff n
@@ -37,22 +37,8 @@ The `Y`-degree of a bivariate polynomial, as a natural number.
 -/
 def natDegreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
 
-/-- `(u,v)`-weighted degree of a polynomial.
-  The maximal `u * i + v * j` such that the polynomial `p`
-  contains a monomial `x^i * y * j`.
--/
-def weightedDegree (p : F[X][Y]) (u v : ℕ) : WithBot ℕ :=
-  Finset.max (Finset.image (fun n => u * (p.coeff n).natDegree + v * n) p.support)
-
-/-- The weighted degree forced to a natural number. -/
-def natWeightedDegree (p : F[X][Y]) (u v : ℕ) : ℕ :=
-  Option.getD (weightedDegree p u v) 0
-
-def degreesYFinset (f : F[X][Y]) : Finset ℕ :=
-  f.toFinsupp.support
-
-lemma degreesYFinset_nonempty (f : F[X][Y]) (hf : f ≠ 0) : (degreesYFinset f).Nonempty := by
-  rw [degreesYFinset]
+/-- The set of `Y`-degrees is non-empty. -/
+lemma degreesYFinset_nonempty (f : F[X][Y]) (hf : f ≠ 0) : (f.toFinsupp.support).Nonempty := by
   apply Finsupp.support_nonempty_iff.mpr
   intro h
   apply hf
@@ -69,8 +55,8 @@ def leadingCoeffY (f : F[X][Y]) : F[X] := f.coeff (natDegree f)
 
 def monicInY (f : F[X][Y]) : Prop := leadingCoeffY f = (1 : F[X])
 
--- /-- `(i, j)`-coefficient of a polynomial. -/
--- def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
+/-- `(i, j)`-coefficient of a polynomial. -/
+def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
 
 -- /-- The coefficient of `Y^n` is a polynomial in `X`. -/
 -- def coeff_Y_n (n : ℕ) : F[X] := f.coeff n
@@ -90,12 +76,12 @@ def totalDegree (f : F[X][Y]) : ℕ :=
 def weightedDegree' (f : F[X][Y]) (a b : ℕ) : ℕ :=
   f.support.sup (fun m => a * (f.coeff m).natDegree + b * m)
 
--- /-- `(u,v)`-weighted degree of a polynomial.
--- The maximal `u * i + v * j` such that the polynomial `p`
--- contains a monomial `x^i * y^j`. -/
--- def weightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : Option ℕ :=
---   List.max? <|
---     List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
+/-- `(u,v)`-weighted degree of a polynomial.
+The maximal `u * i + v * j` such that the polynomial `p`
+contains a monomial `x^i * y^j`. -/
+def weightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : Option ℕ :=
+  List.max? <|
+    List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
 
 /-- The total degree of a bivariate polynomial is equal to the `(1,1)`-weighted degree -/
 lemma total_deg_as_weighted_deg (f : F[X][Y]) :
@@ -119,30 +105,30 @@ lemma degreeY_as_weighted_deg (f : F[X][Y]) (hf : f ≠ 0) :
   exact Finset.sup'_eq_sup (Eq.refl f.support ▸ nonempty_support_iff.mpr hf) fun x ↦ x
 
 
--- def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][Y]) : Option ℕ :=
---   let deg := weightedDegree f 1 1
---   match deg with
---   | none => none
---   | some deg => List.max?
---     (List.map
---       (fun x => if coeff f x.1 x.2 ≠ 0 then x.1 + x.2 else 0)
---       (List.product (List.range deg.succ) (List.range deg.succ)))
+def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][Y]) : Option ℕ :=
+  let deg := weightedDegree f 1 1
+  match deg with
+  | none => none
+  | some deg => List.max?
+    (List.map
+      (fun x => if coeff f x.1 x.2 ≠ 0 then x.1 + x.2 else 0)
+      (List.product (List.range deg.succ) (List.range deg.succ)))
 
--- noncomputable def rootMultiplicity.{u}
---   {F : Type u}
---   [CommSemiring F]
---   [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
---   let X := (Polynomial.X : Polynomial F)
---   rootMultiplicity₀ (F := F) ((f.comp (Y + (C (C y)))).map (Polynomial.compRingHom (X + C x)))
+noncomputable def rootMultiplicity.{u}
+  {F : Type u}
+  [CommSemiring F]
+  [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
+  let X := (Polynomial.X : Polynomial F)
+  rootMultiplicity₀ (F := F) ((f.comp (Y + (C (C y)))).map (Polynomial.compRingHom (X + C x)))
 
--- lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
---   [DecidableEq F]
---   {x y : F} (f : F[X][Y])
---   (h : some 0 < (rootMultiplicity (f := f) x y))
---   :
---   (f.eval 0).eval 0 = 0
---   := by
---   sorry
+lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
+  [DecidableEq F]
+  {x y : F} (f : F[X][Y])
+  (h : some 0 < (rootMultiplicity (f := f) x y))
+  :
+  (f.eval 0).eval 0 = 0
+  := by
+  sorry
 
 /-- Pad a list `l` with zeros on the right to length `n` -/
 def padRight (l : List F) (n : Nat) : List F :=
@@ -191,7 +177,6 @@ opaque discr_y {F : Type} [CommSemiring F] (f : F[X][Y]) : F[X] :=
 
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
   f.Separable ↔ discriminant f = 0 := by sorry
-
 
 
 /-- The polynomial coefficient of the highest power of `Y` is `0` if and only if the bivariate
