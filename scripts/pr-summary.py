@@ -184,7 +184,9 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_s
             # Find the corresponding issue by searching for the stable ID in the issue body
             issue_link = ""
             stable_id_comment = f"<!-- sorry-tracker-id: {sorry['id']} -->"
+            print(f"Searching for ID: '{stable_id_comment}'") # DEBUG
             for issue in issues:
+                print(f"Checking issue #{issue.number} body: '{issue.body}'") # DEBUG
                 if issue.body and stable_id_comment in issue.body:
                     issue_link = f" (Issue #{issue.number})"
                     break
