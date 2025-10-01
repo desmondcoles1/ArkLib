@@ -1,7 +1,7 @@
 import os
 import sys
 import google.generativeai as genai
-from github import Github
+from github import Github, Auth
 
 def generate_ai_summary(diff):
     """
@@ -26,7 +26,7 @@ def generate_summary(diff):
     """
     Generate a summary of the changes from a diff.
     """
-    summary = "### 🤖 AI-Generated PR Summary\n\n"
+    summary = "### 🤖 AI-Generated PR Summary\n\n<!-- AI-Generated PR Summary -->\n\n"
     summary += "**Files Changed:**\n"
     files = set()
     # A simple parser for changed files from the diff
@@ -60,6 +60,35 @@ def count_sorries(diff):
                 new_sorries += 1
     return new_sorries
 
+def generate_build_summary(base_log, pr_log):
+    """
+    Generate a summary of new warnings and errors from the build logs.
+    """
+    def parse_log(log):
+        issues = set()
+        for line in log.splitlines():
+            if "warning:" in line or "error:" in line:
+                # Normalize the path by removing the branch directory prefix
+                line = line.replace("pr-branch/", "").replace("base-branch/", "")
+                issues.add(line)
+        return issues
+
+    base_issues = parse_log(base_log)
+    pr_issues = parse_log(pr_log)
+
+    new_issues = pr_issues - base_issues
+
+    if not new_issues:
+        return ""
+
+    summary = "\n\n**New Warnings/Errors:**\n"
+    summary += "```\n"
+    for issue in sorted(list(new_issues)):
+        summary += f"{issue}\n"
+    summary += "```\n"
+
+    return summary
+
 if __name__ == "__main__":
     # Ensure Gemini API key is available
     if "GEMINI_API_KEY" not in os.environ:
@@ -68,18 +97,44 @@ if __name__ == "__main__":
 
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-    diff = os.environ["PR_DIFF"]
+    with open("pr.diff", "r") as f:
+        diff = f.read()
     summary = generate_summary(diff)
     sorries = count_sorries(diff)
-
     summary += f"\n\n**New 'sorry's:** {sorries}\n"
+
+    try:
+        with open("base-build.log", "r") as f:
+            base_build_log = f.read()
+    except FileNotFoundError:
+        base_build_log = ""
+
+    try:
+        with open("pr-build.log", "r") as f:
+            pr_build_log = f.read()
+    except FileNotFoundError:
+        pr_build_log = ""
+
+    summary += generate_build_summary(base_build_log, pr_build_log)
 
     # Ensure GitHub token and other variables are available for posting the comment
     if "GITHUB_TOKEN" not in os.environ or "GITHUB_REPOSITORY" not in os.environ or "PR_NUMBER" not in os.environ:
         # If we're not in the GitHub Actions context, just print the summary
         print(summary)
     else:
-        g = Github(os.environ["GITHUB_TOKEN"])
+        auth = Auth.Token(os.environ["GITHUB_TOKEN"])
+        g = Github(auth=auth)
         repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
         pr = repo.get_pull(int(os.environ["PR_NUMBER"]))
-        pr.create_issue_comment(summary)
+
+        # Find and update existing comment, or create a new one
+        existing_comment = None
+        for comment in pr.get_issue_comments():
+            if "<!-- AI-Generated PR Summary -->" in comment.body:
+                existing_comment = comment
+                break
+
+        if existing_comment:
+            existing_comment.edit(summary)
+        else:
+            pr.create_issue_comment(summary)
