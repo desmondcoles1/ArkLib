@@ -166,6 +166,9 @@ noncomputable def coeffAsRatFunc : F[X] →+* Polynomial (RatFunc F) :=
 noncomputable def liftToFunctionField {H : F[X][Y]} : F[X] →+* 𝕃 H :=
   RingHom.comp (Ideal.Quotient.mk (Ideal.span {H_tilde H})) coeffAsRatFunc
 
+noncomputable def liftBivariate {H : F[X][Y]} : F[X][Y] →+* 𝕃 H :=
+  RingHom.comp (Ideal.Quotient.mk (Ideal.span {H_tilde H})) bivPolyHom 
+
 /-- The embeddining of the scalars into the function field `𝕃`. -/
 noncomputable def fieldTo𝕃 {H : F[X][Y]} : F →+* 𝕃 H :=
   RingHom.comp liftToFunctionField Polynomial.C

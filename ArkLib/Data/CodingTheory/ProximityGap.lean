@@ -452,6 +452,20 @@ lemma Claim_5_8'
               (H_irr_fact))) := by
   sorry
 
+open AppendixA.ClaimA2 in
+lemma Claim_5_9
+  [Finite F]
+  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {Q : F[Z][X][Y]}
+  (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
+  :
+  ∃ (v₀ v₁ : F[X]), 
+    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=  
+      ⟨H_is_irreducible k h_gs⟩
+    @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
+      (PowerSeries.mk <|
+      fun n => (AppendixA.liftBivariate <|
+        (Polynomial.C v₀ + Polynomial.X * (Polynomial.C v₁)).coeff n)) := by sorry
 
 end ProximityGapSection5
 end
