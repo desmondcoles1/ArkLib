@@ -47,13 +47,13 @@ def analyze_diff(diff):
     current_file = ""
     old_line_num = 0
     new_line_num = 0
+    context_line = ""
 
     # Regex to capture file paths from the diff header
     file_path_regex = re.compile(r'diff --git a/(.+) b/(.+)')
     # Regex to capture line numbers from the hunk header
     hunk_header_regex = re.compile(r'@@ -(\d+),?(\d*) \+(\d+),?(\d*) @@')
 
-    # First pass: collect all added and removed sorries with their context
     raw_added = []
     raw_removed = []
 
@@ -72,36 +72,50 @@ def analyze_diff(diff):
             context_line = ""
             continue
 
-        if not current_file or line.startswith("---") or line.startswith("+++"):
+        if line.startswith("---") or line.startswith("+++"):
             continue
 
-        # Track the last relevant definition line as context for sorries
-        if any(keyword in line for keyword in SORRY_KEYWORDS):
-            context_line = re.sub(r"^[+-]\s*", "", line)
-
+        # --- General Stats (for all files) ---
         if line.startswith('+'):
             lines_added += 1
-            if 'sorry' in line:
-                raw_added.append({'file': current_file, 'context': context_line.strip(), 'line': new_line_num})
-            new_line_num += 1
         elif line.startswith('-'):
             lines_removed += 1
+
+        # --- Sorry Tracking (for .lean files only) ---
+        if current_file.endswith(".lean"):
+            # Track the last relevant definition line as context for sorries
+            stripped_line = line.lstrip('+- ')
+            if any(stripped_line.startswith(keyword + ' ') for keyword in SORRY_KEYWORDS):
+                context_line = re.sub(r"^[+-]\s*", "", line)
+
             if 'sorry' in line:
-                raw_removed.append({'file': current_file, 'context': context_line.strip(), 'line': old_line_num})
-            old_line_num += 1
-        else: # Unchanged line
-            old_line_num += 1
-            new_line_num += 1
+                # Ignore sorries that are in comments
+                comment_pos = line.find("--")
+                sorry_pos = line.find("sorry")
+                if comment_pos != -1 and sorry_pos > comment_pos:
+                    continue
 
+                if line.startswith('+'):
+                    raw_added.append({'file': current_file, 'context': context_line.strip(), 'line': new_line_num})
+                elif line.startswith('-'):
+                    raw_removed.append({'file': current_file, 'context': context_line.strip(), 'line': old_line_num})
 
-    # Second pass: correlate added and removed sorries
+            # Update line numbers for sorry tracking
+            if line.startswith('+'):
+                new_line_num += 1
+            elif line.startswith('-'):
+                old_line_num += 1
+            else: # Unchanged line
+                old_line_num += 1
+                new_line_num += 1
+
+    # Correlate added and removed sorries to find 'affected' ones
     removed_contexts = {f"{s['file']}:{s['context']}": s for s in raw_removed}
 
     for sorry in raw_added:
         key = f"{sorry['file']}:{sorry['context']}"
-        if key in removed_contexts:
-            # This is an affected sorry (moved or modified)
-            removed_sorry = removed_contexts.pop(key) # Remove from dict to avoid double counting
+        if key in removed_contexts and sorry['context']:
+            removed_sorry = removed_contexts.pop(key)
             affected_sorries.append({
                 'file': sorry['file'],
                 'context': sorry['context'],
@@ -109,13 +123,10 @@ def analyze_diff(diff):
                 'new_line': sorry['line']
             })
         else:
-            # This is a new sorry
             added_sorries.append(f'`{sorry["context"]}` in `{sorry["file"]}`' if sorry["context"] else f'in `{sorry["file"]}`')
 
-    # Any remaining sorries in removed_contexts are truly removed
     for key, sorry in removed_contexts.items():
         removed_sorries.append(f'`{sorry["context"]}` in `{sorry["file"]}`' if sorry["context"] else f'in `{sorry["file"]}`')
-
 
     stats = {
         "files_changed": len(files_changed),
