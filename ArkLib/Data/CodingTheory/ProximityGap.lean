@@ -259,14 +259,14 @@ structure ModifiedGuruswami
   where
   Q_ne_0 : Q ≠ 0
   /-- Degree of the polynomial. -/
-  Q_deg : natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
+  Q_deg : Bivariate.natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
   /-- Multiplicity of the roots is at least r. -/
-  Q_multiplicity : ∀ i,  Polynomial.Bivariate.rootMultiplicity Q
+  Q_multiplicity : ∀ i,  Bivariate.rootMultiplicity Q
               (Polynomial.C <| ωs i)
               ((Polynomial.C <| u₀ i) + Polynomial.X * (Polynomial.C <| u₁ i))
             ≥ m
   Q_deg_X :
-    Polynomial.Bivariate.degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
+    Bivariate.degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
   Q_D_Y :
     D_Y Q < D_X (k + 1 / (n : ℚ)) n m / k
   Q_D_YZ :

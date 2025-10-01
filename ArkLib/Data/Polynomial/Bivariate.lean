@@ -83,6 +83,11 @@ def weightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : Opt
   List.max? <|
     List.map (fun n => u * (p.coeff n).natDegree + v * n) (List.range p.natDegree.succ)
 
+def natWeightedDegree.{u} {F : Type u} [Semiring F] (p : F[X][Y]) (u v : ℕ) : ℕ :=
+  Option.getD (weightedDegree p u v) 0
+
+
+
 /-- The total degree of a bivariate polynomial is equal to the `(1,1)`-weighted degree -/
 lemma total_deg_as_weighted_deg (f : F[X][Y]) :
   totalDegree f = weightedDegree' f 1 1 := by
