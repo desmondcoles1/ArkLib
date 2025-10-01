@@ -94,7 +94,7 @@ jobs:
           echo "$EOF_MARKER" >> $GITHUB_OUTPUT
 
       - name: Post Review Comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           REVIEW_TEXT: ${{ steps.ai_review.outputs.review_text }}
         with:
