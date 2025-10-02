@@ -415,13 +415,17 @@ lemma lemma_5_7 [Finite F]
     := by sorry
 
 noncomputable def R [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  (δ : ℚ) (x₀ : F)
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : F[Z][X][Y] := Classical.choose (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
 
 noncomputable def H [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
+  {ωs : Fin n ↪ F}
+  {u₀ u₁ : Fin n → F}
+  (δ : ℚ) (x₀ : F)
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : F[Z][X] := Classical.choose <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
@@ -431,7 +435,7 @@ lemma H_is_irreducible [Finite F]
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  Irreducible (H k (x₀ := x₀) (δ := δ) h_gs) := by
+  Irreducible (H k δ x₀ h_gs) := by
   have h := Classical.choose_spec <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
   simp [H]
   rcases h with ⟨_, h, _⟩
@@ -444,10 +448,14 @@ lemma Claim_5_8
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :  ∀ t ≥ k,
-  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
-    ⟨H_is_irreducible k h_gs⟩
-  @α _ _ _ (R (x₀ := x₀) (δ := δ) k h_gs) x₀ (H k h_gs) (H_irr_fact) t = 0 := by
-  sorry
+  α' 
+    (R k δ x₀ h_gs) 
+    x₀ 
+    (H_is_irreducible k h_gs) 
+    t 
+  = 
+  (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
+  := by sorry
 
 open AppendixA.ClaimA2 in
 lemma Claim_5_8'
@@ -456,29 +464,16 @@ lemma Claim_5_8'
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
-      ⟨H_is_irreducible k h_gs⟩
-    @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
+    γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k h_gs) =
         PowerSeries.mk (fun t =>
           if t ≥ k
-          then 0
+          then (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
           else PowerSeries.coeff _ t
-            (@γ _ _ _
+            (γ' 
               (R k (x₀ := x₀) (δ := δ) h_gs)
               x₀
-              (H k h_gs)
-              (H_irr_fact))) := by
-  extract_lets H_irr_fact
-  ext n
-  unfold γ
-  simp only [map_neg, ge_iff_le, PowerSeries.coeff_mk, right_eq_ite_iff]
-  intros h
-  -- have bla := @Claim_5_8
-  -- erw [PowerSeries.coeff_subst]
-
-
-
-  sorry
+              (H_is_irreducible k h_gs))) := by
+   sorry
 
 open AppendixA.ClaimA2 in
 lemma Claim_5_9
@@ -488,11 +483,9 @@ lemma Claim_5_9
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   ∃ (v₀ v₁ : F[X]),
-    let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
-      ⟨H_is_irreducible k h_gs⟩
-    @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-        @AppendixA.polyToPowerSeries𝕃 _ _ _ _
-          H_irr_fact (
+    γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k (x₀ := x₀) (δ := δ) h_gs) =
+        AppendixA.polyToPowerSeries𝕃 _
+          (
             (Polynomial.map Polynomial.C v₀) +
             (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
           ) := by sorry
@@ -517,11 +510,9 @@ lemma P_eq_gamma
   {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  let H_irr_fact : Fact (Irreducible (H k (x₀ := x₀) (δ := δ) h_gs)) :=
-    ⟨H_is_irreducible k h_gs⟩
-  @γ _ _ _ (R k (x₀ := x₀) (δ := δ) h_gs) x₀ (H k h_gs) (H_irr_fact) =
-  @AppendixA.polyToPowerSeries𝕃 _ _ _ _
-    H_irr_fact (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry
+  γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k (x₀ := x₀) (δ := δ) h_gs) =
+  AppendixA.polyToPowerSeries𝕃 _ 
+    (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry
 
 noncomputable def the_S'x
   [Finite F]
@@ -571,8 +562,8 @@ lemma claim_5_11
     ∀ x ∈ Dtop,
       (the_S'x k ωs δ u₀ u₁ h_gs x).card >
         (2 * k + 1)
-        * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
-        * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
+        * (Bivariate.natDegreeY <| H k δ x₀ h_gs)
+        * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
         * D := by sorry
 
 end ProximityGapSection5

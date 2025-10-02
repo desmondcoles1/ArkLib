@@ -56,7 +56,6 @@ noncomputable def H_tilde (H : F[X][Y]) : Polynomial (RatFunc F) :=
 /-- The monisized version H_tilde is irreducible if the originial polynomial H is irreducible. -/
 lemma irreducibleHTildeOfIrreducible {H : Polynomial (Polynomial F)} :
     (Irreducible H → Irreducible (H_tilde H)) := by
-  -- have bla := @Polynomial.Monic.irreducible_of_irreducible_map
   sorry
 
 /-- The function field `𝕃 ` from Appendix A.1 of [BCIKS20]. -/
@@ -174,7 +173,7 @@ noncomputable def fieldTo𝕃 {H : F[X][Y]} : F →+* 𝕃 H :=
   RingHom.comp liftToFunctionField Polynomial.C
 
 noncomputable def polyToPowerSeries𝕃 (H : F[X][Y])
-  [Fact (Irreducible H)] (P : F[X][Y])
+  (P : F[X][Y])
     : PowerSeries (𝕃 H) :=
   PowerSeries.mk <| fun n =>
     liftToFunctionField (P.coeff n)
@@ -236,6 +235,9 @@ def α (H : F[X][Y]) [Fact (Irreducible H)] (t : ℕ) : 𝕃 H :=
   let W  : 𝕃 H := liftToFunctionField (H.leadingCoeff)
   embeddingOf𝒪Into𝕃 (β R t) / (W ^ (t + 1) * (embeddingOf𝒪Into𝕃 (ξ R x₀)) ^ (2*t - 1))
 
+def α' {H : F[X][Y]} (H_irreducible : Irreducible H) (t : ℕ) : 𝕃 H :=
+  @α _ _ _ R x₀ H ⟨H_irreducible⟩ t
+
 /-- The power series `γ = ∑ α^t (X - x₀)^t ∈ 𝕃 [[X - x₀]]` as defined in Appendix A.4
 of [BCIKS20]. -/
 def γ (H : F[X][Y])
@@ -247,6 +249,9 @@ def γ (H : F[X][Y])
     | _ => 0
   PowerSeries.subst (PowerSeries.mk subst) (PowerSeries.mk (α R x₀ H))
 
+def γ' {H : F[X][Y]}
+  (H_irreducible : Irreducible H) : PowerSeries (𝕃 H) :=
+  @γ _ _ _ R x₀ H ⟨H_irreducible⟩
 
 
 end ClaimA2
