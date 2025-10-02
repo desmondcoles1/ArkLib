@@ -52,11 +52,11 @@ jobs:
           sudo apt-get install -y texlive-full plastex
 
       - name: Build blueprint
-        run: plastex --renderer=HTML5 --theme=bootstrap --output=. blueprint.tex
+        run: plastex --renderer=HTML5 --theme=bootstrap --output=web web.tex
         working-directory: ./blueprint/src
 
       - name: Combine documentation artifacts
-        run: mv ./blueprint/src/blueprint ./.lake/build/doc/blueprint
+        run: mv ./blueprint/src/web ./.lake/build/doc/blueprint
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
