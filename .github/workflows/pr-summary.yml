@@ -5,19 +5,20 @@ on:
 
 permissions:
   pull-requests: write
+  issues: read
 
 jobs:
   summarize:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0 # Fetch all history to enable diffing against base
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
