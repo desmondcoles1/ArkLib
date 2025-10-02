@@ -61,7 +61,6 @@ def codeOfLinearCode (κ : Type*) [Fintype κ] (LC : LinearCode ι F) : Interlea
 The module of matrices whose rows belong to a linear code is in fact an interleaved code.
 -/
 lemma isInterleaved_codeOfLinearCode : (codeOfLinearCode κ LC).isInterleaved := by
-
   sorry
 
 def lawfulInterleavedCodeOfLinearCode (κ : Type*) [Fintype κ] (LC : LinearCode ι F) :
