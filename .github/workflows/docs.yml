@@ -42,16 +42,7 @@ jobs:
           lint: false
 
       - name: Build project documentation
-        id: build-docgen
-        # This action does not have version tags, so we use @main
-        uses: leanprover-community/docgen-action@main
-        with:
-          # Build a blueprint alongside the repository
-          blueprint: true
-
-      - name: List files in the workspace
-        run: ls -R
-        shell: bash
+        run: lake build ArkLib:docs
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
