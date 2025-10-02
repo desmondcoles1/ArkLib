@@ -38,7 +38,7 @@ jobs:
         id: build-lean
         uses: leanprover/lean-action@v1.3.0
         with:
-          # Do not run linter for now, too many errors
+          # Do not run linter for now, too many errors 
           lint: false
 
       - name: Build project documentation
