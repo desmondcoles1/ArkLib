@@ -54,8 +54,10 @@ def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coef
 /-- The `Y`-degree of a bivariate polynomial. -/
 def degreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
 
+/-- The `Y`-degree of a bivariate polynomial. -/
 def degreeX (f : F[X][Y]) : ℕ := f.support.sup (fun n => (f.coeff n).natDegree)
 
+/-- The total degree of a bivariate polynomial. -/
 def totalDegree (f : F[X][Y]) : ℕ :=
   f.support.sup (fun m => (f.coeff m).natDegree + m)
 
@@ -123,12 +125,24 @@ lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
 def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
   1/f.leadingCoeff * Polynomial.resultant f (Polynomial.derivative f)
 
-opaque discr_y {F : Type} [CommSemiring F] (f : F[X][Y]) : F[X] :=
-  sorry
+lemma resultant_is_divisible_by_leadingCoeff
+  {F : Type}
+  [CommRing F]
+  [Inhabited F]
+  (f : F[X])
+  :
+  ∃ r', Polynomial.resultant f (Polynomial.derivative f) =
+    f.leadingCoeff * r' := by sorry
+
+/- In the case of a bivariate polynomial we cannot easily use `discriminant`.
+   We are using the fact that the resultant in question is always
+   divisible by the leading coefficient of the polynomial.
+-/
+opaque discr_y {F : Type} [CommRing F] (f : F[X][Y]) : F[X] :=
+  Classical.choose (resultant_is_divisible_by_leadingCoeff f) 
 
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
   f.Separable ↔ discriminant f = 0 := by sorry
-
 
 /-- The polynomial coefficient of the highest power of `Y` is `0` if and only if the bivariate
 polynomial is the zero polynomial. -/

@@ -1,7 +1,7 @@
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Algebra.Lie.OfAssociative
-import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Module.Submodule.Defs
+import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Data.Finset.BooleanAlgebra
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Data.Set.Defs
