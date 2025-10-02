@@ -57,6 +57,10 @@ def analyze_diff(diff):
         elif line.startswith("---"):
             continue
 
+        # --- Only process .lean files for sorry tracking ---
+        if not current_file.endswith(".lean"):
+            continue
+
         elif line.startswith('+'):
             lines_added += 1
             if 'sorry' in line:
