@@ -150,7 +150,7 @@ def analyze_diff(diff):
     return stats, added_sorries, removed_sorries, affected_sorries
 
 # --- Comment Formatting ---
-def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_sorries, truncated):
+def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_sorries, truncated, issues):
     """Formats the final summary comment in Markdown."""
     
     summary = f"### 🤖 Gemini PR Summary\n\n{COMMENT_IDENTIFIER}\n\n"
@@ -181,7 +181,16 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_s
     if affected_sorries:
         summary += f"*   ✏️ **Affected:** {len(affected_sorries)} `sorry`(s) (line number changed)\n"
         for sorry in affected_sorries:
-            summary += f"    *   `{sorry['context']}` in `{sorry['file']}` moved from L{sorry['old_line']} to L{sorry['new_line']}\n"
+            # Find the corresponding issue by searching for the stable ID in the issue body
+            issue_link = ""
+            stable_id_comment = f"<!-- sorry-tracker-id: {sorry['id']} -->"
+            print(f"Searching for ID: '{stable_id_comment}'") # DEBUG
+            for issue in issues:
+                print(f"Checking issue #{issue.number} body: '{issue.body}'") # DEBUG
+                if issue.body and stable_id_comment in issue.body:
+                    issue_link = f" (Issue #{issue.number})"
+                    break
+            summary += f"    *   `{sorry['context']}` in `{sorry['file']}` moved from L{sorry['old_line']} to L{sorry['new_line']}{issue_link}\n"
 
 
     if not added_sorries and not removed_sorries and not affected_sorries:
@@ -191,6 +200,15 @@ def format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_s
     summary += f"\n---\n\n*Last updated: {timestamp}. See the [main CI run](https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions) for build status.*"
     
     return summary
+
+
+def find_sorry_issues(repo):
+    """Finds all open issues with the 'proof wanted' label."""
+    try:
+        return repo.get_issues(state="open", labels=["proof wanted"])
+    except Exception as e:
+        print(f"Warning: Could not fetch issues. {e}")
+        return []
 
 # --- GitHub Interaction ---
 def post_github_comment(summary):
@@ -234,7 +252,18 @@ if __name__ == "__main__":
     stats, added_sorries, removed_sorries, affected_sorries = analyze_diff(diff)
     ai_summary, truncated = generate_ai_summary(diff)
     
-    final_summary = format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_sorries, truncated)
+    # Fetch sorry issues
+    token = os.environ.get("GITHUB_TOKEN")
+    repo_name = os.environ.get("GITHUB_REPOSITORY")
+    issues = []
+    if token and repo_name:
+        auth = Auth.Token(token)
+        g = Github(auth=auth)
+        repo = g.get_repo(repo_name)
+        issues = find_sorry_issues(repo)
+        print(f"Found {issues.totalCount} issues with 'proof wanted' label.") # DEBUG
+
+    final_summary = format_summary(ai_summary, stats, added_sorries, removed_sorries, affected_sorries, truncated, issues)
     
     if "GITHUB_TOKEN" not in os.environ:
         print("Not in GitHub Actions context. Printing summary instead of posting:")
