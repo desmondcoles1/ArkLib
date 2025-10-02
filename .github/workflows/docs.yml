@@ -13,6 +13,10 @@ permissions:
   id-token: write # Required to upload the site to GitHub Pages
   pages: write # Write access to GitHub Pages
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,6 +25,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
+
+      - name: Cache Lean dependencies
+        uses: actions/cache@v4
+        with:
+          path: ./.lake
+          key: ${{ runner.os }}-lean-${{ hashFiles('lake-manifest.json') }}
+          restore-keys: |
+            ${{ runner.os }}-lean-
 
       - name: Build the project
         id: build-lean
@@ -31,10 +43,15 @@ jobs:
 
       - name: Build project documentation
         id: build-docgen
+        # This action does not have version tags, so we use @main
         uses: leanprover-community/docgen-action@main
         with:
           # Build a blueprint alongside the repository
           blueprint: true
+
+      - name: List files in the workspace
+        run: ls -R
+        shell: bash
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
