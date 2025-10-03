@@ -4,14 +4,33 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Katerina Hristova, František Silváši, Julian Sutherland, Ilia Vlasov
 -/
 
+import ArkLib.Data.Polynomial.Prelims
 import Mathlib.Algebra.Algebra.Defs
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Bivariate
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Eval.Defs
 import Mathlib.Data.Fintype.Defs
-import Mathlib.FieldTheory.Separable
-import Mathlib.RingTheory.Polynomial.Resultant.Basic
+
+/-!
+  # Definitions and Theorems about Bivariate Polynomials with coefficients in a semiring
+
+  We develop the basic definitions needed to argue about bivariate polynomials and monomials
+  explictly.
+
+## Main Definitions
+
+  The file is organised as follows:
+   - We start off by defining coeffiecients of bivariate polynomials, the degrees in
+   `X` and `Y`, total degree and weighted degree. We expess the `X`- `Y` and total degrees as
+   weighted degrees and prove the equivalence of the definitions.
+   - We define root multiplicity, discriminant and resultant.
+   - We prove that the `X`-degree of a product of two bivariate polynomials is the sum of their
+   individual `X`-degrees.
+   - We define and prove some basic properties about quotients of bivariate polynomials.
+   - We define and prove some basic properties of monomials of bivariate polynomials.
+
+-/
 
 open Polynomial
 open Polynomial.Bivariate
@@ -25,36 +44,56 @@ variable {F : Type} [Semiring F]
 /-- The set of coefficients of a bivariate polynomial. -/
 def coeffs [DecidableEq F] (f : F[X][Y]) : Finset F[X] := f.support.image f.coeff
 
-/--
-The `Y`-degree of a bivariate polynomial, as a natural number.
+/-- `(i, j)`-coefficient of a polynomial, i.e. the coefficient of `X^i Y^j`.
 -/
-def natDegreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
-
-/-- The set of `Y`-degrees is non-empty. -/
-lemma degreesYFinset_nonempty (f : F[X][Y]) (hf : f ≠ 0) : (f.toFinsupp.support).Nonempty := by
-  apply Finsupp.support_nonempty_iff.mpr
-  intro h
-  apply hf
-  exact Polynomial.ext (fun n => by rw [← Polynomial.toFinsupp_apply, h]; rfl)
-
-
-def degreeY' (f : F[X][Y]) (hf : f ≠ 0) : ℕ :=
-  f.toFinsupp.support.max' (degreesYFinset_nonempty f hf)
+def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
 
 /-- The polynomial coefficient of the highest power of `Y`. This is the leading coefficient in the
 classical sense if the bivariate polynomial is interpreted as a univariate polynomial over `F[X]`.
 -/
 def leadingCoeffY (f : F[X][Y]) : F[X] := f.coeff (natDegree f)
 
-/-- (i, j)-coefficient of a polynomial, i.e. the coefficient
-    of `X^i Y^j`.
+/-- The polynomial coefficient of the highest power of `Y` is `0` if and only if the bivariate
+polynomial is the zero polynomial. -/
+@[simp, grind =]
+theorem leadingCoeffY_eq_zero (f : F[X][Y]) : leadingCoeffY f = 0 ↔ f = 0 :=
+  ⟨fun h =>
+    Classical.by_contradiction fun hp =>
+      mt mem_support_iff.1 (Classical.not_not.2 h) (Finset.mem_of_max (degree_eq_natDegree hp)),
+    fun h => h.symm ▸ leadingCoeff_zero⟩
+
+/-- The polynomial coefficient of the highest power of `Y` is not `0` if and only if the
+bivariate polynomial is non-zero. -/
+@[simp, grind =]
+lemma leadingCoeffY_ne_zero (f : F[X][Y]) : leadingCoeffY f ≠ 0 ↔ f ≠ 0 := by
+  rw [Ne, leadingCoeffY_eq_zero]
+
+/-- A bivariate polynomial is non-zero if and only if all its coefficients are non-zero. -/
+@[grind =_]
+lemma ne_zero_iff_coeffs_ne_zero (f : F[X][Y]) : f ≠ 0 ↔ f.coeff ≠ 0 := by
+  apply Iff.intro
+  · intro hf
+    have f_finsupp : f.toFinsupp ≠ 0 := by aesop
+    rw [Polynomial.coeff]
+    simp only [ne_eq, Finsupp.coe_eq_zero]
+    exact f_finsupp
+  · intro f_coeffs
+    rw [Polynomial.coeff] at f_coeffs
+    aesop
+
+/--
+The `Y`-degree of a bivariate polynomial, as a natural number.
 -/
-def coeff.{u} {F : Type u} [Semiring F] (f : F[X][Y]) (i j : ℕ) : F := (f.coeff j).coeff i
+def natDegreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
 
-/-- The `Y`-degree of a bivariate polynomial. -/
-def degreeY (f : F[X][Y]) : ℕ := Polynomial.natDegree f
+/-- The set of `Y`-degrees is non-empty. -/
+lemma degreesY_nonempty (f : F[X][Y]) (hf : f ≠ 0) : (f.toFinsupp.support).Nonempty := by
+  apply Finsupp.support_nonempty_iff.mpr
+  intro h
+  apply hf
+  exact Polynomial.ext (fun n => by rw [← Polynomial.toFinsupp_apply, h]; rfl)
 
-/-- The `Y`-degree of a bivariate polynomial. -/
+/-- The `X`-degree of a bivariate polynomial. -/
 def degreeX (f : F[X][Y]) : ℕ := f.support.sup (fun n => (f.coeff n).natDegree)
 
 /-- The total degree of a bivariate polynomial. -/
@@ -89,14 +128,14 @@ lemma degreeX_as_weighted_deg (f : F[X][Y]) :
 
 /-- The `Y`-degree of a bivariate polynomial is equal to the `(0,1)`-weighted degree. -/
 lemma degreeY_as_weighted_deg (f : F[X][Y]) (hf : f ≠ 0) :
-  degreeY f = natWeightedDegree f 0 1 := by
-  unfold degreeY natWeightedDegree
+  natDegreeY f = natWeightedDegree f 0 1 := by
+  unfold natDegreeY natWeightedDegree
   simp only [zero_mul, one_mul, zero_add]
   rw[Polynomial.natDegree_eq_support_max' (p := f) hf, Finset.max'_eq_sup']
   simp
   exact Finset.sup'_eq_sup (Eq.refl f.support ▸ nonempty_support_iff.mpr hf) fun x ↦ x
 
-
+/-- Root multiplicity of a bivariate polynomial. -/
 def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][Y]) : Option ℕ :=
   let deg := weightedDegree f 1 1
   match deg with
@@ -106,58 +145,25 @@ def rootMultiplicity₀.{u} {F : Type u} [Semiring F] [DecidableEq F] (f : F[X][
       (fun x => if coeff f x.1 x.2 ≠ 0 then x.1 + x.2 else 0)
       (List.product (List.range deg.succ) (List.range deg.succ)))
 
-noncomputable def rootMultiplicity.{u}
-  {F : Type u}
-  [CommSemiring F]
-  [DecidableEq F] (f : F[X][Y]) (x y : F) : Option ℕ :=
+/-- The multiplicity of a pair `(x,y)` of a bivariate polynomial `f`. -/
+def rootMultiplicity.{u} {F : Type u} [CommSemiring F] [DecidableEq F]
+  (f : F[X][Y]) (x y : F) : Option ℕ :=
   let X := (Polynomial.X : Polynomial F)
   rootMultiplicity₀ (F := F) ((f.comp (Y + (C (C y)))).map (Polynomial.compRingHom (X + C x)))
 
-lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F]
-  [DecidableEq F]
-  {x y : F} (f : F[X][Y])
-  (h : some 0 < (rootMultiplicity (f := f) x y))
-  :
-  (f.eval 0).eval 0 = 0
-  := by
+/-- If the multiplicity of a pair `(x,y)` is non-negative, then the pair is a root of `f`. -/
+lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F] [DecidableEq F]
+  {x y : F} (f : F[X][Y]) (h : some 0 < (rootMultiplicity (f := f) x y))
+  : (f.eval 0).eval 0 = 0 := by
   sorry
 
-def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
-  1/f.leadingCoeff * Polynomial.resultant f (Polynomial.derivative f)
-
-lemma resultant_is_divisible_by_leadingCoeff
-  {F : Type}
-  [CommRing F]
-  [Inhabited F]
-  (f : F[X])
-  :
-  ∃ r', Polynomial.resultant f (Polynomial.derivative f) =
-    f.leadingCoeff * r' := by sorry
-
-/- In the case of a bivariate polynomial we cannot easily use `discriminant`.
+open Univariate in
+/-- In the case of a bivariate polynomial we cannot easily use `discriminant`.
    We are using the fact that the resultant in question is always
    divisible by the leading coefficient of the polynomial.
 -/
 opaque discr_y {F : Type} [CommRing F] (f : F[X][Y]) : F[X] :=
-  Classical.choose (resultant_is_divisible_by_leadingCoeff f) 
-
-lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
-  f.Separable ↔ discriminant f = 0 := by sorry
-
-/-- The polynomial coefficient of the highest power of `Y` is `0` if and only if the bivariate
-polynomial is the zero polynomial. -/
-@[simp, grind =]
-theorem leadingCoeffY_eq_zero (f : F[X][Y]) : leadingCoeffY f = 0 ↔ f = 0 :=
-  ⟨fun h =>
-    Classical.by_contradiction fun hp =>
-      mt mem_support_iff.1 (Classical.not_not.2 h) (Finset.mem_of_max (degree_eq_natDegree hp)),
-    fun h => h.symm ▸ leadingCoeff_zero⟩
-
-/-- The polynomial coefficient of the highest power of `Y` is not `0` if and only if the
-bivariate polynomial is non-zero. -/
-@[simp, grind =]
-lemma leadingCoeffY_ne_zero (f : F[X][Y]) : leadingCoeffY f ≠ 0 ↔ f ≠ 0 := by
-  rw [Ne, leadingCoeffY_eq_zero]
+  Classical.choose (resultant_is_divisible_by_leadingCoeff f)
 
 /-- Over an intergal domain, the product of two non-zero bivariate polynomials is non-zero. -/
 @[grind ←]
@@ -168,13 +174,15 @@ lemma mul_ne_zero [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
 equal to the sum of their degrees. -/
 @[simp, grind _=_]
 lemma degreeY_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0)
-  : degreeY (f * g) = degreeY f + degreeY g := by
-  unfold degreeY
+  : natDegreeY (f * g) = natDegreeY f + natDegreeY g := by
+  unfold natDegreeY
   rw [←leadingCoeffY_ne_zero] at hf hg
   have h_lc : leadingCoeffY f * leadingCoeffY g ≠ 0 := _root_.mul_ne_zero hf hg
   exact Polynomial.natDegree_mul' h_lc
 
 open Classical in
+/-- If a summand in a finite sum has degree `deg`, and the degree of every other summand
+is strictly less than `deg`, then the degree of the whole sum is exactly `deg`. -/
 lemma natDeg_sum_eq_of_unique {α : Type} {s : Finset α} {f : α → F[X]} {deg : ℕ}
   (mx : α) (h : mx ∈ s) :
     (f mx).natDegree = deg →
@@ -229,6 +237,8 @@ lemma natDeg_sum_eq_of_unique {α : Type} {s : Finset α} {f : α → F[X]} {deg
     rw [Polynomial.degree_eq_natDegree this, f_x_deg]
     exact WithBot.bot_lt_coe _
 
+/-- If some element `x ∈ s` maps to `y` under `f`, and every element of `s` maps to a value
+less than or equal to `y`, then the supremum of `f` over `s` is exactly `y`. -/
 lemma sup_eq_of_le_of_reach {α β : Type} [SemilatticeSup β] [OrderBot β] {s : Finset α} {f : α → β}
       (x : α) {y : β} (h : x ∈ s) :
     f x = y →
@@ -542,10 +552,8 @@ lemma degreeX_mul [IsDomain F] (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
 def evalX (a : F) (f : F[X][Y]) : Polynomial F :=
   ⟨Finsupp.mapRange (Polynomial.eval a) eval_zero f.toFinsupp⟩
 
-/--
-Evaluating a bivariate polynomial in the first variable `X` on a set of points. This results in
-a set of univariate polynomials in `Y`.
--/
+/-- Evaluating a bivariate polynomial in the first variable `X` on a set of points. This results in
+a set of univariate polynomials in `Y`. -/
 def evalSetX [DecidableEq F] (f : F[X][Y]) (P : Finset F) [Nonempty P] : Finset (Polynomial F) :=
   P.image (fun a => evalX a f)
 
@@ -564,25 +572,12 @@ def quotient (f g : F[X][Y]) : Prop := ∃ q : F[X][Y], g = q * f
 lemma quotient_nezero (f q : F[X][Y]) (hg : q * f ≠ 0)
   : q ≠ 0 := by by_contra h; apply hg; simp [h]
 
-/-- A bivariate polynomial is non-zero if and only if all its coefficients are non-zero. -/
-@[grind =_]
-lemma ne_zero_iff_coeffs_ne_zero (f : F[X][Y]) : f ≠ 0 ↔ f.coeff ≠ 0 := by
-  apply Iff.intro
-  · intro hf
-    have f_finsupp : f.toFinsupp ≠ 0 := by aesop
-    rw [Polynomial.coeff]
-    simp only [ne_eq, Finsupp.coe_eq_zero]
-    exact f_finsupp
-  · intro f_coeffs
-    rw [Polynomial.coeff] at f_coeffs
-    aesop
-
 /-- If a non-zero bivariate polynomial `f` divides a non-zero bivariate polynomial `g`, then
 all the coefficients of the quoetient are non-zero. -/
 lemma coeff_ne_zero (f q : F[X][Y]) (hg : q * f ≠ 0) : q.coeff ≠ 0 :=
   (ne_zero_iff_coeffs_ne_zero q).1 (quotient_nezero f q hg)
 
-/-- The `X` degree of the bivarate quotient is bounded above by the difference of the `X`-degrees of
+/-- The `X`-degree of the bivarate quotient is bounded above by the difference of the `X`-degrees of
 the divisor and divident.
 -/
 @[grind]
@@ -599,13 +594,22 @@ the divisor and divident.
 -/
 @[grind]
 lemma degreeY_le_degreeY_sub_degreeY [IsDomain F] (f q : F[X][Y]) (hf : f ≠ 0) (hg : q * f ≠ 0) :
-  degreeY q ≤ degreeY (q * f) - degreeY f := by
+  natDegreeY q ≤ natDegreeY (q * f) - natDegreeY f := by
   rw [degreeY_mul]
   · aesop
   · rw [ne_zero_iff_coeffs_ne_zero]
     apply coeff_ne_zero f q hg
   · exact hf
 
+/-- The total degree of the product of two bivariate polynomials is the sum of their total degrees.
+-/
+@[simp, grind _=_]
+theorem totalDegree_mul (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
+    totalDegree (f * g) = totalDegree f + totalDegree g := by
+    sorry
+
+/-- Definition of a monomial when the bivariate polynomial is considered as a univariate
+polynomial in `Y`. -/
 def monomialY (n : ℕ) : F[X] →ₗ[F[X]] F[X][Y] where
   toFun t := ⟨Finsupp.single n t⟩
   map_add' x y := by rw [Finsupp.single_add]; aesop
@@ -621,6 +625,7 @@ def monomialXY (n m : ℕ) : F →ₗ[F] F[X][Y] where
     rw[smul_monomial, smul_monomial]
     simp
 
+/-- The bivariate monomial is well-defined. -/
 @[grind _=_]
 theorem monomialXY_def {n m : ℕ} {a : F} : monomialXY n m a = monomial m (monomial n a) := by
   unfold monomialXY
@@ -645,7 +650,8 @@ theorem monomialXY_mul_monomialXY {n m p q : ℕ} {a b : F} :
     Finsupp.single_zero, Finsupp.sum_single_index, zero_mul]
   rw [@monomial_mul_monomial]
 
-
+/-- Taking a bivariate monomial to a power works as expected.
+In particular, ` (a * X^n * Y^m)^k = (a^k) * X^(n * k) * Y^(m * k)`. -/
 @[simp, grind _=_]
 theorem monomialXY_pow {n m k : ℕ} {a : F} :
   monomialXY n m a ^ k = monomialXY (n * k) (m * k) (a ^ k) := by
@@ -692,9 +698,7 @@ lemma totalDegree_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
     ] <;> simp [ha]
   rw [Nat.add_comm]
 
-/-- The `X`-degree of the monomial `a * X^n * Y^m` is `n`.
-
-KATY TODO: Check whether the `degreeX'` def is okay, if not reprove -/
+/-- The `X`-degree of the monomial `a * X^n * Y^m` is `n`. -/
 @[simp]
 lemma degreeX_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
     degreeX (monomialXY n m a) = n := by
@@ -708,24 +712,16 @@ lemma degreeX_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
 /-- The `Y`-degree of the monomial `a * X^n * Y^m` is `m`. -/
 @[simp]
 lemma degreeY_monomialXY {n m : ℕ} {a : F} (ha : a ≠ 0) :
-    degreeY (monomialXY n m a) = m := by
+    natDegreeY (monomialXY n m a) = m := by
     classical
-    unfold degreeY
+    unfold natDegreeY
     rw [monomialXY_def]
     rw [Polynomial.natDegree_monomial]
     simp [ha]
 
 /-- `(a,b)`-weighted degree of a monomial `X^i * Y^j` -/
 def weightedDegreeMonomialXY {n m : ℕ} (a b t : ℕ) : ℕ :=
-  a * (degreeX (monomialXY n m t)) + b * degreeY (monomialXY n m t)
-
-/-- The total degree of the product of two bivariate polynomials is the sum of their total degrees.
--/
-@[simp, grind _=_]
-theorem totalDegree_mul (f g : F[X][Y]) (hf : f ≠ 0) (hg : g ≠ 0) :
-    totalDegree (f * g) = totalDegree f + totalDegree g := by
-    sorry
+  a * (degreeX (monomialXY n m t)) + b * natDegreeY (monomialXY n m t)
 
 end
-
 end Bivariate
