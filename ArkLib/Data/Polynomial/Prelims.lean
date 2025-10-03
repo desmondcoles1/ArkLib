@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Katerina Hristova
+Authors: Katerina Hristova, Ilia Vlasov
 -/
 
 import Mathlib.Algebra.Polynomial.Basic
@@ -9,15 +9,54 @@ import Mathlib.Algebra.Polynomial.Bivariate
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Algebra.Polynomial.Eval.Irreducible
 import Mathlib.FieldTheory.RatFunc.Basic
+import Mathlib.FieldTheory.Separable
 import Mathlib.RingTheory.Ideal.Span
-
+import Mathlib.RingTheory.Polynomial.Resultant.Basic
 
 /-!
   # Preliminary Definitions and Theorems on polynomials and rings of rational functions.
+
+  In this file, we state the needed definition and lemmas from general polynomial theory and
+  commutative algebra needed to state and/or prove results on rational functions and bivariate
+  polynomials.
+
+  We divide the file into three sections : Univariate, containing results on univariate polynomials,
+  Ideal, containing results relating rings and their ideals, and RatFunc, containing some
+  preliminaries relating rational functions to polynomials.
+
+  ## Main Definitions
+  -- In Univariate, we define a discriminant of a polynomial and state lemmas relating
+  discriminants to resultants and separability.
+  -- In Ideal, we define principal ideals, and state the well-known result from commutative
+  algebra that a principal ideal in a polynomial ring is maximal if and only if it is generated
+  by an irreducible polynomial.
+  -- In RatFunc, we define the needed algebra homomorphisms enabling us to lift univariate and
+  bivariate polynomials to rational functions.
 -/
 
 open Polynomial
 open Polynomial.Bivariate
+
+namespace Univariate
+
+section
+
+/-- Discriminant of a univariate polynomial. -/
+noncomputable def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
+  1/f.leadingCoeff * Polynomial.resultant f (Polynomial.derivative f)
+
+/-- The resultant of a polynomial is divisible by its leading coefficient. -/
+lemma resultant_is_divisible_by_leadingCoeff {F : Type} [CommRing F] [Inhabited F] (f : F[X])
+  : ∃ r',
+    Polynomial.resultant f (Polynomial.derivative f) = f.leadingCoeff * r'
+    := by sorry
+
+/-- A polynomial is separable if and only if its discriminant is non-zero. -/
+lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
+  f.Separable ↔ discriminant f = 0 := by sorry
+
+end
+end Univariate
 
 namespace Ideal
 section
@@ -34,17 +73,16 @@ end
 end Ideal
 
 namespace ToRatFunc
-section
+noncomputable section
 
 /-- The algebra map embedding the univariate polynomial ring into its ring of rational functions. -/
-noncomputable def univPolyHom {F : Type} [CommRing F] [IsDomain F] : F[X] →+* RatFunc F :=
+def univPolyHom {F : Type} [CommRing F] [IsDomain F] : F[X] →+* RatFunc F :=
   algebraMap (F[X]) (RatFunc F)
 
 
 /-- The algebra map embedding the bivariate polynomial ring into its ring of rational functions. -/
-noncomputable def bivPolyHom {F : Type} [CommRing F] [IsDomain F] :
+def bivPolyHom {F : Type} [CommRing F] [IsDomain F] :
   Polynomial (F[X]) →+* Polynomial (RatFunc F) := Polynomial.mapRingHom (univPolyHom)
-
 
 end
 end ToRatFunc
