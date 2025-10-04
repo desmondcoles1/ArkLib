@@ -46,14 +46,16 @@ jobs:
         env:
           DISABLE_EQUATIONS: 1
 
-      - name: Install blueprint dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-full plastex
-
       - name: Build blueprint
-        run: plastex --renderer=HTML5 --theme=bootstrap --output-dir web web.tex
-        working-directory: ./blueprint/src
+        uses: xu-cheng/texlive-action@v3
+        with:
+          docker_image: ghcr.io/xu-cheng/texlive-full:20231201
+          run: |
+            apk update
+            apk add --update make py3-pip git
+            pip install plastex
+            cd blueprint/src
+            plastex --renderer=HTML5 --theme=bootstrap --output-dir web web.tex
 
       - name: Combine documentation artifacts
         run: mv ./blueprint/src/web ./.lake/build/doc/blueprint
