@@ -55,7 +55,7 @@ jobs:
             apk add --update make py3-pip git
             pip install plastex
             cd blueprint/src
-            plastex --renderer=HTML5 --theme=bootstrap --output-dir web web.tex
+            plastex --renderer=HTML5 --theme=bootstrap --output=. web.tex
 
       - name: Combine documentation artifacts
         run: mv ./blueprint/src/web ./.lake/build/doc/blueprint
