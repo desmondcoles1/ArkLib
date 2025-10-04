@@ -80,8 +80,14 @@ def analyze_diff(diff):
         if line.startswith("---") or line.startswith("+++"):
             continue
 
-        if line.startswith('+'):
+
+        # --- Only process .lean files for sorry tracking ---
+        if not current_file.endswith(".lean"):
+            continue
+            
+        elif line.startswith('+'):
             lines_added += 1
+            
         elif line.startswith('-'):
             lines_removed += 1
 
