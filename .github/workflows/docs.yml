@@ -2,8 +2,6 @@ name: Build Documentation
 
 on:
   push:
-    branches: [main]  # Only on main branch
-  pull_request:
     branches: [main]
   workflow_dispatch:
 
