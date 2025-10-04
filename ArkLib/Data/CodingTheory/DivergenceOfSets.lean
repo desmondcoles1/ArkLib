@@ -67,7 +67,8 @@ open Classical in
 /-- `Corollary 1.3` (Concentration bounds) from [BCIKS20]. -/
 lemma concentration_bounds {deg : ℕ} {domain : ι ↪ F}
   {U : AffineSubspace F (ι → F)} [Nonempty U]
-  (hdiv : (divergence U (RScodeSet domain deg) : ℝ≥0) ≤ 1 - ReedSolomonCode.sqrtRate deg domain)
+  (hdiv_pos : 0 < (divergence U (RScodeSet domain deg) : ℝ≥0))
+  (hdiv_lt : (divergence U (RScodeSet domain deg) : ℝ≥0) < 1 - ReedSolomonCode.sqrtRate deg domain)
   : let δ' := divergence U (RScodeSet domain deg)
     Pr_{let y ← $ᵖ U}[Code.relHammingDistToCode y (RScodeSet domain deg) ≠ δ']
     ≤ errorBound δ' deg domain := by sorry

@@ -84,8 +84,8 @@ variable {ι : Type*} [Fintype ι]
          {k : ℕ}
 
 /-- Affine line between two vectors with coefficients in a semiring. -/
-def line [Ring F] (u v : ι → F) : Submodule F (ι → F) :=
-  vectorSpan _ {u, v}
+def line [Ring F] (u v : ι → F) : AffineSubspace F (ι → F) :=
+  affineSpan _ {u, v}
 
 variable [DecidableEq F]
 
