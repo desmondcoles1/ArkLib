@@ -66,8 +66,6 @@ jobs:
           cp -r ./.lake/build/doc/* _deploy/docs/
           # Copy blueprint
           cp blueprint/print/print.pdf _deploy/blueprint.pdf
-          # Remove oversized file as a precaution
-          rm -f _deploy/docs/declarations/declaration-data.bmp
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
