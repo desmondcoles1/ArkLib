@@ -1,4 +1,4 @@
-name: Build Documentation and Blueprint
+name: Build and Deploy Website to GitHub Pages
 
 on:
   push:
@@ -6,7 +6,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,9 +20,8 @@ jobs:
     steps:
       - name: Checkout project
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # Fetch all history for all branches and tags
 
+      # --- Lean and Blueprint Build ---
       - name: Cache Lean dependencies
         uses: actions/cache@v4
         with:
@@ -30,10 +31,8 @@ jobs:
             ${{ runner.os }}-lean-
 
       - name: Build the project
-        id: build-lean
         uses: leanprover/lean-action@v1.3.0
         with:
-          # Do not run linter for now, too many errors
           lint: false
 
       - name: Build project documentation
@@ -54,30 +53,34 @@ jobs:
             pip install --upgrade pip requests wheel
             pip install pygraphviz --global-option=build_ext --global-option="-L/usr/lib/graphviz/" --global-option="-R/usr/lib/graphviz/"
             pip install leanblueprint
-            cd blueprint
             leanblueprint pdf
 
-      - name: List blueprint output
-        run: ls -R blueprint
-
-      - name: Check blueprint declarations
+      # --- Combine and Deploy ---
+      - name: Prepare deployment directory
         run: |
-          ~/.elan/bin/lake exe checkdecls blueprint/lean_decls
-
-      - name: Commit documentation and blueprint
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # Copy docs
-          rm -rf home_page/docs
-          mkdir -p home_page/docs
-          cp -r ./.lake/build/doc/* home_page/docs/
-
+          mkdir _deploy
+          # Copy landing page
+          cp home_page/index.html _deploy/
+          # Create docs directory and copy Lean docs
+          mkdir -p _deploy/docs
+          cp -r ./.lake/build/doc/* _deploy/docs/
           # Copy blueprint
-          cp blueprint/blueprint.pdf home_page/blueprint.pdf
-          
-          git add home_page/docs home_page/blueprint.pdf
-          git diff --staged --quiet || git commit -m "docs: update documentation and blueprint [skip ci]"
-          git push
+          cp blueprint/print/print.pdf _deploy/blueprint.pdf
+          # Remove oversized file as a precaution
+          rm -f _deploy/docs/declarations/declaration-data.bmp
 
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./_deploy
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
