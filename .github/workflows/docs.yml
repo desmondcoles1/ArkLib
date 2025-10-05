@@ -54,6 +54,7 @@ jobs:
             pip install pygraphviz --global-option=build_ext --global-option="-L/usr/lib/graphviz/" --global-option="-R/usr/lib/graphviz/"
             pip install leanblueprint
             leanblueprint pdf
+            leanblueprint web
 
       # --- Combine and Deploy ---
       - name: Prepare deployment directory
@@ -66,6 +67,9 @@ jobs:
           cp -r ./.lake/build/doc/* _deploy/docs/
           # Copy blueprint
           cp blueprint/print/print.pdf _deploy/blueprint.pdf
+          # Copy blueprint HTML
+          mkdir -p _deploy/blueprint
+          cp -r blueprint/web/* _deploy/blueprint/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
