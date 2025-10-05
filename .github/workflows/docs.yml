@@ -1,4 +1,4 @@
-name: Build and Deploy Documentation
+name: Build and Deploy Website
 
 on:
   push:
@@ -19,6 +19,7 @@ jobs:
       - name: Checkout project
         uses: actions/checkout@v5
 
+      # --- Lean and Blueprint Build ---
       - name: Cache Lean dependencies
         uses: actions/cache@v4
         with:
@@ -28,7 +29,6 @@ jobs:
             ${{ runner.os }}-lean-
 
       - name: Build the project
-        id: build-lean
         uses: leanprover/lean-action@v1.3.0
         with:
           lint: false
@@ -53,16 +53,25 @@ jobs:
             pip install leanblueprint
             leanblueprint pdf
 
+      # --- Combine and Deploy ---
       - name: Prepare deployment directory
-        run: cp blueprint/print/print.pdf ./.lake/build/doc/blueprint.pdf
+        run: |
+          mkdir _deploy
+          # Copy landing page
+          cp home_page/index.html _deploy/
+          # Create docs directory and copy Lean docs
+          mkdir -p _deploy/docs
+          cp -r ./.lake/build/doc/* _deploy/docs/
+          # Copy blueprint
+          cp blueprint/print/print.pdf _deploy/blueprint.pdf
 
       - name: Deploy to docs-output branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./.lake/build/doc
+          publish_dir: ./_deploy
           publish_branch: docs-output
           force_orphan: true
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'docs: deploy updated documentation [skip ci]'
+          commit_message: 'deploy: deploy full website [skip ci]'
