@@ -3,6 +3,8 @@ name: Build Documentation and Blueprint
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -54,7 +56,7 @@ jobs:
             pip install --upgrade pip requests wheel
             pip install pygraphviz --global-option=build_ext --global-option="-L/usr/lib/graphviz/" --global-option="-R/usr/lib/graphviz/"
             pip install leanblueprint
-            leanblueprint pdf -v
+            leanblueprint pdf
 
       - name: List blueprint output
         run: ls -R blueprint
@@ -74,7 +76,7 @@ jobs:
           cp -r ./.lake/build/doc/* home_page/docs/
 
           # Copy blueprint
-          cp blueprint/blueprint.pdf home_page/blueprint.pdf
+          cp blueprint/print/print.pdf home_page/blueprint.pdf
           
           git add home_page/docs home_page/blueprint.pdf
           git diff --staged --quiet || git commit -m "docs: update documentation and blueprint [skip ci]"
