@@ -8,10 +8,8 @@ import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Data.Matrix.Rank
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import ArkLib.Data.Fin.Basic
-
 import Mathlib.Data.Matrix.Basic --I added
-
-
+import Mathlib.SetTheory.Cardinal.Basic
 
 noncomputable section
 
@@ -55,48 +53,67 @@ def subLeftFull (U : Matrix (Fin m) (Fin n) F) (c_reindex : Fin m → Fin n) :
 variable [CommRing F]
          {U : Matrix (Fin m) (Fin n) F}
 
---myown below
-
-
---prove that this column rank is equal to the usual column rank in mathlib, my own lemma
-lemma colSpan_eq_column_span (U : Matrix (Fin m) (Fin n) F) :
-  Submodule.span F (Set.range U.col) =
-  Submodule.span F { U.transpose i | i : Fin n } := by
-  rw[Set.range]
-  simp [Matrix.col, Matrix.transpose]
-
-
-lemma rank_eq_col_rank :
-  U.rank = colRank U := by
-  rw [Matrix.rank_eq_finrank_span_cols, colSpan_eq_column_span]
-  rfl
-  -- use theorem matrix.rank_eq_finrank_span_cols, and just make sure the sets of columnbs are equal
-
---this is decidedly not in mathlib and actually isn't obvious!
-lemma rank_eq_row_rank :
-  U.rank = rowRank U := by sorry
--- rw [Matrix.rank_eq_finrank_span_rows, colSpan_eq_column_span]
---  rfl
-
--- myown above
-
-lemma rank_eq_min_row_col_rank  :
+/-- The rank of a matrix equals the minimum of its row rank and column rank. -/
+lemma rank_eq_min_row_col_rank :
   U.rank = min (rowRank U) (colRank U) := by sorry
-  --consequence of above
+
+/-- A square matrix over an integral domain has full rank if its determinant is nonzero. -/
+lemma rank_eq_if_det_ne_zero {U : Matrix (Fin n) (Fin n) F} [IsDomain F] :
+  Matrix.det U ≠ 0 → U.rank = n  := by
+    intro h_det
+    have h_ind : (LinearIndependent F U.col) := Matrix.linearIndependent_cols_of_det_ne_zero h_det
+    rw[
+      Matrix.rank_eq_finrank_span_cols,
+      finrank_span_eq_card h_ind,
+      Fintype.card_fin
+    ]
+
+/-- An m×n matrix has full rank if the submatrix consisting of rows 1 through n has rank n. -/
+lemma rank_eq_if_subUpFull_eq [Nontrivial F] (h : n ≤ m) :
+   (subUpFull U (Fin.castLE h)).rank = n  → U.rank = n  := by
+   intro h_sub_mat_rank
+   apply le_antisymm
+   ·  exact Matrix.rank_le_width U
+   ·  calc n = (subUpFull U (Fin.castLE h)).rank := by rw[h_sub_mat_rank]
+           _ ≤ U.rank := by exact Matrix.rank_submatrix_le (Fin.castLE h) (Equiv.refl (Fin n)) U
+
+/-- cRank and Rank agree for a finite matirx -/
+lemma cRank_rank_conversion [Nontrivial F] :
+  ↑(U.rank) = U.cRank := by
+  rw[
+    Matrix.rank_eq_finrank_span_cols,
+    ← Matrix.cRank_toNat_eq_finrank,
+    Cardinal.cast_toNat_of_lt_aleph0
+  ]
+  calc U.cRank ≤ ↑(Fintype.card (Fin n)) := by exact Matrix.cRank_le_card_width U
+         _ = ↑n := by rw[Fintype.card_fin]
+  exact Cardinal.nat_lt_aleph0 n
+
+/-- An m×n matrix has full rank if the submatrix consisting of columns 1 through m has rank m. -/
+lemma full_row_rank_via_rank_subLeftFull [Nontrivial F] (h : m ≤ n) :
+   (subLeftFull U (Fin.castLE h)).rank = m → U.rank = m := by
+   intro h_sub_mat_rank
+   rw[
+    Matrix.rank_eq_finrank_span_cols,
+    ← Matrix.cRank_toNat_eq_finrank
+   ]
+   have h_cRank : U.cRank = ↑m := by
+    apply le_antisymm
+    · calc U.cRank ≤ ↑(Fintype.card (Fin m)) := Matrix.cRank_le_card_height U
+           _ = ↑m := by rw[Fintype.card_fin]
+    · calc ↑m = ↑((subLeftFull U (Fin.castLE h)).rank) := by rw[h_sub_mat_rank]
+           _ = (subLeftFull U (Fin.castLE h)).cRank := by exact cRank_rank_conversion
+           _ ≤ U.cRank := by exact Matrix.cRank_submatrix_le U id (Fin.castLE h)
+   simp [h_cRank]
 
 
-lemma rank_eq_iff_det_ne_zero {U : Matrix (Fin n) (Fin n) F} :
-  U.rank = n ↔ Matrix.det U ≠ 0 := by sorry
-  --this has to be in the determinant file or rank file in mathlib
 
-lemma rank_eq_iff_subUpFull_eq (h : n ≤ m) :
-  U.rank = n ↔ (subUpFull U (Fin.castLE h)).rank = n := sorry --this statement is the transpose of the below statement and is also false as stated I think...
 
-lemma full_row_rank_via_rank_subLeftFull (h : m ≤ n) :
-  U.rank = m ↔ (subLeftFull U (Fin.castLE h)).rank = m := by sorry --I think this statement is false
+
 
 
 end
+
 
 end Matrix
 
