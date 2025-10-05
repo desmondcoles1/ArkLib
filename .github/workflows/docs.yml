@@ -1,4 +1,4 @@
-name: Build and Deploy Website
+name: Build and Deploy Website to GitHub Pages
 
 on:
   push:
@@ -6,14 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -64,15 +66,21 @@ jobs:
           cp -r ./.lake/build/doc/* _deploy/docs/
           # Copy blueprint
           cp blueprint/print/print.pdf _deploy/blueprint.pdf
+          # Remove oversized file as a precaution
+          rm -f _deploy/docs/declarations/declaration-data.bmp
 
-      - name: Deploy to docs-output branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_deploy
-          publish_branch: docs-output
-          force_orphan: true
-          exclude_assets: '**/declaration-data.bmp'
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          commit_message: 'deploy: deploy full website [skip ci]'
+          path: ./_deploy
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
