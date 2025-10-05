@@ -72,6 +72,7 @@ jobs:
           publish_dir: ./_deploy
           publish_branch: docs-output
           force_orphan: true
+          exclude_assets: '**/declaration-data.bmp'
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: 'deploy: deploy full website [skip ci]'
