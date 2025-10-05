@@ -54,8 +54,7 @@ jobs:
             pip install --upgrade pip requests wheel
             pip install pygraphviz --global-option=build_ext --global-option="-L/usr/lib/graphviz/" --global-option="-R/usr/lib/graphviz/"
             pip install leanblueprint
-            cd blueprint
-            leanblueprint pdf
+            leanblueprint pdf -v
 
       - name: List blueprint output
         run: ls -R blueprint
