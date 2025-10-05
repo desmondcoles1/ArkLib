@@ -1,9 +1,7 @@
-name: Build Documentation and Blueprint
+name: Build and Deploy Documentation
 
 on:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
   workflow_dispatch:
 
@@ -15,13 +13,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # Fetch all history for all branches and tags
 
       - name: Cache Lean dependencies
         uses: actions/cache@v4
@@ -35,7 +31,6 @@ jobs:
         id: build-lean
         uses: leanprover/lean-action@v1.3.0
         with:
-          # Do not run linter for now, too many errors
           lint: false
 
       - name: Build project documentation
@@ -58,27 +53,16 @@ jobs:
             pip install leanblueprint
             leanblueprint pdf
 
-      - name: List blueprint output
-        run: ls -R blueprint
+      - name: Prepare deployment directory
+        run: cp blueprint/print/print.pdf ./.lake/build/doc/blueprint.pdf
 
-      - name: Check blueprint declarations
-        run: |
-          ~/.elan/bin/lake exe checkdecls blueprint/lean_decls
-
-      - name: Commit documentation and blueprint
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # Copy docs
-          rm -rf home_page/docs
-          mkdir -p home_page/docs
-          cp -r ./.lake/build/doc/* home_page/docs/
-
-          # Copy blueprint
-          cp blueprint/print/print.pdf home_page/blueprint.pdf
-          
-          git add home_page/docs home_page/blueprint.pdf
-          git diff --staged --quiet || git commit -m "docs: update documentation and blueprint [skip ci]"
-          git push
-
+      - name: Deploy to docs-output branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./.lake/build/doc
+          publish_branch: docs-output
+          force_orphan: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'docs: deploy updated documentation [skip ci]'
