@@ -7,8 +7,8 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Data.Matrix.Rank
 import Mathlib.LinearAlgebra.AffineSpace.Pointwise
-import Mathlib.Data.Matrix.Basic --I added
-import Mathlib.SetTheory.Cardinal.Basic
+
+
 
 noncomputable section
 
@@ -60,8 +60,7 @@ variable [CommRing F]
          {U : Matrix (Fin m) (Fin n) F}
 
 /-- The rank of a matrix equals the minimum of its row rank and column rank. -/
-lemma rank_eq_min_row_col_rank :
-  U.rank = min (rowRank U) (colRank U) := by sorry
+lemma rank_eq_min_row_col_rank : U.rank = min (rowRank U) (colRank U) := by sorry
 
 /-- A square matrix over an integral domain has full rank if its determinant is nonzero. -/
 lemma rank_eq_if_det_ne_zero {U : Matrix (Fin n) (Fin n) F} [IsDomain F] :

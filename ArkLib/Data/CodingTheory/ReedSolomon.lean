@@ -128,9 +128,8 @@ lemma rank_nonsquare_eq_deg_of_ι_le (inj : Function.Injective α) (h : m ≤ n)
     exact Matrix.full_row_rank_via_rank_subLeftFull h this
   rw[
     ←subLeftFull_of_vandermonde_is_vandermonde,
-    Matrix.rank_eq_if_det_ne_zero
-  ]
-  rw [Matrix.det_vandermonde_ne_zero_iff]
+    Matrix.rank_eq_if_det_ne_zero]
+  rw[Matrix.det_vandermonde_ne_zero_iff]
   exact inj
 
 @[simp]
