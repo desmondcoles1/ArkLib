@@ -232,10 +232,13 @@ section
 
 open Polynomial
 
--- { i |
---         ∃ j ∈ Q.support, ∃ k ∈ (Q.coeff j).support,
---           i = j + (Bivariate.coeff Q j k).natDegree }
+/-- Following the Proximity Gap paper this the Y-degree of 
+    a trivariate polynomial `Q`.
+-/
 def D_Y (Q : F[Z][X][Y]) : ℕ := Bivariate.natDegreeY Q
+
+/-- The YZ-degree of a trivariate polynomial.
+-/
 def D_YZ (Q : F[Z][X][Y]) : ℕ :=
   Option.getD (dflt := 0) <| Finset.max
     (Finset.image
@@ -254,6 +257,9 @@ def D_YZ (Q : F[Z][X][Y]) : ℕ :=
 
 end
 
+/-- The Guruswami-Sudan condition as it is stated in
+    the proximity gap paper.
+-/
 structure ModifiedGuruswami
   (m n k : ℕ)
   (ωs : Fin n ↪ F)
@@ -268,14 +274,20 @@ structure ModifiedGuruswami
               (Polynomial.C <| ωs i)
               ((Polynomial.C <| u₀ i) + Polynomial.X * (Polynomial.C <| u₁ i))
             ≥ m
+  /-- The X-degree bound. -/
   Q_deg_X :
     Bivariate.degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
+  /-- The Y-degree bound. -/
   Q_D_Y :
     D_Y Q < D_X (k + 1 / (n : ℚ)) n m / k
+  /-- The YZ-degree bound. -/
   Q_D_YZ :
     D_YZ Q ≤ n * (m + 1/(2 : ℚ))^3 / (6 * Real.sqrt ((k + 1) / n))
 
--- Definition of D_YZ needs a fix, in particular, currently definition is "D_XY".
+/-- The claim 5.4 from the proximity gap paper.
+    It essentially claims that there exists 
+    a soultion to the Guruswami-Sudan constraints above.
+-/
 lemma proximity_gap_claim_5_4
   {m n k : ℕ}
   {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
@@ -292,12 +304,16 @@ instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s where
   complete := by
     sorry
 
+/-- The set `S` (equation 5.2 of the proximity gap paper). -/
 def the_S [Finite F] (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
   : Finset F := Set.toFinset { z | ∃ v : ReedSolomon.code ωs (k + 1), δᵣ(u₀ + z • u₁, v) ≤ δ}
 
 open Polynomial
 
 omit [DecidableEq (RatFunc F)] in
+/-- There exists a `δ`-close polynomial `P_z` for each `z` 
+    from the set `S`.
+-/
 lemma Pz_exists_for_the_S
   [Finite F]
   {k : ℕ}
@@ -326,6 +342,9 @@ lemma Pz_exists_for_the_S
       rw [Function.comp_def, hS.2]
       exact dist
 
+/-- The `δ`-close polynomial `Pz` for each `z` 
+    from the set `S`.
+-/
 noncomputable def Pz
   [Finite F]
   {k : ℕ}
@@ -338,6 +357,11 @@ noncomputable def Pz
   := Classical.choose
       (Pz_exists_for_the_S (n := n) (k := k) hS)
 
+/-- Proposition 5.5 from the proximity gap paper.
+    There exists a subset `S'` of the set `S` and
+    a bivariate polynomial `P(X, Z)` that matches
+    `Pz` on that set. 
+-/
 lemma lemma_5_5
   [Finite F]
   {ωs : Fin n ↪ F}
@@ -352,6 +376,8 @@ lemma lemma_5_5
     P.natDegree ≤ k ∧
     Bivariate.degreeX P ≤ 1 := by sorry
 
+/-- The subset `S'` extracted from the proprosition 5.5.
+-/
 noncomputable def the_S'
   [Finite F]
   (ωs : Fin n ↪ F)
@@ -361,6 +387,7 @@ noncomputable def the_S'
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : Finset F := Classical.choose (lemma_5_5 k h_gs (δ := δ))
 
+/-- `S'` is indeed a subset of `S` -/
 lemma the_S'_sub_the_S
   [Finite F]
   {ωs : Fin n ↪ F}
@@ -370,6 +397,7 @@ lemma the_S'_sub_the_S
   {δ : ℚ}
   : the_S' k ωs δ u₀ u₁ h_gs ⊆ the_S k ωs δ u₀ u₁ := by sorry
 
+/-- The equation 5.12 from the proximity gap paper. -/
 lemma eq_5_12
   {m n k : ℕ}
   {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
@@ -387,6 +415,7 @@ lemma eq_5_12
           (fun ((R, f), e) => (R.comp ((Y : F[Z][X][Y]) ^ f))^e) (List.zip (List.zip R f) e))
   := sorry
 
+/-- Claim 5.6 of the proximity gap paper. -/
 lemma lemma_5_6
   {ωs : Fin n ↪ F}
   {u₀ u₁ : Fin n → F}
@@ -398,6 +427,7 @@ lemma lemma_5_6
 
 open Trivariate in
 open Bivariate in
+/-- Claim 5.7 of the proximity gap paper. -/
 lemma lemma_5_7 [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
