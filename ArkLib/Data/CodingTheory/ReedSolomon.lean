@@ -5,23 +5,17 @@ Authors: Quang Dao, Katerina Hristova, František Silváši, Julian Sutherland, 
 Mirco Richter
 -/
 
-import ArkLib.Data.CodingTheory.Basic
-import Mathlib.LinearAlgebra.Lagrange
-import Mathlib.RingTheory.Henselian
-import ArkLib.Data.Fin.Lift
 import ArkLib.Data.MvPolynomial.LinearMvExtension
 import ArkLib.Data.Polynomial.Interface
+import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.Data.Finset.BooleanAlgebra
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Data.Set.Defs
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
-import Mathlib.Data.Finset.BooleanAlgebra
-import Mathlib.Data.Set.Defs
-import Mathlib.Algebra.Lie.OfAssociative
+import Mathlib.LinearAlgebra.Lagrange
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.RingTheory.Henselian
-
-
 
 /-!
   # Reed-Solomon Codes
@@ -158,23 +152,20 @@ theorem mulVecLin_coeff_vandermondens_eq_eval_matrixOfPolynomials
   (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) =
   fun i => p.eval (v i) := by
   ext i
-  simp only [
-    nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, eval_eq_sum
-  ]
-  refine Eq.symm (Finset.sum_of_injOn (·%n) ?p₁ ?p₂ (fun i _ h ↦ ?p₃) (fun i _ ↦ ?p₄))
-  · aesop (config := { warnOnNonterminal := false })
-          (add simp [Set.InjOn])
-          (add safe forward [le_natDegree_of_mem_supp, lt_of_le_of_lt, Nat.lt_add_one_of_le])
-          (add 50% apply (show ∀ {a b c : ℕ}, a < c → b < c → a % c = b % c → a = b from
-                                 fun h₁ h₂ ↦ by aesop (add simp Nat.mod_eq_of_lt)))
-          (erase simp mem_support_iff)
-    rw [Nat.mod_eq_of_lt, Nat.mod_eq_of_lt] at a_2 <;> assumption
-  · aesop (add simp Set.MapsTo) (add safe apply Nat.mod_lt) (add 1% cases Nat)
-  · aesop (add safe (by specialize h i)) (add simp [Nat.mod_eq_of_lt])
-  · have : i < n := by aesop (add safe forward le_natDegree_of_mem_supp)
-                              (erase simp mem_support_iff)
-                              (add safe (by omega))
-    aesop (add simp Nat.mod_eq_of_lt) (add safe (by ring))
+  have hLHS :
+      (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) i
+        = ∑ x ∈ Finset.range n, (if x < n then p.coeff x * v i ^ x else 0) := by
+    simp [nonsquare_mulVecLin, Finset.sum_fin_eq_sum_range, Fin.liftF'_p_coeff]
+  have hRHS :
+      p.eval (v i) = ∑ x ∈ Finset.range n, p.coeff x * v i ^ x :=
+    Polynomial.eval_eq_sum_range' (p := p) (x := v i) (n := n) h_deg
+  calc
+    (Vandermonde.nonsquare (ι' := n) v).mulVecLin (Fin.liftF' p.coeff) i
+        = ∑ x ∈ Finset.range n, (if x < n then p.coeff x * v i ^ x else 0) := hLHS
+    _ = ∑ x ∈ Finset.range n, p.coeff x * v i ^ x := by
+          refine Finset.sum_congr rfl (fun x hx => ?_)
+          simp [Finset.mem_range.mp hx]
+    _ = p.eval (v i) := by simp [hRHS]
 
 end
 
@@ -193,6 +184,7 @@ variable {ι : Type*} [Fintype ι] [Nonempty ι]
 
 abbrev RScodeSet (domain : ι ↪ F) (deg : ℕ) : Set (ι → F) := (ReedSolomon.code domain deg).carrier
 
+open Classical in
 def toFinset (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F) :=
   (RScodeSet domain deg).toFinset
 
@@ -383,7 +375,8 @@ noncomputable def decode : (ReedSolomon.code domain deg) →ₗ[F] F[X] :=
     (interpolate (domain := domain))
     (ReedSolomon.code domain deg)
 
-/- ReedSolomon codewords are decoded into degree < deg polynomials-/
+/-- ReedSolomon codewords are decoded into degree < deg polynomials
+-/
 lemma decoded_polynomial_lt_deg (c : ReedSolomon.code domain deg) :
   decode c ∈ (degreeLT F deg : Submodule F F[X]) := by
   -- Unpack the witness polynomial for this codeword

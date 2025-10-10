@@ -11,7 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
+<<<<<<< HEAD
         uses: actions/checkout@v4
+=======
+        uses: actions/checkout@v5
+>>>>>>> public/main
 
       - name: Update ArkLib.lean
         run: ./scripts/update-lib.sh

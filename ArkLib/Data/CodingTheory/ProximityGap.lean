@@ -1,8 +1,24 @@
+/-
+Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Quang Dao, Katerina Hristova, František Silváši, Julian Sutherland,
+         Ilia Vlasov
+-/
+
+import ArkLib.Data.CodingTheory.Basic
+import ArkLib.Data.CodingTheory.GuruswamiSudan
+import ArkLib.Data.CodingTheory.Prelims
+import ArkLib.Data.CodingTheory.ReedSolomon
+import ArkLib.Data.Polynomial.Bivariate
+import ArkLib.Data.Polynomial.RationalFunctions
+import ArkLib.Data.Probability.Notation
+
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.Algebra.Module.Submodule.Defs
 import Mathlib.Algebra.Polynomial.Basic
 import Mathlib.Data.Finset.BooleanAlgebra
+import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Data.Set.Defs
 import Mathlib.FieldTheory.RatFunc.AsPolynomial
@@ -13,19 +29,13 @@ import Mathlib.RingTheory.Henselian
 import Mathlib.RingTheory.PowerSeries.Basic
 import Mathlib.RingTheory.PowerSeries.Substitution
 
-import ArkLib.Data.CodingTheory.GuruswamiSudan
-import ArkLib.Data.CodingTheory.Prelims
-import ArkLib.Data.CodingTheory.ReedSolomon
-import ArkLib.Data.Polynomial.Bivariate
-import ArkLib.Data.Polynomial.RationalFunctions
-
-
 /-!
   # Definitions and Theorems about Proximity Gaps
 
   We define the proximity gap properties of linear codes over finite fields.
 
-  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes".
+  [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes" by Eli Ben-Sasson,
+  Dan Carmon, Yuval Ishai, Swastik Kopparty, and Shubhangi Saraf.
 
   ## Main Definitions
 
@@ -40,8 +50,17 @@ open scoped BigOperators
 section
 
 variable {n : Type*} [Fintype n] [DecidableEq n]
+universe u
 
-variable {F : Type*} [Field F] [Fintype F] [DecidableEq F]
+open NNReal Finset Function ProbabilityTheory
+
+open scoped BigOperators LinearCode
+
+section
+
+variable {n : Type} [Fintype n] [DecidableEq n]
+
+variable {F : Type} [Field F] [Fintype F] [DecidableEq F]
 
 variable (C : Submodule F (n → F)) [DecidablePred (· ∈ C)]
 
@@ -66,77 +85,80 @@ def correlatedAgreement (C : Set (n → F)) (δ : ℝ≥0) {k : ℕ} (W : Fin k 
   ∃ S : Finset n, #(S) ≥ (1 - δ) * (Fintype.card n) ∧
     ∃ v : Fin k → n → F, ∀ i, v i ∈ C ∧ {j | v i j = W i j} = S
 
-section
-variable {ι : Type*} [Fintype ι] [Nonempty ι]
-         {F : Type*}
-
-/-- Definition 1.1 in [BCIKS20].
--/
-noncomputable def generalProximityGap {α : Type*} [DecidableEq α] [Nonempty α]
-  (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (δ ε : ℝ≥0) : Prop :=
-  ∀ (S : Finset _) (h : S.Nonempty), S ∈ C → (PMF.uniformOfFinset S h).toOuterMeasure
-  {x | Code.relHammingDistToCode x P ≤ δ} = 1
-  ∨ (PMF.uniformOfFinset S h).toOuterMeasure {x | Code.relHammingDistToCode x P ≤ δ} ≤ ε
 end
 
 section
-variable {ι : Type*} [Fintype ι] [Nonempty ι]
-         {F : Type*} [Field F] [Fintype F] [DecidableEq F]
+
+variable {ι : Type} [Fintype ι] [Nonempty ι]
+         {F : Type}
+
+/-- `Definition 1.1` in [BCIKS20]. -/
+noncomputable def generalProximityGap {α : Type} [DecidableEq α] [Nonempty α]
+  (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (δ ε : ℝ≥0) : Prop :=
+  ∀ S ∈ C, ∀ [Nonempty S],
+  Xor'
+  ( Pr_{let x ← $ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] = 1 )
+  ( Pr_{let x ← $ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] ≤ ε )
+end
+
+section
+variable {ι : Type} [Fintype ι] [Nonempty ι]
+         {F : Type} [Field F] [Fintype F] [DecidableEq F]
+
 /-- The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
-  defined up to the Johnson bound. More precisely, let `rho` be the rate of the Reed-Solomon code.
-  Then for `δ ∈ (0, 1 - √rho)`, we define the relevant error parameter `ε` for the unique decoding
-  bound, i.e. `δ ∈ [0, (1-√rho)/2]` and Johnson bound, i.e. `δ ∈ [(1-√rho)/2 , 1 - √rho]`.
+  defined up to the Johnson bound. More precisely, let `ρ` be the rate of the Reed-Solomon code.
+  Then for `δ ∈ (0, 1 - √ρ)`, we define the relevant error parameter `ε` for the unique decoding
+  bound, i.e. `δ ∈ [0, (1-ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-ρ)/2 , 1 - √ρ]`. Otherwise,
+  we set `ε = 0`.
 -/
 noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
-  letI j := ReedSolomonCode.sqrtRate deg domain
-  if δ ≤ 1 - j/2 then Fintype.card ι / Fintype.card F
-  else if δ ≥ 1 - j/2 ∧ δ ≤ 1 - j
-       then letI m := min (1 - j - δ) (j / 20)
+  letI ρ : ℝ≥0 := ρ (ReedSolomon.code domain deg)
+  if δ ∈ Set.Ioc 0 ((1 - ρ)/2)
+  then Fintype.card ι / Fintype.card F
+  else if δ ∈ Set.Ioo ((1 - ρ)/2) (1 - ρ.sqrt)
+       then letI m := min (1 - ρ.sqrt - δ) (ρ.sqrt / 20)
             ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
        else 0
 
-/-- Theorem 1.2 Proximity Gaps for Reed-Solomon codes in [BCIKS20].
--/
+/-- `Theorem 1.2` (Proximity Gaps for Reed-Solomon Codes) in [BCIKS20]. -/
 theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] {deg : ℕ} {domain : ι ↪ F}
   (C : Fin t → (Fin k → (ι → F))) {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
   generalProximityGap
     (ReedSolomonCode.toFinset domain deg)
-    (Affine.AffSpanSetFinsetCol C)
+    (Affine.AffSpanFinsetCol C)
     δ
     (errorBound δ deg domain) := by sorry
 
-/-- Theorem 1.4 (Main Theorem — Correlated agreement over lines) in [BCIKS20].
--/
+set_option linter.style.commandStart false
+
+/-- `Theorem 1.4` (Main Theorem — Correlated agreement over lines) in [BCIKS20]. -/
 theorem correlatedAgreement_lines {u : Fin 2 → ι → F} {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
-    (PMF.uniformOfFintype F).toOuterMeasure
-      {z | Code.relHammingDistToCode (u 1 + z • u 2) (ReedSolomon.code domain deg) ≤ δ} >
-      errorBound δ deg domain) :
-  correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
+    Pr_{ let z ← $ᵖ F}[
+        Code.relHammingDistToCode (u 0 + z • u 1) (ReedSolomon.code domain deg) ≤ δ
+      ] > errorBound δ deg domain
+  ) : correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
-/-- Theorem 1.5 (Correlated agreement for low-degree parameterised curves) in [BCIKS20].
--/
+/-- `Theorem 1.5` (Correlated agreement for low-degree parameterised curves) in [BCIKS20]. -/
 theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
+  (hδ : δ ≤ 1 - ReedSolomonCode.sqrtRate deg domain)
   (hproximity :
-    (PMF.uniformOfFintype (Curve.parametrisedCurveFinite u)).toOuterMeasure
-      {y | Code.relHammingDistToCode y.1 (ReedSolomon.code domain deg) ≤ δ} >
+    Pr_{let y ← $ᵖ (Curve.parametrisedCurveFinite u)}[
+      Code.relHammingDistToCode y.1 (ReedSolomon.code domain deg) ≤ δ
+    ] >
       k * (errorBound δ deg domain)) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 open Affine in
-/--
-Theorem 1.6 (Correlated agreement over affine spaces) in [BCIKS20].
--/
-theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin k → ι → F} {deg : ℕ}
-  {domain : ι ↪ F} {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
+/-- `Theorem 1.6` (Correlated agreement over affine spaces) in [BCIKS20]. -/
+theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin (k + 1) → ι → F}
+  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
-    (@PMF.uniformOfFintype (affineSpan F (Affine.finsetOfVectors u).toSet)
-      affineSpan_Fintype affineSpan_nonempty').toOuterMeasure
-        {y | Code.relHammingDistToCode (ι := ι) (F := F) y (ReedSolomon.code domain deg) ≤ δ} >
-        errorBound δ deg domain) :
+    Pr_{let y ← $ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}[
+        Code.relHammingDistToCode (ι := ι) (F := F) y (ReedSolomon.code domain deg) ≤ δ
+    ] > errorBound δ deg domain) :
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 end
@@ -641,4 +663,5 @@ lemma claim_5_11
 
 end ProximityGapSection5
 end
+
 end ProximityGap
