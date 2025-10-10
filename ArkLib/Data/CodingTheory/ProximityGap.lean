@@ -444,6 +444,9 @@ lemma lemma_5_7 [Finite F]
         / (Bivariate.natDegreeY Q) > 2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q
     := by sorry
 
+/-- Claim 5.7 establishes existens of a polynomial `R`.
+    This is the extraction of this polynomial.
+-/
 noncomputable def R [Finite F]
   {ωs : Fin n ↪ F}
   {u₀ u₁ : Fin n → F}
@@ -452,6 +455,9 @@ noncomputable def R [Finite F]
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : F[Z][X][Y] := Classical.choose (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
 
+/-- Claim 5.7 establishes existens of a polynomial `H`.
+    This is the extraction of this polynomial.
+-/
 noncomputable def H [Finite F]
   {ωs : Fin n ↪ F}
   {u₀ u₁ : Fin n → F}
@@ -460,6 +466,10 @@ noncomputable def H [Finite F]
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : F[Z][X] := Classical.choose <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
 
+/-- An important property of the polynomial
+    `H` extracted from claim 5.7 is that it is 
+    irreducible.
+-/
 lemma H_is_irreducible [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
@@ -472,6 +482,12 @@ lemma H_is_irreducible [Finite F]
   sorry
 
 open AppendixA.ClaimA2 in
+/-- The claim 5.8 from the proximity gap paper.
+    States that the approximate solution is 
+    actually a solution.
+    This version of the claim is stated in terms
+    of coefficients.
+-/
 lemma Claim_5_8
   [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
@@ -488,6 +504,11 @@ lemma Claim_5_8
   := by sorry
 
 open AppendixA.ClaimA2 in
+/-- The claim 5.8 from the proximity gap paper.
+    States that the approximate solution is 
+    actually a solution.
+    This version is in terms of polynomials.
+-/
 lemma Claim_5_8'
   [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
@@ -506,6 +527,10 @@ lemma Claim_5_8'
    sorry
 
 open AppendixA.ClaimA2 in
+/-- Claim 5.9 from the proximity gap paper.
+    States that the solution `γ` is linear in 
+    the variable `Z`.
+-/
 lemma Claim_5_9
   [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
@@ -520,6 +545,9 @@ lemma Claim_5_9
             (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
           ) := by sorry
 
+/-- The linear represenation of the solution `γ` 
+    extracted from the claim 5.9.
+-/
 noncomputable def P [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
   {Q : F[Z][X][Y]}
@@ -534,6 +562,8 @@ noncomputable def P [Finite F]
   )
 
 open AppendixA.ClaimA2 in
+/-- The extracted `P` from claim 5.9 equals `γ`.
+-/
 lemma P_eq_gamma
   [Finite F]
   {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
@@ -544,6 +574,9 @@ lemma P_eq_gamma
   AppendixA.polyToPowerSeries𝕃 _ 
     (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry
 
+/-- The set `S'_x` from the proximity gap paper (just before claim 5.10).
+    The set of all `z∈S'` such that `w(x,z)` matches `P_z(x)`.
+-/
 noncomputable def the_S'x
   [Finite F]
   (ωs : Fin n ↪ F)
@@ -555,6 +588,11 @@ noncomputable def the_S'x
   : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ the_S' k ωs δ u₀ u₁ h_gs,
     u₀ x + z * u₁ x = (Pz (the_S'_sub_the_S k h_gs h)).eval (ωs x)} sorry
 
+/-- Claim 5.10 of the proximity gap paper.
+    Needed to prove the claim 5.9.
+    This claim states that `γ(x)=w(x,Z)` if
+    the cardinality |S'_x| is big enough.
+-/
 lemma claim_5_10
   [Finite F]
   {ωs : Fin n ↪ F}
@@ -575,6 +613,11 @@ lemma claim_5_10
     (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X
   := by sorry
 
+/-- Claim 5.11 from the proximity gap paper.
+    There exists a set of points `{x₀,...,x_{k+1}}` 
+    such that the sets S_{x_j} satisfy the condition
+    in the claim 5.10.
+-/
 lemma claim_5_11
   [Finite F]
   {ωs : Fin n ↪ F}
