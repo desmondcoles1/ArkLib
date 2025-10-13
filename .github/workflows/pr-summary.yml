@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-
-name: PR Summary
-
-on:
-  pull_request:
-
-permissions:
-  pull-requests: write
-=======
 name: PR Summary
 
 on:
@@ -16,28 +6,11 @@ on:
 permissions:
   pull-requests: write
   issues: read
->>>>>>> public/main
 
 jobs:
   summarize:
     runs-on: ubuntu-latest
     steps:
-<<<<<<< HEAD
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: pr-branch
-
-      - name: Checkout base branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          path: base-branch
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-=======
       - name: Checkout PR Code
         uses: actions/checkout@v5
         with:
@@ -46,27 +19,14 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v6
->>>>>>> public/main
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-<<<<<<< HEAD
-        run: pip install -r ./pr-branch/scripts/requirements.txt
-
-      - name: Get PR diff
-        id: diff
-        run: |
-          diff -uprN base-branch pr-branch > pr.diff || true
-          echo 'diff<<EOF' >> $GITHUB_OUTPUT
-          cat pr.diff >> $GITHUB_OUTPUT
-          echo 'EOF' >> $GITHUB_OUTPUT
-=======
         run: pip install -r ./scripts/requirements.txt
 
       - name: Generate diff
         run: git diff ${{ github.event.pull_request.base.sha }} HEAD > pr.diff
->>>>>>> public/main
 
       - name: Generate summary
         env:
@@ -74,10 +34,4 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-<<<<<<< HEAD
-          PR_DIFF: ${{ steps.diff.outputs.diff }}
-        run: |
-          python ./pr-branch/scripts/pr-summary.py
-=======
         run: python ./scripts/pr-summary.py
->>>>>>> public/main

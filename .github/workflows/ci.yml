@@ -44,8 +44,4 @@ jobs:
 
       - name: Check blueprint declarations
         run: |
-<<<<<<< HEAD
           ~/.elan/bin/lake exe checkdecls blueprint/lean_decls
-=======
-          ~/.elan/bin/lake exe checkdecls blueprint/lean_decls
->>>>>>> public/main
