@@ -50,16 +50,24 @@ section
 
 variable {f : Polynomial F}
 
+lemma evenPart_def :
+  evenPart f = C (2⁻¹ : F) * (f + f.comp (-X)) := rfl
+
 @[simp]
 lemma evenPart_by_2 :
   2 * (evenPart f) = f + f.comp (-X) := by
-  simp [evenPart.eq_def, ext_iff]
+  simp [evenPart_def, ext_iff]
+
+lemma oddPart_def :
+  oddPart f =
+  C (2⁻¹ : F) * (f - f.comp (-X)) /ₘ X
+  := rfl
 
 @[simp]
 lemma oddPart_by_2 :
     2 * (oddPart f) = (f - f.comp (-X)) /ₘ X
  := by
-  simp [oddPart.eq_def, ext_iff]
+  simp [oddPart_def, ext_iff]
   by_cases heq : f - f.comp (-X) = 0
   · simp [heq]
   · intro n

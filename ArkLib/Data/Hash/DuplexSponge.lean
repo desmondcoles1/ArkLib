@@ -119,7 +119,7 @@ class SpongeUnit (α : Type) extends Zero α, Serde α ByteArray, HasSize α UIn
   Rust interface:
   ```rust
     /// Write a bunch of units in the wire.
-    fn write(bunch: &[Self], w: &mut impl std::io::Write) → Result<(), std::io::Error>;
+    fn write(bunch: &[Self], w: &mut impl std::io::Write) -> Result<(), std::io::Error>;
   ```
   Default implementation: serialize each unit of `α`, then write to stream
   -/
@@ -129,7 +129,7 @@ class SpongeUnit (α : Type) extends Zero α, Serde α ByteArray, HasSize α UIn
   Rust interface:
   ```rust
     /// Read a bunch of units from the wire
-    fn read(r: &mut impl std::io::Read, bunch: &mut [Self]) → Result<(), std::io::Error>;
+    fn read(r: &mut impl std::io::Read, bunch: &mut [Self]) -> Result<(), std::io::Error>;
   ```
   Default implementation: read `byteSize * array.length` bytes from stream, deserialize each
   unit of `α`, then return the array if there is no error, otherwise throw an error
@@ -159,21 +159,21 @@ class DuplexSpongeInterface (U : Type) [SpongeUnit U] (α : Type*)
     extends Inhabited α, Zero α, Initialize α (Vector UInt8 32) where
   /-- Absorb new elements in the sponge.
   ```rust
-    fn absorb_unchecked(&mut self, input: &[U]) → &mut Self;
+    fn absorb_unchecked(&mut self, input: &[U]) -> &mut Self;
   ```
   -/
   absorbUnchecked : α × Array U → α
 
   /-- Squeeze out new elements, changing the state of the sponge.
   ```rust
-    fn squeeze_unchecked(&mut self, output: &mut [U]) → &mut Self;
+    fn squeeze_unchecked(&mut self, output: &mut [U]) -> &mut Self;
   ```
   -/
   squeezeUnchecked : α × Array U → α × Array U
 
   /-- Ratcheting.
   ```rust
-    fn ratchet_unchecked(&mut self) → &mut Self;
+    fn ratchet_unchecked(&mut self) -> &mut Self;
   ```
 
   More notes from the Rust implementation:
@@ -236,7 +236,7 @@ pub trait Permutation: Zeroize + Default + Clone + AsRef<[Self::U]> + AsMut<[Sel
     type U: Unit;
     const N: usize;  // The width of the sponge
     const R: usize;  // The rate of the sponge
-    fn new(iv: [u8; 32]) → Self;
+    fn new(iv: [u8; 32]) -> Self;
     fn permute(&mut self);
 }
 ```

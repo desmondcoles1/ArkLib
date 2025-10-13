@@ -7,14 +7,7 @@ Mirco Richter
 
 import ArkLib.Data.MvPolynomial.LinearMvExtension
 import ArkLib.Data.Polynomial.Interface
-import Mathlib.Algebra.Lie.OfAssociative
-import Mathlib.Data.Finset.BooleanAlgebra
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Sqrt
-import Mathlib.Data.Set.Defs
-import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import Mathlib.LinearAlgebra.Lagrange
-import Mathlib.Probability.Distributions.Uniform
 import Mathlib.RingTheory.Henselian
 
 /-!
@@ -66,7 +59,7 @@ def checkMatrix (deg : ℕ) [Fintype ι] : Matrix (Fin (Fintype.card ι - deg)) 
 --   sorry
 end ReedSolomon
 
-open Classical Polynomial Matrix Code LinearCode
+open Polynomial Matrix Code LinearCode
 
 variable {F ι ι' : Type*}
          {C : Set (ι → F)}
