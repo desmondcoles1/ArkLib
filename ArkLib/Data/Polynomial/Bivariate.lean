@@ -148,7 +148,7 @@ def rootMultiplicity.{u} {F : Type u} [CommSemiring F] [DecidableEq F]
 /-- If the multiplicity of a pair `(x,y)` is non-negative, then the pair is a root of `f`. -/
 lemma rootMultiplicity_some_implies_root {F : Type} [CommSemiring F] [DecidableEq F]
   {x y : F} (f : F[X][Y]) (h : some 0 < (rootMultiplicity (f := f) x y))
-  : (f.eval 0).eval 0 = 0 := by
+  : (f.eval (C x)).eval y = 0 := by
   sorry
 
 open Univariate in
