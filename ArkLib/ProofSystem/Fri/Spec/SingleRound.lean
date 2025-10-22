@@ -8,6 +8,7 @@ Authors: Quang Dao, František Silváši, Julian Sutherland, Ilia Vlasov
 import ArkLib.OracleReduction.Basic
 import ArkLib.ProofSystem.Fri.Domain
 import ArkLib.ProofSystem.Fri.RoundConsistency
+import ArkLib.ToMathlib.Finset.Basic
 
 /-!
 # The FRI protocol
@@ -74,7 +75,7 @@ def FinalStatement (F : Type) (k : ℕ) : Type := Fin (k + 1) → F
 @[reducible]
 def OracleStatement (i : Fin (k + 1)) : Fin (i.val + 1) → Type :=
   fun j =>
-    evalDomain D x (∑ j' ∈ (List.take j.1 (List.finRange (k + 1))).toFinset, s j')
+    evalDomain D x (∑ j' ∈ finRangeTo j.1, s j')
       → F
 
 @[reducible]
@@ -82,22 +83,18 @@ def FinalOracleStatement : Fin (k + 2) → Type :=
   fun j =>
     if j.1 = k + 1
     then (Unit → F[X])
-    else (evalDomain D x (∑ j' ∈ (List.take j.1 (List.finRange (k + 1))).toFinset, s j') → F)
+    else (evalDomain D x (∑ j' ∈ finRangeTo j.1, s j') → F)
 
 /-- The FRI protocol has as witness the polynomial that is supposed to correspond to the codeword in
   the oracle statement. -/
 @[reducible]
 def Witness (F : Type) [NonBinaryField F] {k : ℕ}
     (s : Fin (k + 1) → ℕ+) (d : ℕ+) (i : Fin (k + 2)) :=
-  F⦃< 2^(
-    (∑ j' ∈ (List.finRange (k + 1)).toFinset, (s j').1) -
-      (∑ j' ∈ (List.take i.1 (List.finRange (k + 1))).toFinset, (s j').1)) * d
-    ⦄[X]
+  F⦃< 2^((∑ j', (s j').1) - (∑ j' ∈ finRangeTo i.1, (s j').1)) * d⦄[X]
 
 private lemma sum_add_one {i : Fin (k + 1)} :
-  ∑ j' ∈ (List.take (↑i + 1) (List.finRange (k + 1))).toFinset, (s j').1 =
-    (∑ j' ∈ (List.take (↑i) (List.finRange (k + 1))).toFinset, (s j').1) + (s i).1 := by
-          rw [List.take_add, List.toFinset_append]
+  ∑ j' ∈ finRangeTo (i.1 + 1), (s j').1 = (∑ j' ∈ finRangeTo i.1, (s j').1) + (s i).1 := by
+          rw [finRangeTo, List.take_add, List.toFinset_append]
           rw
             [
               Finset.sum_union
@@ -174,7 +171,7 @@ private lemma witness_lift {F : Type} [NonBinaryField F]
       · convert deg_bound
         rw [sum_add_one]
         simp
-      · simp only [List.toFinset_finRange, ge_iff_le]
+      · simp only [ge_iff_le]
         apply sum_le_univ_sum_of_nonneg
         simp
       · apply @CanonicallyOrderedAddCommMonoid.single_le_sum (Fin (k + 1)) ℕ _ _ _
@@ -213,19 +210,11 @@ instance : ∀ j, OracleInterface (FinalOracleStatement D x s j) :=
            Query :=
             ↑(
               evalDomain D x
-              (∑ j' ∈ (List.take j.1 (List.finRange (k + 1))).toFinset, s j')
+              (∑ j' ∈ finRangeTo j.1, s j')
             )
            Response := F
            answer := cast (by simp [h, FinalOracleStatement])
-                          (
-                            id
-                              (α :=
-                                ↑(
-                                  evalDomain D x
-                                    (∑ j' ∈ (List.take j.1 (List.finRange (k + 1))).toFinset, s j')
-                                ) → F
-                              )
-                          )
+                          (id (α := ↑(evalDomain D x (∑ j' ∈ finRangeTo j.1, s j')) → F))
          }
 
 omit [Finite F] in
@@ -241,7 +230,7 @@ omit [Finite F] in
 @[simp]
 lemma domain_lem₁ {i : Fin (k + 1)} :
     [FinalOracleStatement D x s]ₒ.domain ⟨i.1, Nat.lt_succ_of_lt i.2⟩ =
-      evalDomain D x (∑ j' ∈ (List.take i.1 (List.finRange (k + 1))).toFinset, s j') := by
+      evalDomain D x (∑ j' ∈ finRangeTo i.1, s j') := by
   unfold OracleSpec.domain FinalOracleStatement OracleInterface.toOracleSpec
   unfold OracleInterface.Query
   unfold instOracleInterfaceFinalOracleStatement
@@ -711,7 +700,7 @@ def getConst (k : ℕ) (s : Fin (k + 1) → ℕ+) : OracleComp [FinalOracleState
 
 private lemma roots_of_unity_lem {s : Fin (k + 1) → ℕ+} {i : Fin (k + 1)}
     (k_le_n : (∑ j', (s j').1) ≤ n) :
-  (∑ j' ∈ (List.take i.1 (List.finRange (k + 1))).toFinset, (s j').1) ≤ n - (s i).1 := by
+  (∑ j' ∈ finRangeTo i.1, (s j').1) ≤ n - (s i).1 := by
     apply Nat.le_sub_of_add_le
     rw [←sum_add_one]
     transitivity
@@ -737,12 +726,12 @@ noncomputable def queryVerifier (k_le_n : (∑ j', (s j').1) ≤ n) (l : ℕ) [D
                   let x₀ := prevChallenges i
                   let s₀ :
                     evalDomain D x
-                      (∑ j' ∈ (List.take i.1 (List.finRange (k + 1))).toFinset, (s j').1) :=
+                      (∑ j' ∈ finRangeTo i.1, (s j').1) :=
                     ⟨_, pow_2_pow_i_mem_Di_of_mem_D _ s₀.2⟩
                   let queries :
                     List (
                       evalDomain D x
-                        (∑ j' ∈ (List.take i.1 (List.finRange (k + 1))).toFinset, (s j').1)
+                        (∑ j' ∈ finRangeTo i.1, (s j').1)
                     ) :=
                     List.map
                       (fun r =>
