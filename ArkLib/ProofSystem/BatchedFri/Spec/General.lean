@@ -64,8 +64,15 @@ def liftingLens :
     (Fri.Spec.OracleStatement D x s 0) Fin.elim0
     (↥(Fri.Spec.Witness F s d 0)) Unit
     (↥(Fri.Spec.Witness F s d 0)) Unit where
-  stmt := sorry
-  wit  := sorry
+  stmt := Witness.InvLens.ofOutputOnly <| fun ⟨⟨cs, stmt⟩, ostmt⟩ =>
+    ⟨
+      stmt,
+      fun j => by
+        simpa [Fin.fin_one_eq_zero j, Fri.Spec.OracleStatement, -Fri.CosetDomain.evalDomain] using
+          fun v => (ostmt 0) v + ∑ j, cs j * ostmt j.succ v
+    ⟩
+  wit  := Witness.Lens.id
+
 
 /- Lifting FRI to include using `liftingLens`:
     - RLC in statement
