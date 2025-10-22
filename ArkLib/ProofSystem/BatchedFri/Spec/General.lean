@@ -37,24 +37,12 @@ variable (k : ℕ) (s : Fin (k + 1) → ℕ+) (d : ℕ+)
 variable (dom_size_cond : (2 ^ (∑ i, (s i).1)) * d ≤ 2 ^ n)
 variable (l m : ℕ)
 
--- /- Input/Output relations for the FRI protocol. -/
--- def inputRelation [DecidableEq F] (δ : ℝ≥0) :
---     Set
---       (
---         (Statement (k := k) F 0 × (∀ j, OracleStatement (k := k) D x s 0 j)) ×
---         Witness F s d (0 : Fin (k + 2))
---       ) :=
---   match k with
---   | 0 => FinalFoldPhase.inputRelation D x s d (round_bound dom_size_cond) δ
---   | .succ _ => FoldPhase.inputRelation D x s d 0 (round_bound dom_size_cond) δ
-
--- def outputRelation [DecidableEq F] (δ : ℝ≥0) :
---     Set
---       (
---         (FinalStatement F k × ∀ j, FinalOracleStatement D x s j) ×
---         Witness F s d (Fin.last (k + 1))
-      -- )
-  -- := QueryRound.outputRelation D x s d (round_bound dom_size_cond) δ
+-- /- Input/Output relations for the Batched FRI protocol. -/
+def inputRelation [DecidableEq F] (δ : ℝ≥0) :
+    Set
+      (
+        Unit × (∀ j, OracleStatement D x m j) × (Witness F s d m)
+      ) := sorry
 
 def liftingLens :
   OracleContext.Lens
