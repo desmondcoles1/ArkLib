@@ -55,12 +55,12 @@ def liftingLens :
   stmt := Witness.InvLens.ofOutputOnly <| fun ⟨⟨cs, stmt⟩, ostmt⟩ =>
     ⟨
       stmt,
-      fun j => by
-        simpa [Fin.fin_one_eq_zero j, Fri.Spec.OracleStatement, -Fri.CosetDomain.evalDomain] using
-          fun v => (ostmt 0) v + ∑ j, cs j * ostmt j.succ v
+      fun j =>
+        fun v =>
+          have : v.1 ∈ Fri.CosetDomain.evalDomain D x 0 := by convert v.2; simp
+          (ostmt 0) ⟨v.1, this⟩ + ∑ j, cs j * ostmt j.succ ⟨v.1, this⟩
     ⟩
   wit  := Witness.Lens.id
-
 
 /- Lifting FRI to include using `liftingLens`:
     - RLC in statement
@@ -91,7 +91,7 @@ noncomputable def liftedFRI [DecidableEq F] :
       -- (InnerOStmtOut := Fin.elim0)
       -- (OuterWitOut := Unit)
       -- (InnerWitOut := Unit)
-      (liftingLens D x k s d m)
+      (liftingLens.{0, 0, 0, 0} D x k s d m)
       (Fri.Spec.reduction D x k s d dom_size_cond l)
 
 /- Oracle reduction of the batched FRI protocol. -/
