@@ -52,12 +52,12 @@ def inputRelation [DecidableEq F] (δ : ℝ≥0) :
 -/
 def liftingLens :
   OracleContext.Lens
-    ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1))) Unit
-    (Fri.Spec.Statement F (0 : Fin (k + 1))) Unit
-    (OracleStatement D x m) Fin.elim0
-    (Fri.Spec.OracleStatement D x s 0) Fin.elim0
-    (↥(Fri.Spec.Witness F s d 0)) Unit
-    (↥(Fri.Spec.Witness F s d 0)) Unit where
+    ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1))) (Fri.Spec.FinalStatement F k)
+    (Fri.Spec.Statement F (0 : Fin (k + 1))) (Fri.Spec.FinalStatement F k)
+    (OracleStatement D x m) (Fri.Spec.FinalOracleStatement D x s)
+    (Fri.Spec.OracleStatement D x s 0) (Fri.Spec.FinalOracleStatement D x s)
+    (Fri.Spec.Witness F s d 0) (Fri.Spec.Witness F s d (Fin.last (k + 1)))
+    (Fri.Spec.Witness F s d 0) (Fri.Spec.Witness F s d (Fin.last (k + 1))) where
   stmt := Witness.InvLens.ofOutputOnly <| fun ⟨⟨cs, stmt⟩, ostmt⟩ =>
     ⟨
       stmt,
@@ -70,15 +70,16 @@ def liftingLens :
 noncomputable def liftedFRI [DecidableEq F] :
   OracleReduction []ₒ
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
-        (OracleStatement D x m) (Fri.Spec.Witness F s d 0)
-    Unit Fin.elim0 Unit
+      (OracleStatement D x m) (Fri.Spec.Witness F s d 0)
+    (Fri.Spec.FinalStatement F k)
+      (Fri.Spec.FinalOracleStatement D x s) (Fri.Spec.Witness F s d (Fin.last (k + 1)))
     (
       Fri.Spec.pSpecFold D x k s ++ₚ
       Fri.Spec.FinalFoldPhase.pSpec F ++ₚ
       Fri.Spec.QueryRound.pSpec D x l
     ) :=
     OracleReduction.liftContext
-      (liftingLens.{0, 0, 0, 0} D x k s d m)
+      (liftingLens D x k s d m)
       (Fri.Spec.reduction D x k s d dom_size_cond l)
 
 /- Oracle reduction of the batched FRI protocol. -/
