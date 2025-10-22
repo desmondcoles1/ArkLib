@@ -44,6 +44,12 @@ def inputRelation [DecidableEq F] (δ : ℝ≥0) :
         Unit × (∀ j, OracleStatement D x m j) × (Witness F s d m)
       ) := sorry
 
+
+/- Lifting FRI to include using `liftingLens`:
+    - RLC in statement
+    - Simulate batched polynomial oracle using oracles of
+      batched polynomials
+-/
 def liftingLens :
   OracleContext.Lens
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1))) Unit
@@ -55,18 +61,12 @@ def liftingLens :
   stmt := Witness.InvLens.ofOutputOnly <| fun ⟨⟨cs, stmt⟩, ostmt⟩ =>
     ⟨
       stmt,
-      fun j =>
-        fun v =>
+      fun j v =>
           have : v.1 ∈ Fri.CosetDomain.evalDomain D x 0 := by convert v.2; simp
           (ostmt 0) ⟨v.1, this⟩ + ∑ j, cs j * ostmt j.succ ⟨v.1, this⟩
     ⟩
   wit  := Witness.Lens.id
 
-/- Lifting FRI to include using `liftingLens`:
-    - RLC in statement
-    - Simulate batched polynomial oracle using oracles of
-      batched polynomials
--/
 noncomputable def liftedFRI [DecidableEq F] :
   OracleReduction []ₒ
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
@@ -78,26 +78,14 @@ noncomputable def liftedFRI [DecidableEq F] :
       Fri.Spec.QueryRound.pSpec D x l
     ) :=
     OracleReduction.liftContext
-      -- (oSpec := []ₒ)
-      -- (OuterStmtIn := ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1))))
-      -- (InnerStmtIn := Fri.Spec.Statement F (0 : Fin (k + 1)))
-      -- (OuterOStmtIn := OracleStatement D x m)
-      -- (InnerOStmtIn := Fri.Spec.OracleStatement D x s 0)
-      -- (OuterWitIn := Fri.Spec.Witness F s d 0)
-      -- (InnerWitIn := Fri.Spec.Witness F s d 0)
-      -- (OuterStmtOut := Unit)
-      -- (InnerStmtOut := Unit)
-      -- (OuterOStmtOut := Fin.elim0)
-      -- (InnerOStmtOut := Fin.elim0)
-      -- (OuterWitOut := Unit)
-      -- (InnerWitOut := Unit)
       (liftingLens.{0, 0, 0, 0} D x k s d m)
       (Fri.Spec.reduction D x k s d dom_size_cond l)
 
 /- Oracle reduction of the batched FRI protocol. -/
 @[reducible]
 noncomputable def batchedFRIreduction [DecidableEq F] :=
-  OracleReduction.append (BatchingRound.batchOracleReduction D x s d m)
+  OracleReduction.append
+    (BatchingRound.batchOracleReduction D x s d m)
     (liftedFRI D x k s d dom_size_cond l m)
 
 end Spec

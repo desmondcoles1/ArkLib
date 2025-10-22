@@ -68,10 +68,10 @@ def outputRelation :
 /-- The verifier send `m` field elements to batch the `m + 1` batched polynomials,
     the prover then returns the putative codeword corresponding to the batched polynomial -/
 @[reducible]
-def pSpec (F : Type) (m : ℕ) : ProtocolSpec 1 := ⟨!v[.V_to_P], !v[Fin m → F]⟩
+def batchSpec (F : Type) (m : ℕ) : ProtocolSpec 1 := ⟨!v[.V_to_P], !v[Fin m → F]⟩
 
 /- `OracleInterface` instance for `pSpec` of the non-final folding rounds. -/
-instance : ∀ j, OracleInterface ((pSpec F m).Message j)
+instance : ∀ j, OracleInterface ((batchSpec F m).Message j)
   | ⟨0, h⟩ => nomatch h
 
 /-- The batching round oracle prover. -/
@@ -80,7 +80,7 @@ noncomputable def batchProver :
     Unit (OracleStatement D x m) (Witness F s d m)
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
       (OracleStatement D x m) (Fri.Spec.Witness F s d (0 : Fin (k + 2)))
-    (pSpec F m) where
+    (batchSpec F m) where
   PrvState
   | 0 => (∀j, OracleStatement D x m j) × Witness F s d m
   | 1 => (Fin m → F) × (∀j, OracleStatement D x m j) × Fri.Spec.Witness F s d (0 : Fin (k + 2))
@@ -152,7 +152,7 @@ noncomputable def batchVerifier :
     Unit (OracleStatement D x m)
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
     (OracleStatement D x m)
-    (pSpec F m) where
+    (batchSpec F m) where
   verify := fun _ chals => pure ⟨chals ⟨0, by simp⟩, Fin.elim0⟩
   embed :=
     ⟨
@@ -168,7 +168,7 @@ noncomputable def batchOracleReduction :
     ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
     (OracleStatement D x m)
     (Fri.Spec.Witness F s d (0 : Fin (k + 2)))
-    (pSpec F m) where
+    (batchSpec F m) where
   prover := batchProver D x s d m
   verifier := batchVerifier (k := k) D x m
 
