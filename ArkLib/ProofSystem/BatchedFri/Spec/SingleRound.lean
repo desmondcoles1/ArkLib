@@ -82,77 +82,79 @@ instance : ∀ j, OracleInterface ((pSpec D x m).Message j)
 noncomputable def batchProver :
   OracleProver []ₒ
     Unit (OracleStatement D x m) (Witness F s d m)
-    (Fri.Spec.Statement F (0 : Fin (k + 1)))
+    ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
     (Fri.Spec.OracleStatement D x s (0 : Fin (k + 1)))
     (Fri.Spec.Witness F s d (0 : Fin (k + 2)))
     (pSpec D x m) where
   PrvState
   | 0 => Witness F s d m
-  | _ => Fri.Spec.Witness F s d (0 : Fin (k + 2))
+  | _ => (Fin m → F) × Fri.Spec.Witness F s d (0 : Fin (k + 2))
 
   input := fun i => i.2
 
   sendMessage
   | ⟨0, h⟩ => nomatch h
-  | ⟨1, _⟩ => fun p =>
-    pure ⟨fun x => p.1.eval x.1.1, p⟩
+  | ⟨1, _⟩ => fun ⟨cs, p⟩ =>
+    pure ⟨fun x => p.1.eval x.1.1, ⟨cs, p⟩⟩
 
   receiveChallenge
   | ⟨0, _⟩ => fun ps => pure <|
     fun (cs : Fin m → F) =>
-      ⟨
-        ps 0 + ∑ i, Polynomial.C (cs i) * (ps i.succ).1,
-        by
-          unfold Fri.Spec.Witness
-          simp only [List.toFinset_finRange, Fin.coe_ofNat_eq_mod, Nat.zero_mod, List.take_zero,
-            List.toFinset_nil, sum_empty, tsub_zero]
-          apply mem_degreeLT.mpr
-          by_cases h : ↑(ps 0) + ∑ i, Polynomial.C (cs i) * ↑(ps i.succ) = 0
-          · rw [h]
-            simp
-            exact compareOfLessAndEq_eq_lt.mp rfl
-          · rw [Polynomial.degree_eq_natDegree h]
-            norm_cast
-            apply Nat.lt_of_le_pred (by simp)
-            transitivity
-            · exact Polynomial.natDegree_add_le _ _
-            · apply Nat.max_le_of_le_of_le
-              · have := mem_degreeLT.mp (ps 0).2
-                by_cases h₀ : (ps 0).1 = 0
-                · rw [h₀]
-                  simp
+      ⟨cs,
+        ⟨
+          ps 0 + ∑ i, Polynomial.C (cs i) * (ps i.succ).1,
+          by
+            unfold Fri.Spec.Witness
+            simp only [List.toFinset_finRange, Fin.coe_ofNat_eq_mod, Nat.zero_mod, List.take_zero,
+              List.toFinset_nil, sum_empty, tsub_zero]
+            apply mem_degreeLT.mpr
+            by_cases h : ↑(ps 0) + ∑ i, Polynomial.C (cs i) * ↑(ps i.succ) = 0
+            · rw [h]
+              simp
+              exact compareOfLessAndEq_eq_lt.mp rfl
+            · rw [Polynomial.degree_eq_natDegree h]
+              norm_cast
+              apply Nat.lt_of_le_pred (by simp)
+              transitivity
+              · exact Polynomial.natDegree_add_le _ _
+              · apply Nat.max_le_of_le_of_le
                 · have := mem_degreeLT.mp (ps 0).2
-                  erw
-                    [
-                      Polynomial.degree_eq_natDegree h₀,
-                      WithBot.coe_lt_coe,
-                      Nat.cast_id, Nat.cast_id
-                    ] at this
-                  exact Nat.le_pred_of_lt this
-              · apply Polynomial.natDegree_sum_le_of_forall_le
-                intros i _
-                by_cases h : Polynomial.C (cs i) = 0
-                · rw [h]
-                  simp
-                · by_cases h' : (ps i.succ).1 = 0
-                  · rw [h']
+                  by_cases h₀ : (ps 0).1 = 0
+                  · rw [h₀]
                     simp
-                  · rw [Polynomial.natDegree_mul h h', Polynomial.natDegree_C, zero_add]
-                    have := mem_degreeLT.mp (ps i.succ).2
+                  · have := mem_degreeLT.mp (ps 0).2
                     erw
                       [
-                        Polynomial.degree_eq_natDegree h',
+                        Polynomial.degree_eq_natDegree h₀,
                         WithBot.coe_lt_coe,
                         Nat.cast_id, Nat.cast_id
                       ] at this
                     exact Nat.le_pred_of_lt this
+                · apply Polynomial.natDegree_sum_le_of_forall_le
+                  intros i _
+                  by_cases h : Polynomial.C (cs i) = 0
+                  · rw [h]
+                    simp
+                  · by_cases h' : (ps i.succ).1 = 0
+                    · rw [h']
+                      simp
+                    · rw [Polynomial.natDegree_mul h h', Polynomial.natDegree_C, zero_add]
+                      have := mem_degreeLT.mp (ps i.succ).2
+                      erw
+                        [
+                          Polynomial.degree_eq_natDegree h',
+                          WithBot.coe_lt_coe,
+                          Nat.cast_id, Nat.cast_id
+                        ] at this
+                      exact Nat.le_pred_of_lt this
+        ⟩
       ⟩
   | ⟨1, h⟩ => nomatch h
 
-  output := fun p => pure <|
+  output := fun ⟨cs, p⟩ => pure <|
     ⟨
       ⟨
-        Fin.elim0,
+        ⟨cs, Fin.elim0⟩,
         fun _ x => p.1.eval x.1.1
       ⟩,
       p
@@ -162,9 +164,10 @@ noncomputable def batchProver :
 noncomputable def batchVerifier :
   OracleVerifier []ₒ
     Unit (OracleStatement D x m)
-    (Fri.Spec.Statement F (0 : Fin (k + 1))) (Fri.Spec.OracleStatement D x s (0 : Fin (k + 1)))
+    ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
+    (Fri.Spec.OracleStatement D x s (0 : Fin (k + 1)))
     (pSpec D x m) where
-  verify := fun _ _ => pure Fin.elim0
+  verify := fun _ chals => pure ⟨chals ⟨0, by simp⟩, Fin.elim0⟩
   embed :=
     ⟨
       fun _ => Sum.inr ⟨1, by simp⟩,
@@ -176,7 +179,7 @@ noncomputable def batchVerifier :
 noncomputable def batchOracleReduction :
   OracleReduction []ₒ
     Unit (OracleStatement D x m) (Witness F s d m)
-    (Fri.Spec.Statement F (0 : Fin (k + 1)))
+    ((Fin m → F) × Fri.Spec.Statement F (0 : Fin (k + 1)))
     (Fri.Spec.OracleStatement D x s (0 : Fin (k + 1)))
     (Fri.Spec.Witness F s d (0 : Fin (k + 2)))
     (pSpec D x m) where
