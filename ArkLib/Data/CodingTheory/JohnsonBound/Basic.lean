@@ -56,17 +56,17 @@ lemma division_by_conjugate {a b : ℝ} (hpos : 0 ≤ b) (hnonzero : a + b.sqrt 
   ring_nf
   simp_all
 
-lemma sqrt_le_J {q x : ℝ} (hq : q > 1) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) (hqx : q / (q - 1) * x ≤ 1) :
-  1 - ((1-x) : ℝ).sqrt ≤ J q x := by
+lemma sqrt_le_J {q δ : ℝ} (hq : q > 1) (hx0 : 0 ≤ δ) (hx1 : δ ≤ 1) (hqx : q / (q - 1) * δ ≤ 1) :
+  1 - ((1-δ) : ℝ).sqrt ≤ J q δ := by
   unfold J
   set frac := q / (q - 1) with hfrac
   have hfrac_ge : frac ≥ 1 := by rw [hfrac, ge_iff_le, one_le_div] <;> grind
-  have hx' : 1 - x ≥ 0 := by linarith
-  have hfracx' : 1 - frac * x ≥ 0 := by nlinarith
-  suffices 1 - √(1 - x) ≤ (1 / frac) * (1 - √(1 - frac * x)) by simpa
+  have hx' : 1 - δ ≥ 0 := by linarith
+  have hfracx' : 1 - frac * δ ≥ 0 := by nlinarith
+  suffices 1 - √(1 - δ) ≤ (1 / frac) * (1 - √(1 - frac * δ)) by simpa
   rw [division_by_conjugate hx' (by positivity), division_by_conjugate hfracx' (by positivity)]
-  have : x = 1 - (1 - x) := by ring
-  have : frac * x = 1 - (1 - frac * x) := by ring
+  have : δ = 1 - (1 - δ) := by ring
+  have : frac * δ = 1 - (1 - frac * δ) := by ring
   field_simp
   gcongr
   nlinarith
