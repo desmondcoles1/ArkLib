@@ -46,12 +46,32 @@ def JohnsonConditionStrong (B : Finset (Fin n → F)) (v : Fin n → F) : Prop :
 
 /-- The function used for `q`-ary Johnson Bound.
 -/
-noncomputable def J (q δ : ℚ) : ℝ :=
+noncomputable def J (q δ : ℝ) : ℝ :=
   let frac := q / (q - 1)
   (1 / frac) * (1 - Real.sqrt (1 - frac * δ))
 
-lemma sqrt_le_J {q x : ℚ} :
-  1 - ((1-x) : ℝ).sqrt ≤ J q x := by sorry
+lemma division_by_conjugate {a b : ℝ} (hpos : 0 ≤ b) (hnonzero : a + b.sqrt ≠ 0) :
+  a - (b).sqrt = (a^2 - b)/(a + b.sqrt) := by
+  rw[eq_div_iff hnonzero]
+  ring_nf
+  simp_all
+
+lemma sqrt_le_J {q x : ℝ} (hq : q > 1) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) (hqx : q / (q - 1) * x ≤ 1) :
+  1 - ((1-x) : ℝ).sqrt ≤ J q x := by
+  unfold J
+  set frac := q / (q - 1) with hfrac
+  have hfrac_ge : frac ≥ 1 := by rw [hfrac, ge_iff_le, one_le_div] <;> grind
+  have hx' : 1 - x ≥ 0 := by linarith
+  have hfracx' : 1 - frac * x ≥ 0 := by nlinarith
+  suffices 1 - √(1 - x) ≤ (1 / frac) * (1 - √(1 - frac * x)) by simpa
+  rw [division_by_conjugate hx' (by positivity), division_by_conjugate hfracx' (by positivity)]
+  have : x = 1 - (1 - x) := by ring
+  have : frac * x = 1 - (1 - frac * x) := by ring
+  field_simp
+  gcongr
+  nlinarith
+
+
 
 /-- The `q`-ary Johnson bound.
 -/
