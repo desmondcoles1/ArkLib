@@ -669,7 +669,7 @@ instance : ∀ j, OracleInterface ((pSpec D x l).Challenge j) := fun j =>
 noncomputable def queryProver :
   OracleProver []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s) (Witness F s d (Fin.last (k + 1)))
-    (FinalStatement F k) (FinalOracleStatement D x s) (Witness F s d (Fin.last (k + 1)))
+    Unit Fin.elim0 Unit
     (pSpec D x l) where
   PrvState
   | _ =>
@@ -684,7 +684,7 @@ noncomputable def queryProver :
   receiveChallenge
   | ⟨1, _⟩ => fun x => pure <| fun _ => x
 
-  output := pure
+  output := fun _ => pure ⟨⟨(), fun i => Fin.elim0 i⟩, ()⟩
 
 /- Used by the verified to query the `i`th oracle at `w`, a point of the
    appropriate evaluation domain. -/
@@ -724,7 +724,7 @@ private lemma roots_of_unity_lem {s : Fin (k + 1) → ℕ+} {i : Fin (k + 1)}
 noncomputable def queryVerifier (k_le_n : (∑ j', (s j').1) ≤ n) (l : ℕ) [DecidableEq F] :
   OracleVerifier []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s)
-    (FinalStatement F k) (FinalOracleStatement D x s)
+    Unit Fin.elim0
     (pSpec D x l) where
   verify := fun prevChallenges roundChallenge => do
     let (p : F[X]) ← getConst D x k s
@@ -766,22 +766,20 @@ noncomputable def queryVerifier (k_le_n : (∑ j', (s j').1) ≤ n) (l : ℕ) [D
                       pure (p.eval (s₀.1.1 ^ (2 ^ (s (Fin.last k)).1)))
                   guard (RoundConsistency.roundConsistencyCheck x₀ pts β)
               )
-    pure prevChallenges
+    pure ()
   embed :=
     ⟨
-      fun j =>
-        Sum.inl <| by simpa using j,
-      by intros _; aesop
+      fun j => Fin.elim0 j,
+      by intros x; exact Fin.elim0 x
     ⟩
   hEq := by
-    unfold FinalOracleStatement pSpec
-    aesop
+    intros i; exact Fin.elim0 i
 
 /- Query round oracle reduction. -/
 noncomputable def queryOracleReduction [DecidableEq F] :
   OracleReduction []ₒ
     (FinalStatement F k) (FinalOracleStatement D x s) (Witness F s d (Fin.last (k + 1)))
-    (FinalStatement F k) (FinalOracleStatement D x s) (Witness F s d (Fin.last (k + 1)))
+    Unit Fin.elim0 Unit
     (pSpec D x l) where
   prover := queryProver D x s d l
   verifier := queryVerifier D x s (round_bound domain_size_cond) l

@@ -90,8 +90,7 @@ noncomputable def reduction [DecidableEq F] :
   OracleReduction []ₒ
     (Statement F (0 : Fin (k + 1))) (OracleStatement D x s (0 : Fin (k + 1)))
       (Witness F s d (0 : Fin (k + 2)))
-    (FinalStatement F k) (FinalOracleStatement D x s)
-      (Witness F s d (Fin.last (k + 1)))
+    Unit Fin.elim0 Unit
     (pSpecFold D x k s ++ₚ FinalFoldPhase.pSpec F ++ₚ QueryRound.pSpec D x l) :=
   OracleReduction.append (reductionFold D x k s d)
     (QueryRound.queryOracleReduction (k := k) D x s d dom_size_cond l)
