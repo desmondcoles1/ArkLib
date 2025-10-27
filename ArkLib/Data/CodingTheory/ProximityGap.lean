@@ -292,7 +292,7 @@ structure ModifiedGuruswami
   Q_ne_0 : Q ≠ 0
   /-- Degree of the polynomial. -/
   Q_deg : natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
-  /-- Multiplicity of the roots is at least r. -/
+  /-- Multiplicity of the roots is at least `m`. -/
   Q_multiplicity : ∀ i, rootMultiplicity Q
               (Polynomial.C <| ωs i)
               ((Polynomial.C <| u₀ i) + Polynomial.X * (Polynomial.C <| u₁ i))
