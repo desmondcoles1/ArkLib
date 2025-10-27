@@ -6,7 +6,7 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 
 import ArkLib.Data.Polynomial.Bivariate
 
-open Polynomial.Bivariate Bivariate Polynomial
+open Polynomial.Bivariate Polynomial
 
 /--
 Polishchuk-Spielman Lemma variant from Ben-Sasson et Al. Proximity Gaps for Reed-Solomon Codes

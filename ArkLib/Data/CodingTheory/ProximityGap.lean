@@ -52,7 +52,7 @@ section
 variable {n : Type*} [Fintype n] [DecidableEq n]
 universe u
 
-open NNReal Finset Function ProbabilityTheory
+open NNReal Finset Function ProbabilityTheory Finset
 
 open scoped BigOperators LinearCode
 
@@ -213,7 +213,7 @@ open Classical in
 noncomputable def proximity_gap_degree_bound (rho : ℚ) (m n : ℕ) : ℕ :=
   let b := D_X rho m n
   if h : ∃ n : ℕ, b = n
-  then (Classical.choose h) - 1
+  then h.choose - 1
   else Nat.floor b
 
 /-- The ball radius from lemma 5.3 of the Proximity Gap paper,
@@ -320,15 +320,13 @@ lemma proximity_gap_claim_5_4
 
 end
 
-variable {m : ℕ} (k : ℕ)
+variable {m : ℕ} (k : ℕ) {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F} {Q : F[Z][X][Y]} {ωs : Fin n ↪ F}
+         [Finite F]
 
-instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s where
-  elems := sorry
-  complete := by
-    sorry
+noncomputable instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s := Fintype.ofFinite _
 
 /-- The set `S` (equation 5.2 of the proximity gap paper). -/
-def the_S [Finite F] (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
+noncomputable def the_S (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
   : Finset F := Set.toFinset { z | ∃ v : ReedSolomon.code ωs (k + 1), δᵣ(u₀ + z • u₁, v) ≤ δ}
 
 open Polynomial
@@ -337,48 +335,34 @@ omit [DecidableEq (RatFunc F)] in
 /-- There exists a `δ`-close polynomial `P_z` for each `z` 
     from the set `S`.
 -/
-lemma Pz_exists_for_the_S
-  [Finite F]
+lemma exists_Pz_of_the_S
   {k : ℕ}
   {z : F}
-  {ωs : Fin n ↪ F}
-  {δ : ℚ} {u₀ u₁ : Fin n → F}
   (hS : z ∈ the_S (k := k) ωs δ u₀ u₁)
   :
   ∃ Pz : F[X], Pz.natDegree ≤ k ∧ δᵣ(u₀ + z • u₁, Pz.eval ∘ ωs) ≤ δ := by
     unfold the_S at hS
-    simp only [Subtype.exists, exists_prop, Set.mem_toFinset, Set.mem_setOf_eq] at hS
-    rcases hS with ⟨w, hS, dist⟩
-    unfold ReedSolomon.code at hS
-    rw [Submodule.mem_map] at hS
-    rcases hS with ⟨p, hS⟩
-    exists p
-    apply And.intro
-    · have hS := hS.1
-      rw [Polynomial.mem_degreeLT] at hS
-      by_cases h : p = 0
-      · rw [h]; simp
-      · rw [Polynomial.degree_eq_natDegree h, Nat.cast_lt] at hS
-        linarith
-    · unfold ReedSolomon.evalOnPoints at hS
-      simp only [LinearMap.coe_mk, AddHom.coe_mk] at hS
-      rw [Function.comp_def, hS.2]
-      exact dist
+    obtain ⟨w, hS, dist⟩ : ∃ a ∈ ReedSolomon.code ωs (k + 1), ↑δᵣ(u₀ + z • u₁, a) ≤ δ := by
+      simpa using hS
+    obtain ⟨p, hS⟩ : ∃ y ∈ degreeLT F (k + 1), (ReedSolomon.evalOnPoints ωs) y = w := by
+      simpa using hS
+    exact ⟨p, ⟨
+      by if h : p = 0
+         then simp [h]
+         else rw [mem_degreeLT, degree_eq_natDegree h, Nat.cast_lt] at hS; grind,
+      by convert dist; rw [←hS.2]; rfl
+    ⟩⟩
 
 /-- The `δ`-close polynomial `Pz` for each `z` 
     from the set `S`.
 -/
 noncomputable def Pz
-  [Finite F]
   {k : ℕ}
   {z : F}
-  {ωs : Fin n ↪ F}
-  {δ : ℚ} {u₀ u₁ : Fin n → F}
   (hS : z ∈ the_S k ωs δ u₀ u₁)
   :
   F[X]
-  := Classical.choose
-      (Pz_exists_for_the_S (n := n) (k := k) hS)
+  := (exists_Pz_of_the_S (n := n) (k := k) hS).choose
 
 /-- Proposition 5.5 from the proximity gap paper.
     There exists a subset `S'` of the set `S` and
@@ -386,15 +370,10 @@ noncomputable def Pz
     `Pz` on that set. 
 -/
 lemma lemma_5_5
-  [Finite F]
-  {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  {δ : ℚ}
   :
   ∃ S', ∃ (h_sub : S' ⊆ the_S k ωs δ u₀ u₁), ∃ P : F[Z][X],
-    S'.card > (the_S k ωs δ u₀ u₁).card / (2 * D_Y Q) ∧
+    #S' > #(the_S k ωs δ u₀ u₁) / (2 * D_Y Q) ∧
     ∀ z : S', Pz (h_sub z.2) = P.map (Polynomial.evalRingHom z.1) ∧
     P.natDegree ≤ k ∧
     Bivariate.degreeX P ≤ 1 := by sorry
@@ -402,29 +381,20 @@ lemma lemma_5_5
 /-- The subset `S'` extracted from the proprosition 5.5.
 -/
 noncomputable def the_S'
-  [Finite F]
   (ωs : Fin n ↪ F)
   (δ : ℚ)
   (u₀ u₁ : Fin n → F)
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : Finset F := Classical.choose (lemma_5_5 k h_gs (δ := δ))
+  : Finset F := (lemma_5_5 k h_gs (δ := δ)).choose
 
 /-- `S'` is indeed a subset of `S` -/
-lemma the_S'_sub_the_S
-  [Finite F]
-  {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+lemma the_S'_subset_the_S
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  {δ : ℚ}
   : the_S' k ωs δ u₀ u₁ h_gs ⊆ the_S k ωs δ u₀ u₁ := by sorry
 
 /-- The equation 5.12 from the proximity gap paper. -/
 lemma eq_5_12
-  {m n k : ℕ}
-  {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+  {k : ℕ}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁) :
   ∃ (C : F[Z][X]) (R : List F[Z][X][Y]) (f : List ℕ) (e : List ℕ),
     R.length = f.length ∧
@@ -433,69 +403,55 @@ lemma eq_5_12
     ∀ Rᵢ ∈ R, Rᵢ.Separable ∧
     ∀ Rᵢ ∈ R, Irreducible Rᵢ ∧
     Q = (Polynomial.C C) *
-      (List.prod
-        <| List.map
-          (fun ((R, f), e) => (R.comp ((Y : F[Z][X][Y]) ^ f))^e) (List.zip (List.zip R f) e))
+        ∏ (Rᵢ ∈ R.toFinset) (fᵢ ∈ f.toFinset) (eᵢ ∈ e.toFinset),
+          (Rᵢ.comp ((Y : F[Z][X][Y]) ^ fᵢ))^eᵢ
   := sorry
 
 /-- Claim 5.6 of the proximity gap paper. -/
 lemma lemma_5_6
-  {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : ∃ x₀,
-      ∀ R ∈ Classical.choose (Classical.choose_spec (eq_5_12 h_gs)),
+      ∀ R ∈ (eq_5_12 h_gs).choose_spec.choose,
       Bivariate.evalX x₀ (Bivariate.discr_y R) ≠ 0 := by sorry
 
 open Trivariate in
 open Bivariate in
 /-- Claim 5.7 of the proximity gap paper. -/
-lemma lemma_5_7 [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+lemma lemma_5_7
+  (δ : ℚ) (x₀ : F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  ∃ R H, R ∈ Classical.choose (Classical.choose_spec (eq_5_12 h_gs)) ∧
+  ∃ R H, R ∈ (eq_5_12 h_gs).choose_spec.choose ∧
     Irreducible H ∧ H ∣ (Bivariate.evalX (Polynomial.C x₀) R) ∧
-   (@Set.toFinset _ { z : the_S (F := F) k ωs δ u₀ u₁ |
-        let Pz := Pz z.2
+    #(@Set.toFinset _ { z : the_S (F := F) k ωs δ u₀ u₁ |
+        letI Pz := Pz z.2
         (Trivariate.eval_on_Z R z.1).eval Pz = 0 ∧
-        (Bivariate.evalX z.1 H).eval (Pz.eval x₀) = 0} sorry).card
-    ≥ (the_S k ωs δ u₀ u₁).card / (Bivariate.natDegreeY Q)
-    ∧ (the_S k ωs δ u₀ u₁).card
-        / (Bivariate.natDegreeY Q) > 2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q
-    := by sorry
+        (Bivariate.evalX z.1 H).eval (Pz.eval x₀) = 0} sorry)
+    ≥ #(the_S k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q)
+    ∧ #(the_S k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q) >
+      2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q := by sorry
 
 /-- Claim 5.7 establishes existens of a polynomial `R`.
     This is the extraction of this polynomial.
 -/
-noncomputable def R [Finite F]
-  {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
+noncomputable def R
   (δ : ℚ) (x₀ : F)
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : F[Z][X][Y] := Classical.choose (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+  : F[Z][X][Y] := (lemma_5_7 k δ x₀ h_gs).choose
 
 /-- Claim 5.7 establishes existens of a polynomial `H`.
     This is the extraction of this polynomial.
 -/
-noncomputable def H [Finite F]
-  {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
+noncomputable def H
   (δ : ℚ) (x₀ : F)
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : F[Z][X] := Classical.choose <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+  : F[Z][X] := (lemma_5_7 k δ x₀ h_gs).choose_spec.choose
 
 /-- An important property of the polynomial
     `H` extracted from claim 5.7 is that it is 
     irreducible.
 -/
-lemma H_is_irreducible [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+lemma irreducible_H
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   Irreducible (H k δ x₀ h_gs) := by
@@ -512,15 +468,12 @@ open AppendixA.ClaimA2 in
     of coefficients.
 -/
 lemma Claim_5_8
-  [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  :  ∀ t ≥ k,
+  : ∀ t ≥ k,
   α' 
     (R k δ x₀ h_gs) 
     x₀ 
-    (H_is_irreducible k h_gs) 
+    (irreducible_H k h_gs) 
     t 
   = 
   (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
@@ -533,12 +486,9 @@ open AppendixA.ClaimA2 in
     This version is in terms of polynomials.
 -/
 lemma Claim_5_8'
-  [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-    γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k h_gs) =
+    γ' (R k δ x₀ h_gs) x₀ (irreducible_H k h_gs) =
         PowerSeries.mk (fun t =>
           if t ≥ k
           then (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
@@ -546,7 +496,7 @@ lemma Claim_5_8'
             (γ' 
               (R k (x₀ := x₀) (δ := δ) h_gs)
               x₀
-              (H_is_irreducible k h_gs))) := by
+              (irreducible_H k h_gs))) := by
    sorry
 
 open AppendixA.ClaimA2 in
@@ -555,13 +505,10 @@ open AppendixA.ClaimA2 in
     the variable `Z`.
 -/
 lemma Claim_5_9
-  [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   ∃ (v₀ v₁ : F[X]),
-    γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k (x₀ := x₀) (δ := δ) h_gs) =
+    γ' (R k δ x₀ h_gs) x₀ (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
         AppendixA.polyToPowerSeries𝕃 _
           (
             (Polynomial.map Polynomial.C v₀) +
@@ -571,9 +518,8 @@ lemma Claim_5_9
 /-- The linear represenation of the solution `γ` 
     extracted from the claim 5.9.
 -/
-noncomputable def P [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+noncomputable def P
+  (δ : ℚ) (x₀ : F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   F[Z][X] :=
@@ -587,29 +533,22 @@ noncomputable def P [Finite F]
 open AppendixA.ClaimA2 in
 /-- The extracted `P` from claim 5.9 equals `γ`.
 -/
-lemma P_eq_gamma
-  [Finite F]
-  {ωs : Fin n ↪ F} {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F}
-  {Q : F[Z][X][Y]}
+lemma gamma_eq_P
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  γ' (R k δ x₀ h_gs) x₀ (H_is_irreducible k (x₀ := x₀) (δ := δ) h_gs) =
+  γ' (R k δ x₀ h_gs) x₀ (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
   AppendixA.polyToPowerSeries𝕃 _ 
-    (P k (δ := δ) (x₀ := x₀) h_gs) := by sorry
+    (P k δ x₀ h_gs) := by sorry
 
 /-- The set `S'_x` from the proximity gap paper (just before claim 5.10).
     The set of all `z∈S'` such that `w(x,z)` matches `P_z(x)`.
 -/
 noncomputable def the_S'x
-  [Finite F]
-  (ωs : Fin n ↪ F)
   (δ : ℚ)
-  (u₀ u₁ : Fin n → F)
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   (x : Fin n)
   : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ the_S' k ωs δ u₀ u₁ h_gs,
-    u₀ x + z * u₁ x = (Pz (the_S'_sub_the_S k h_gs h)).eval (ωs x)} sorry
+    u₀ x + z * u₁ x = (Pz (the_S'_subset_the_S k h_gs h)).eval (ωs x)} sorry
 
 /-- Claim 5.10 of the proximity gap paper.
     Needed to prove the claim 5.9.
@@ -617,22 +556,17 @@ noncomputable def the_S'x
     the cardinality |S'_x| is big enough.
 -/
 lemma claim_5_10
-  [Finite F]
   {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
-  {x₀ : F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  {δ : ℚ}
   {x : Fin n}
   {D : ℕ}
-  (hD : D ≥ Bivariate.totalDegree (H k (x₀ := x₀) (δ := δ) h_gs))
-  (hx : (the_S'x k ωs δ u₀ u₁ h_gs x).card >
+  (hD : D ≥ Bivariate.totalDegree (H k δ x₀ h_gs))
+  (hx : (the_S'x k δ h_gs x).card >
     (2 * k + 1)
-      * (Bivariate.natDegreeY <| H k (x₀ := x₀) (δ := δ) h_gs)
-      * (Bivariate.natDegreeY <| R k (x₀ := x₀) (δ := δ) h_gs)
+      * (Bivariate.natDegreeY <| H k δ x₀ h_gs)
+      * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
       * D)
-  : (P k (x₀ := x₀) (δ := δ) h_gs).eval (Polynomial.C (ωs x)) =
+  : (P k δ x₀ h_gs).eval (Polynomial.C (ωs x)) =
     (Polynomial.C <| u₀ x) + u₁ x • Polynomial.X
   := by sorry
 
@@ -642,21 +576,16 @@ lemma claim_5_10
     in the claim 5.10.
 -/
 lemma claim_5_11
-  [Finite F]
   {ωs : Fin n ↪ F}
-  {u₀ u₁ : Fin n → F}
-  {x₀ : F}
-  {Q : F[Z][X][Y]}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  {δ : ℚ}
   {x : Fin n}
   {D : ℕ}
-  (hD : D ≥ Bivariate.totalDegree (H k (x₀ := x₀) (δ := δ) h_gs))
+  (hD : D ≥ Bivariate.totalDegree (H k δ x₀ h_gs))
   :
   ∃ Dtop : Finset (Fin n),
     Dtop.card = k + 1 ∧
     ∀ x ∈ Dtop,
-      (the_S'x k ωs δ u₀ u₁ h_gs x).card >
+      (the_S'x k δ h_gs x).card >
         (2 * k + 1)
         * (Bivariate.natDegreeY <| H k δ x₀ h_gs)
         * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
