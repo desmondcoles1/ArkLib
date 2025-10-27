@@ -67,7 +67,7 @@ def principalIdeal {F : Type} [Semiring F] (f : F) : Ideal F := Ideal.span {f}
 
 /-- A principal ideal in a polynomial ring is maximal if and only if its generator is
 an irreducble polynomial. -/
-lemma principal_is_maximal_iff_irred {F : Type} [CommRing F] (f : F[X]) :
+lemma principal_is_maximal_iff_irred {F : Type} [Field F] (f : F[X]) :
   (principalIdeal f).IsMaximal ↔ Irreducible f := by sorry
 
 end
