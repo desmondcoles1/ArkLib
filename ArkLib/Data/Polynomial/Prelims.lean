@@ -54,7 +54,7 @@ lemma resultant_is_divisible_by_leadingCoeff {F : Type} [CommRing F] [Inhabited 
 
 /-- A polynomial is separable if and only if its discriminant is non-zero. -/
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
-  f.Separable ↔ discriminant f = 0 := by sorry
+  f.Separable ↔ discriminant f ≠ 0 := by sorry
 
 end
 end Univariate
