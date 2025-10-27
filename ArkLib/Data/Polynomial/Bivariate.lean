@@ -156,7 +156,7 @@ open Univariate in
    We are using the fact that the resultant in question is always
    divisible by the leading coefficient of the polynomial.
 -/
-opaque discr_y {F : Type} [CommRing F] (f : F[X][Y]) : F[X] :=
+def discr_y {F : Type} [CommRing F] (f : F[X][Y]) : F[X] :=
   Classical.choose (resultant_is_divisible_by_leadingCoeff f)
 
 /-- Over an intergal domain, the product of two non-zero bivariate polynomials is non-zero. -/
