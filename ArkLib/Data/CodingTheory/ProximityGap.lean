@@ -253,6 +253,7 @@ lemma guruswami_sudan_for_proximity_gap_property {k m : ℕ} {ωs : Fin n ↪ F}
 section
 
 open Polynomial
+open Polynomial.Bivariate
 
 /-- Following the Proximity Gap paper this the Y-degree of 
     a trivariate polynomial `Q`.
@@ -290,15 +291,15 @@ structure ModifiedGuruswami
   where
   Q_ne_0 : Q ≠ 0
   /-- Degree of the polynomial. -/
-  Q_deg : Bivariate.natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
+  Q_deg : natWeightedDegree Q 1 k < D_X ((k + 1) / (n : ℚ)) n m
   /-- Multiplicity of the roots is at least r. -/
-  Q_multiplicity : ∀ i,  Bivariate.rootMultiplicity Q
+  Q_multiplicity : ∀ i, rootMultiplicity Q
               (Polynomial.C <| ωs i)
               ((Polynomial.C <| u₀ i) + Polynomial.X * (Polynomial.C <| u₁ i))
             ≥ m
   /-- The X-degree bound. -/
   Q_deg_X :
-    Bivariate.degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
+    degreeX Q < D_X ((k + 1) / (n : ℚ)) n m
   /-- The Y-degree bound. -/
   Q_D_Y :
     D_Y Q < D_X (k + 1 / (n : ℚ)) n m / k

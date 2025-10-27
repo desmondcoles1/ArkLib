@@ -35,7 +35,7 @@ import Mathlib.Data.Fintype.Defs
 open Polynomial
 open Polynomial.Bivariate
 
-namespace Bivariate
+namespace Polynomial.Bivariate
 
 noncomputable section
 
@@ -724,4 +724,4 @@ def weightedDegreeMonomialXY {n m : ℕ} (a b t : ℕ) : ℕ :=
   a * (degreeX (monomialXY n m t)) + b * natDegreeY (monomialXY n m t)
 
 end
-end Bivariate
+end Polynomial.Bivariate
