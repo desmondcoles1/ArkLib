@@ -22,6 +22,8 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Data.Set.Defs
 import Mathlib.FieldTheory.RatFunc.AsPolynomial
+import Mathlib.LinearAlgebra.Span.Defs
+import Mathlib.LinearAlgebra.AffineSpace.Defs
 import Mathlib.FieldTheory.Separable
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import Mathlib.Probability.Distributions.Uniform
@@ -97,8 +99,8 @@ noncomputable def generalProximityGap {α : Type} [DecidableEq α] [Nonempty α]
   (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (δ ε : ℝ≥0) : Prop :=
   ∀ S ∈ C, ∀ [Nonempty S],
   Xor'
-  ( Pr_{let x ← $ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] = 1 )
-  ( Pr_{let x ← $ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] ≤ ε )
+  ( Pr_{let x ←$ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] = 1 )
+  ( Pr_{let x ←$ᵖ S}[Code.relHammingDistToCode x.1 P ≤ δ] ≤ ε )
 end
 
 section
@@ -643,28 +645,26 @@ section
 open NNReal Finset Function
 
 open scoped BigOperators
-
-variable {ι : Type} [Fintype ι] [Nonempty ι]
+variable {l : ℕ} [NeZero l]
+         {ι : Type} [Fintype ι] [Nonempty ι]
          {F : Type} [Field F] [Fintype F] [DecidableEq F]
 
+
+
+open scoped Pointwise
+open scoped ProbabilityTheory
 open Uniform in
-theorem lemma_6_3 [DecidableEq ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
-  {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
-  (hproximity :
-    (PMF.uniformOfFinset (@Set.toFinset _ sorry
-      (s := (AffineSubspace.carrier
-        <| affineSpan F
-          (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-            set)))) (hs := sorry)).toOuterMeasure
-      {y : ι → F | Code.relHammingDistToCode y (ReedSolomon.code domain deg) ≤ δ} >
-      (ProximityGap.errorBound δ deg domain)) :
-  ∀ x ∈ (AffineSubspace.carrier
-  <| affineSpan F
-    (let set := { x  | ∃ v ∈ (List.tail u), x = v };
-      set
-      )), Code.relHammingDistToCode x (ReedSolomon.code domain deg) ≤ δ
-  := by sorry
+theorem lemma_6_3 [DecidableEq ι] [DecidableEq F]
+  {u : Fin l → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  (hδ : δ ∈ Set.Ioo 0 (1 - (ReedSolomonCode.sqrtRate (k + 1) domain))) :
+  letI U' : Finset _ :=
+    @Set.toFinset _ (vectorSpan F {u x | x ∈ (List.finRange l).tail} : Set (ι → F)) sorry
+  letI U : Finset (ι → F) := {u 0} + U'
+  haveI : Nonempty U := sorry
+  letI ε : ℝ≥0 := ProximityGap.errorBound δ (k + 1) domain
+  letI V := ReedSolomon.code domain (k + 1)
+  Pr_{let x ←$ᵖ U}[δᵣ(x.1, V) ≤ δ] > ε → ∀ u' ∈ U', δᵣ(u', V) ≤ δ := by
+  sorry
 
 end
 
