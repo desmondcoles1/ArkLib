@@ -22,8 +22,6 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
 import Mathlib.Data.Set.Defs
 import Mathlib.FieldTheory.RatFunc.AsPolynomial
-import Mathlib.LinearAlgebra.Span.Defs
-import Mathlib.LinearAlgebra.AffineSpace.Defs
 import Mathlib.FieldTheory.Separable
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import Mathlib.Probability.Distributions.Uniform
@@ -155,7 +153,7 @@ theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k 
 
 open Affine in
 /-- `Theorem 1.6` (Correlated agreement over affine spaces) in [BCIKS20]. -/
-theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin (k + 1) → ι → F}
+theorem correlatedAgreement_affine_spaces {k : ℕ} {u : Fin (k + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
     Pr_{let y ← $ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}[
@@ -649,21 +647,19 @@ variable {l : ℕ} [NeZero l]
          {ι : Type} [Fintype ι] [Nonempty ι]
          {F : Type} [Field F] [Fintype F] [DecidableEq F]
 
-
-
-open scoped Pointwise
-open scoped ProbabilityTheory
+open scoped Pointwise in
+open scoped ProbabilityTheory in
 open Uniform in
 theorem lemma_6_3 [DecidableEq ι] [DecidableEq F]
-  {u : Fin l → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
+  {u : Fin (l + 2) → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ∈ Set.Ioo 0 (1 - (ReedSolomonCode.sqrtRate (k + 1) domain))) :
-  letI U' : Finset _ :=
-    @Set.toFinset _ (vectorSpan F {u x | x ∈ (List.finRange l).tail} : Set (ι → F)) sorry
-  letI U : Finset (ι → F) := {u 0} + U'
+  letI U' : Finset (ι → F) :=
+    SetLike.coe (affineSpan F (Finset.univ.image (Fin.tail u))) |>.toFinset
+  letI U : Finset (ι → F) := u 0 +ᵥ U'
   haveI : Nonempty U := sorry
   letI ε : ℝ≥0 := ProximityGap.errorBound δ (k + 1) domain
   letI V := ReedSolomon.code domain (k + 1)
-  Pr_{let x ←$ᵖ U}[δᵣ(x.1, V) ≤ δ] > ε → ∀ u' ∈ U', δᵣ(u', V) ≤ δ := by
+  Pr_{let u ←$ᵖ U}[δᵣ(u.1, V) ≤ δ] > ε → ∀ u' ∈ U', δᵣ(u', V) ≤ δ := by
   sorry
 
 end
