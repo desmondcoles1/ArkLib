@@ -743,29 +743,26 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
     mu_set μ ι' ≥ α ∧
     ∀ i, ∀ x ∈ ι', u i x = v i x := sorry
 
-theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin l → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   {μ : ι → Set.Icc (0 : ℝ) 1}
   {M m : ℕ}
   (hm : 3 ≤ m)
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  {α : ℝ}
-  (hα : (ReedSolomonCode.sqrtRate deg domain) * (1 + 1 / (2 * m : ℝ)) < α)
-  (hS : { z : F | agree_set μ (fun i => ∑ j < u.length, z ^ j * u.getD j 0 i)
-          (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) >
-          max
-            ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2 * u.length
-              / (3 * (ReedSolomonCode.sqrtRate deg domain)^2))
-            ((2 * m + 1) * (M * (Fintype.card ι) + 1) * u.length
-              / (ReedSolomonCode.sqrtRate deg domain
-              |> NNReal.toReal))
-          })
-  :
-  ∃ v : List (ι → F), v.length = u.length ∧
-  (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-  mu_set μ (@Set.toFinset _ { i ∈ (Finset.univ (α := ι))
-    | ∀ j ≤ u.length, u.getD j 0 i = v.getD j 0 i  } sorry) ≥ α
-  := by sorry
+  {α : ℝ} :
+  letI sqrtRate := ReedSolomonCode.sqrtRate deg domain
+  letI S : Finset F := {
+    z : F | agree_set μ (fun i ↦ ∑ j, z ^ j.1 * u j i) (finCarrier domain deg) ≥ α
+  }
+  (hα : sqrtRate * (1 + 1 / (2 * m : ℝ)) ≤ α) →
+  (hS :
+    Finset.card S >
+      max ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2 * l / (3 * sqrtRate^2))
+          ((2 * m + 1) * (M * Fintype.card ι + 1) * l / sqrtRate.toReal)
+    ) →
+  ∃ v : Fin l → ι → F,
+    (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
+    mu_set μ {i : ι | ∀ j, u j i = v j i} ≥ α := sorry
 
 open Uniform in
 theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
