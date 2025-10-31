@@ -828,31 +828,28 @@ lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : F
   {v : Fin (l + 2) → ι → F}
   (hv : ∀ i, v i ∈ (ReedSolomon.code domain deg))
   {S' : Finset F}
-  (hS'_card : S'.card ≥ l + 2) :
+  (hS'_card : S'.card > l + 1) :
   letI w (x : ι) (z : F) : F := ∑ i, z ^ i.1 * u i x
   letI wtilde (x : ι) (z : F) : F := ∑ i, z ^ i.1 * v i x
   (hS'_agree : ∀ z ∈ S', agree μ (w · z) (wtilde · z) ≥ α) →
-  mu_set μ {x : ι | ∀ i, u i x = v i x} ≥
+  mu_set μ {x : ι | ∀ i, u i x = v i x} >
   α - ((l + 1) : ℝ) / (S'.card - (l + 1)) := by sorry
 
-lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
+lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℝ) 1}
-  {α : ℝ}
+  {α : ℝ≥0}
   {M : ℕ}
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
-  (hα : 0 ≤ α)
-  {v : List (ι → F)}
-  (hv : ∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg))
-  (h_len : u.length = v.length)
+  {v : Fin (l + 2) → ι → F}
+  (hv : ∀ i, v i ∈ ReedSolomon.code domain deg)
   {S' : Finset F}
-  (hS'_card : S'.card > u.length)
-  (hS'_card₁ : S'.card > (M * Fintype.card ι + 1) * u.length)
-  (hS'_agree : ∀ z ∈ S', agree μ (fun x => ∑ i < u.length, z ^ i * u.getD i 0 x)
-    (fun x => ∑ i < v.length, z ^ i * v.getD i 0 x) ≥ α)
-  :
-  mu_set μ (@Set.toFinset _ { x : ι | ∀ i < u.length, u.getD i 0 x = v.getD i 0 x} sorry)
-    ≥ α := by sorry
+  (hS'_card : S'.card > l + 1)
+  (hS'_card₁ : S'.card ≥ (M * Fintype.card ι + 1) * (l + 1)) :
+  letI w (x : ι) (z : F) : F := ∑ i, z ^ i.1 * u i x
+  letI wtilde (x : ι) (z : F) : F := ∑ i, z ^ i.1 * v i x
+  (hS'_agree : ∀ z ∈ S', agree μ (w · z) (wtilde · z) ≥ α) → 
+  mu_set μ {x : ι | ∀ i, u i x = v i x} ≥ α := by sorry
 end
 
 end WeightedAgreement
