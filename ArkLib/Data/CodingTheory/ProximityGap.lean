@@ -812,79 +812,14 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
   letI pr :=
     Pr_{let u ←$ᵖ U}[agree_set μ u (finCarrier domain deg) ≥ α]
   (hα : sqrtRate * (1 + 1 / (2 * m : ℝ)) ≤ α) →
-  pr > ENNReal.ofReal (
-    max ((1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2 * 1 / (3 * sqrtRate^3) * 1 / )
-        ((2 * m + 1) * (M * Fintype.card ι + 1) * l / sqrtRate.toReal)
-  ) →
-  1 = 1 := by sorry
-  -- (hproximity :
-  --   (PMF.uniformOfFinset (@Set.toFinset _ sorry
-  --     (s := (AffineSubspace.carrier
-  --       <| affineSpan F
-  --         (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-  --           set)))) (hs := sorry)).toOuterMeasure
-  --     {y : ι → F
-  --       | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
-  --     (ProximityGap.errorBound (Real.toNNReal α) deg domain))
-  -- (h_additionally :
-  --   (PMF.uniformOfFinset (@Set.toFinset _ sorry
-  --   (s := (AffineSubspace.carrier
-  --     <| affineSpan F
-  --       (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
-  --         set)))) (hs := sorry)).toOuterMeasure
-  --   {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α }
-  --     ≥
-  --         (Real.toEReal <| max
-  --           ((1 + 1 / (2 * m : ℝ)) ^ 7 * m ^ 7 * (Fintype.card ι) ^ 2
-  --             / (3 * (ReedSolomonCode.sqrtRate deg domain) ^ 2))
-  --           ((2 * m + 1) * (M * (Fintype.card ι) + 1) / (ReedSolomonCode.sqrtRate deg domain
-  --             |> NNReal.toReal))))
-  -- :
-  -- ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F),
-  --   (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
-  --   mu_set μ ι' ≥ α ∧
-  --   u.length = v.length ∧
-  --   ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
-  -- := by sorry
-
--- open Uniform in
--- theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
---   {deg : ℕ} {domain : ι ↪ F}
---   {μ : ι → Set.Icc (0 : ℝ) 1}
---   {α : ℝ}
---   {M m : ℕ}
---   (hm : 3 ≤ m)
---   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
---   (hα : (ReedSolomonCode.sqrtRate deg domain) * (1 + 1 / (2 * m : ℝ)) < α)
---   (hproximity :
---     (PMF.uniformOfFinset (@Set.toFinset _ sorry
---       (s := (AffineSubspace.carrier
---         <| affineSpan F
---           (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
---             set)))) (hs := sorry)).toOuterMeasure
---       {y : ι → F
---         | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α } >
---       (ProximityGap.errorBound (Real.toNNReal α) deg domain))
---   (h_additionally :
---     (PMF.uniformOfFinset (@Set.toFinset _ sorry
---     (s := (AffineSubspace.carrier
---       <| affineSpan F
---         (let set := { x  | ∃ v ∈ (List.tail u), x = u.headD 0 + v };
---           set)))) (hs := sorry)).toOuterMeasure
---     {y : ι → F | agree_set μ y (@Set.toFinset _ (ReedSolomon.code domain deg).carrier sorry) ≥ α }
---       ≥
---           (Real.toEReal <| max
---             ((1 + 1 / (2 * m : ℝ)) ^ 7 * m ^ 7 * (Fintype.card ι) ^ 2
---               / (3 * (ReedSolomonCode.sqrtRate deg domain) ^ 2))
---             ((2 * m + 1) * (M * (Fintype.card ι) + 1) / (ReedSolomonCode.sqrtRate deg domain
---               |> NNReal.toReal))))
---   :
---   ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : List (ι → F),
---     (∀ i < v.length, v.getD i 0 ∈ (ReedSolomon.code domain deg)) ∧
---     mu_set μ ι' ≥ α ∧
---     u.length = v.length ∧
---     ∀ i < u.length, ∀ x ∈ ι', u.getD i 0 x = v.getD i 0 x
---   := by sorry
+  letI numeratorl : ℝ := (1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2
+  letI denominatorl : ℝ := 1 / (3 * sqrtRate^3) * 1 / Fintype.card F
+  letI numeratorr : ℝ := (2 * m + 1) * (M * Fintype.card ι + 1)
+  letI denominatorr : ℝ := 1 / sqrtRate * 1 / Fintype.card F
+  pr > ENNReal.ofReal (max (numeratorl * denominatorl) (numeratorr * denominatorr)) →
+  ∃ v : Fin (l + 2) → ι → F,
+    (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
+    mu_set μ {i : ι | ∀ j, u j i = v j i} ≥ α := by sorry
 
 lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k : ℕ} {u : List (ι → F)}
   {deg : ℕ} {domain : ι ↪ F}
