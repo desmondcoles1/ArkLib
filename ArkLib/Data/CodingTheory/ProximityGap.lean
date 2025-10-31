@@ -687,7 +687,7 @@ variable {ι : Type} [Fintype ι] [Nonempty ι]
 variable {F : Type} [Field F] [Fintype F] [DecidableEq F]
 
 variable (C : Submodule F (n → F)) [DecidablePred (· ∈ C)]
-         (μ : ι → Set.Icc (0 : ℝ) 1)
+         (μ : ι → Set.Icc (0 : ℚ) 1)
 
 noncomputable def agree (u v : ι → F) : ℝ :=
   1 / (Fintype.card ι) * ∑ i ∈ { i | u i = v i }, (μ i).1
@@ -719,7 +719,7 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
   {l : ℕ}
   {k : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {M : ℕ}
   {α : ℝ≥0}
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) :
@@ -738,14 +738,14 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
       (1 / min (α - sqrtRate) (sqrtRate / 20) + 3 / sqrtRate)
     )
   ) →
-  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : Fin (l + 2) → ι → F,
+  ∃ ι' : Finset ι, ∃ v : Fin (l + 2) → ι → F,
     (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
     mu_set μ ι' ≥ α ∧
     ∀ i, ∀ x ∈ ι', u i x = v i x := sorry
 
 theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {M m : ℕ}
   (hm : 3 ≤ m)
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
@@ -769,12 +769,12 @@ open scoped Pointwise in
 open ProbabilityTheory in
 theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {M : ℕ}
   {α : ℝ≥0} :
   letI sqrtRate := ReedSolomonCode.sqrtRate deg domain
   (hα : sqrtRate < α) →
-  (hα₁ : α < 1) → 
+  (hα₁ : α < 1) →
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) →
   letI U' : Finset (ι → F) :=
     SetLike.coe (affineSpan F (Finset.univ.image (Fin.tail u))) |>.toFinset
@@ -785,11 +785,11 @@ theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
     Pr_{let u ←$ᵖ U}[agree_set μ u (finCarrier domain deg) ≥ α]
   pr > ε →
   pr ≥ ENNReal.ofReal (
-         ((l + 1) * (M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
+         ((M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
          *
          (1 / min (α - sqrtRate) (sqrtRate / 20) + 3 / sqrtRate)
        ) →
-  ∃ ι' ⊆ Finset.univ (α := ι), ∃ v : Fin (l + 2) → ι → F,
+  ∃ ι' : Finset ι, ∃ v : Fin (l + 2) → ι → F,
     (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
     mu_set μ ι' ≥ α ∧
     ∀ i, ∀ x ∈ ι', u i x = v i x := by sorry
@@ -799,7 +799,7 @@ open scoped Pointwise in
 open Uniform in
 theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
   {M m : ℕ}
   (hm : 3 ≤ m)
@@ -813,17 +813,17 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
     Pr_{let u ←$ᵖ U}[agree_set μ u (finCarrier domain deg) ≥ α]
   (hα : sqrtRate * (1 + 1 / (2 * m : ℝ)) ≤ α) →
   letI numeratorl : ℝ := (1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2
-  letI denominatorl : ℝ := 1 / (3 * sqrtRate^3) * 1 / Fintype.card F
+  letI denominatorl : ℝ := (3 * sqrtRate^3) * Fintype.card F
   letI numeratorr : ℝ := (2 * m + 1) * (M * Fintype.card ι + 1)
-  letI denominatorr : ℝ := 1 / sqrtRate * 1 / Fintype.card F
-  pr > ENNReal.ofReal (max (numeratorl * denominatorl) (numeratorr * denominatorr)) →
+  letI denominatorr : ℝ := sqrtRate * Fintype.card F
+  pr > ENNReal.ofReal (max (numeratorl / denominatorl) (numeratorr / denominatorr)) →
   ∃ v : Fin (l + 2) → ι → F,
     (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
     mu_set μ {i : ι | ∀ j, u j i = v j i} ≥ α := by sorry
 
 lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
   {v : Fin (l + 2) → ι → F}
   (hv : ∀ i, v i ∈ (ReedSolomon.code domain deg))
@@ -837,7 +837,7 @@ lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : F
 
 lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
-  {μ : ι → Set.Icc (0 : ℝ) 1}
+  {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
   {M : ℕ}
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ))
@@ -848,7 +848,7 @@ lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : F
   (hS'_card₁ : S'.card ≥ (M * Fintype.card ι + 1) * (l + 1)) :
   letI w (x : ι) (z : F) : F := ∑ i, z ^ i.1 * u i x
   letI wtilde (x : ι) (z : F) : F := ∑ i, z ^ i.1 * v i x
-  (hS'_agree : ∀ z ∈ S', agree μ (w · z) (wtilde · z) ≥ α) → 
+  (hS'_agree : ∀ z ∈ S', agree μ (w · z) (wtilde · z) ≥ α) →
   mu_set μ {x : ι | ∀ i, u i x = v i x} ≥ α := by sorry
 end
 
