@@ -776,13 +776,10 @@ theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
   (hα : sqrtRate < α) →
   (hα₁ : α < 1) →
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) →
-  letI U' : Finset (ι → F) :=
-    SetLike.coe (affineSpan F (Finset.univ.image (Fin.tail u))) |>.toFinset
-  letI U : Finset (ι → F) := u 0 +ᵥ U'
-  haveI : Nonempty U := sorry
   letI ε := ProximityGap.errorBound α deg domain
   letI pr :=
-    Pr_{let u ←$ᵖ U}[agree_set μ u (finCarrier domain deg) ≥ α]
+    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}
+      [agree_set μ u (finCarrier domain deg) ≥ α]
   pr > ε →
   pr ≥ ENNReal.ofReal (
          ((M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
@@ -805,12 +802,9 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
   (hm : 3 ≤ m)
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) :
   letI sqrtRate := ReedSolomonCode.sqrtRate deg domain
-  letI U' : Finset (ι → F) :=
-    SetLike.coe (affineSpan F (Finset.univ.image (Fin.tail u))) |>.toFinset
-  letI U : Finset (ι → F) := u 0 +ᵥ U'
-  haveI : Nonempty U := sorry
   letI pr :=
-    Pr_{let u ←$ᵖ U}[agree_set μ u (finCarrier domain deg) ≥ α]
+    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}
+      [agree_set μ u (finCarrier domain deg) ≥ α]
   (hα : sqrtRate * (1 + 1 / (2 * m : ℝ)) ≤ α) →
   letI numeratorl : ℝ := (1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2
   letI denominatorl : ℝ := (3 * sqrtRate^3) * Fintype.card F
