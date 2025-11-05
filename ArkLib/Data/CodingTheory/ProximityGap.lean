@@ -652,7 +652,7 @@ variable {l : ℕ} [NeZero l]
 open scoped Pointwise in
 open scoped ProbabilityTheory in
 open Uniform in
-theorem lemma_6_3 [DecidableEq ι] [DecidableEq F]
+theorem average_proximity_implies_proximity_of_linear_subspace [DecidableEq ι] [DecidableEq F]
   {u : Fin (l + 2) → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ∈ Set.Ioo 0 (1 - (ReedSolomonCode.sqrtRate (k + 1) domain))) :
   letI U' : Finset (ι → F) :=
@@ -715,7 +715,7 @@ instance {domain : ι ↪ F} {deg : ℕ} : Nonempty (finCarrier domain deg) := b
   exact Submodule.nonempty (Polynomial.degreeLT F deg)
 
 open ProbabilityTheory in
-theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
+theorem weighted_correlated_agreement_for_parameterized_curves [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
   {l : ℕ}
   {k : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
@@ -743,7 +743,8 @@ theorem theorem_7_1 [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
     mu_set μ ι' ≥ α ∧
     ∀ i, ∀ x ∈ ι', u i x = v i x := sorry
 
-theorem theorem_7_2 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
+theorem large_agreement_set_on_curve_implies_weighted_correlated_agreement
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   {μ : ι → Set.Icc (0 : ℚ) 1}
   {M m : ℕ}
