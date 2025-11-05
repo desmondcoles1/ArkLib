@@ -768,7 +768,8 @@ theorem large_agreement_set_on_curve_implies_weighted_correlated_agreement
 open Uniform in
 open scoped Pointwise in
 open ProbabilityTheory in
-theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
+theorem weighted_correlated_agreement_over_affine_spaces 
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
   {M : ℕ}
@@ -779,8 +780,8 @@ theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) →
   letI ε := ProximityGap.errorBound α deg domain
   letI pr :=
-    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}
-      [agree_set μ u (finCarrier domain deg) ≥ α]
+    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)
+    }[agree_set μ u (finCarrier domain deg) ≥ α]
   pr > ε →
   pr ≥ ENNReal.ofReal (
          ((M * Fintype.card ι + 1) : ℝ) / (Fintype.card F : ℝ)
@@ -795,7 +796,8 @@ theorem theorem_7_3 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
 open scoped ProbabilityTheory in
 open scoped Pointwise in
 open Uniform in
-theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
+theorem weighted_correlated_agreement_over_affine_spaces' 
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
@@ -804,8 +806,8 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
   (hμ : ∀ i, ∃ n : ℤ, (μ i).1 = (n : ℚ) / (M : ℚ)) :
   letI sqrtRate := ReedSolomonCode.sqrtRate deg domain
   letI pr :=
-    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}
-      [agree_set μ u (finCarrier domain deg) ≥ α]
+    Pr_{let u ←$ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)
+    }[agree_set μ u (finCarrier domain deg) ≥ α]
   (hα : sqrtRate * (1 + 1 / (2 * m : ℝ)) ≤ α) →
   letI numeratorl : ℝ := (1 + 1 / (2 * m : ℝ))^7 * m^7 * (Fintype.card ι)^2
   letI denominatorl : ℝ := (3 * sqrtRate^3) * Fintype.card F
@@ -816,7 +818,8 @@ theorem theorem_7_4 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u
     (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
     mu_set μ {i : ι | ∀ j, u j i = v j i} ≥ α := by sorry
 
-lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
+lemma list_agreement_on_curve_implies_correlated_agreement_bound 
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
@@ -830,7 +833,8 @@ lemma lemma_7_5 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : F
   mu_set μ {x : ι | ∀ i, u i x = v i x} >
   α - ((l + 1) : ℝ) / (S'.card - (l + 1)) := by sorry
 
-lemma lemma_7_6 [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
+lemma sufficiently_large_list_agreement_on_curve_implies_correlated_agreement
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
   {α : ℝ≥0}
