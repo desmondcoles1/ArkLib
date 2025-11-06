@@ -602,19 +602,19 @@ variable {n k m : ℕ} [NeZero n]
 def curve {l : ℕ} (u : Fin l → Fin n → F) (z : F) : Fin n → F :=
     ∑ i, z ^ i.1 • u i
 
-def the_S_multi {l : ℕ}
+def coeffs_of_close_proximity_curve {l : ℕ}
   (δ : ℚ) (u : Fin l → Fin n → F) (V : Finset (Fin n → F)) : Finset F :=
   @Set.toFinset _ { z | δᵣ(curve u z, V) ≤ δ} sorry
 
-theorem theorem_6_1 {l : ℕ}
+theorem large_agreement_set_on_curve_implies_correlated_agreement {l : ℕ}
   {rho : ℚ}
   {δ : ℚ}
   {V : Finset (Fin n → F)}
   (hδ : δ ≤ (1 - rho) / 2)
   {u : Fin l → Fin n → F}
-  (hS : n * l < (the_S_multi δ u V).card)
+  (hS : n * l < (coeffs_of_close_proximity_curve δ u V).card)
   :
-  the_S_multi δ u V = F ∧
+  coeffs_of_close_proximity_curve δ u V = F ∧
   ∃ (v : Fin l → Fin n → F),
     ∀ z, δᵣ(curve u z, curve v z) ≤ δ ∧
     ({ x : Fin n | Finset.image u ≠ Finset.image v } : Finset _).card ≤ δ * n := by
@@ -623,7 +623,7 @@ theorem theorem_6_1 {l : ℕ}
 noncomputable def δ₀ (rho : ℚ) (m : ℕ) : ℝ :=
   1 - Real.sqrt rho - Real.sqrt rho / (2 * m)
 
-theorem theorem_6_2 {l : ℕ}
+theorem large_agreement_set_on_curve_implies_correlated_agreement' {l : ℕ}
   [Finite F]
   {m : ℕ}
   {rho : ℚ}
@@ -633,7 +633,7 @@ theorem theorem_6_2 {l : ℕ}
   (hδ : δ ≤ δ₀ rho m)
   {u : Fin l → Fin n → F}
   (hS : ((1 + 1 / (2 * m)) ^ 7 * m ^ 7) / (3 * (Real.rpow rho (3 / 2 : ℚ)))
-    * n ^ 2 * l < (the_S_multi δ u V).card)
+    * n ^ 2 * l < (coeffs_of_close_proximity_curve δ u V).card)
   :
   ∃ (v : Fin l → Fin n → F),
   ∀ i, v i ∈ V ∧
@@ -715,7 +715,8 @@ instance {domain : ι ↪ F} {deg : ℕ} : Nonempty (finCarrier domain deg) := b
   exact Submodule.nonempty (Polynomial.degreeLT F deg)
 
 open ProbabilityTheory in
-theorem weighted_correlated_agreement_for_parameterized_curves [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
+theorem weighted_correlated_agreement_for_parameterized_curves 
+  [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
   {l : ℕ}
   {k : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
