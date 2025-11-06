@@ -37,7 +37,17 @@ import Mathlib.RingTheory.PowerSeries.Substitution
   [BCIKS20] refers to the paper "Proximity Gaps for Reed-Solomon Codes" by Eli Ben-Sasson,
   Dan Carmon, Yuval Ishai, Swastik Kopparty, and Shubhangi Saraf.
 
-  ## Main Definitions
+  Using {https://eprint.iacr.org/2020/654}, version 20210703:203025.
+
+  ## Main Definitions and Statements
+
+  - proximity measure, proximity gap, correlated agreement, `(δ, ε)`-proximity gap, proximity
+  parameters
+  - statement of Theorem 1.2 (Proximity Gaps for Reed-Solomon codes) in [BCIKS20].
+  - statements of all the correlated agreement theorems from [BCIKS20]:
+  Theorem 1.4 (Main Theorem — Correlated agreement over lines),
+  Theorem 1.5 (Correlated agreement for low-degree parameterised curves)
+  Theorem 1.6 (Correlated agreement over affine spaces).
 
 -/
 
@@ -92,8 +102,18 @@ section
 variable {ι : Type} [Fintype ι] [Nonempty ι]
          {F : Type}
 
-/-- `Definition 1.1` in [BCIKS20]. -/
-noncomputable def generalProximityGap {α : Type} [DecidableEq α] [Nonempty α]
+/-- Definition 1.1 in [BCIKS20].
+
+Let `P` be a set `P` and `C` a collection of sets. We say that `C` displays a
+`(δ, ε)`-proximity gap with respect to `P` and the relative Hamming distance measure
+if for every `S ∈ C` exactly one of the following holds:
+
+1. The probability that a randomly sampled element `s` from `S` is `δ`-close to `P` is `1`.
+2. The probability that a randomly sampled element `s` from `S` is `δ`-close to `P` is at most
+`ε`.
+
+We call `δ` the proximity parameter and `ε` the error parameter. -/
+noncomputable def δ_ε_proximityGap {α : Type} [DecidableEq α] [Nonempty α]
   (P : Finset (ι → α)) (C : Set (Finset (ι → α))) (δ ε : ℝ≥0) : Prop :=
   ∀ S ∈ C, ∀ [Nonempty S],
   Xor'
@@ -108,7 +128,7 @@ variable {ι : Type} [Fintype ι] [Nonempty ι]
 /-- The error bound `ε` in the pair of proximity and error parameters `(δ,ε)` for Reed-Solomon codes
   defined up to the Johnson bound. More precisely, let `ρ` be the rate of the Reed-Solomon code.
   Then for `δ ∈ (0, 1 - √ρ)`, we define the relevant error parameter `ε` for the unique decoding
-  bound, i.e. `δ ∈ [0, (1-ρ)/2]` and Johnson bound, i.e. `δ ∈ [(1-ρ)/2 , 1 - √ρ]`. Otherwise,
+  bound, i.e. `δ ∈ (0, (1-ρ)/2]` and Johnson bound, i.e. `δ ∈ ((1-ρ)/2 , 1 - √ρ)`. Otherwise,
   we set `ε = 0`.
 -/
 noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : ℝ≥0 :=
@@ -120,27 +140,41 @@ noncomputable def errorBound (δ : ℝ≥0) (deg : ℕ) (domain : ι ↪ F) : �
             ⟨(deg ^ 2 : ℝ≥0) / ((2 * m) ^ 7 * (Fintype.card F : ℝ)), by positivity⟩
        else 0
 
-/-- `Theorem 1.2` (Proximity Gaps for Reed-Solomon Codes) in [BCIKS20]. -/
+/-- Theorem 1.2 (Proximity Gaps for Reed-Solomon codes) in [BCIKS20].
+
+Let `C` be a collection of affine spaces. Then `C` displays a `(δ, ε)`-proximity gap with respect to
+a Reed-Solomon code, where `(δ,ε)` are the proximity and error parameters defined up to the
+Johnson bound. -/
 theorem proximity_gap_RSCodes {k t : ℕ} [NeZero k] [NeZero t] {deg : ℕ} {domain : ι ↪ F}
   (C : Fin t → (Fin k → (ι → F))) {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain)) :
-  generalProximityGap
+  δ_ε_proximityGap
     (ReedSolomonCode.toFinset domain deg)
-    (Affine.AffSpanFinsetCol C)
+    (Affine.AffSpanFinsetCollection C)
     δ
     (errorBound δ deg domain) := by sorry
 
 set_option linter.style.commandStart false
 
-/-- `Theorem 1.4` (Main Theorem — Correlated agreement over lines) in [BCIKS20]. -/
+/-- Theorem 1.4 (Main Theorem — Correlated agreement over lines) in [BCIKS20].
+
+Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
+pair `(δ, ε)` and two words `u₀` and `u₁`, such that the probability that a random affine
+line passing through `u₀` and `u₁` is `δ`-close to Reed-Solomon code is at most `ε`.
+Then, the words `u₀` and `u₁` have correlated agreement. -/
 theorem correlatedAgreement_lines {u : Fin 2 → ι → F} {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
-    Pr_{ let z ← $ᵖ F}[
+    Pr_{let z ← $ᵖ F}[
         Code.relHammingDistToCode (u 0 + z • u 1) (ReedSolomon.code domain deg) ≤ δ
       ] > errorBound δ deg domain
   ) : correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
-/-- `Theorem 1.5` (Correlated agreement for low-degree parameterised curves) in [BCIKS20]. -/
+/-- Theorem 1.5 (Correlated agreement for low-degree parameterised curves) in [BCIKS20].
+
+Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
+pair `(δ, ε)` and a curve passing through words `u₀, ..., uκ`, such that
+the  probability that a random point on the curve is `δ`-close to the Reed-Solomon code
+is at most `ε`. Then, the words `u₀, ..., uκ` have correlated agreement. -/
 theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ≤ 1 - ReedSolomonCode.sqrtRate deg domain)
@@ -152,8 +186,18 @@ theorem correlatedAgreement_affine_curves [DecidableEq ι] {k : ℕ} {u : Fin k 
   correlatedAgreement (ReedSolomon.code domain deg) δ u := by sorry
 
 open Affine in
-/-- `Theorem 1.6` (Correlated agreement over affine spaces) in [BCIKS20]. -/
-theorem correlatedAgreement_affine_spaces {k : ℕ} {u : Fin (k + 2) → ι → F}
+/-- Theorem 1.6 (Correlated agreement over affine spaces) in [BCIKS20].
+
+Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
+pair `(δ, ε)` and an affine space with origin `u₀` and affine generting set `u₁, ..., uκ`
+such that the probability a random point in the affine space is `δ`-close to the Reed-Solomon
+code is at most `ε`. Then the words `u₀, ..., uκ` have correlated agreement.
+
+Note that we have `k+2` vectors to form the affine space. This an intricacy needed us to be
+able to isolate the affine origin from the affine span and to form a generating set of the
+correct size. The reason for taking an extra vector is that after isolating the affine origin,
+the affine span is formed as the span of the difference of the rest of the vector set. -/
+theorem correlatedAgreement_affine_spaces {k : ℕ} [NeZero k] {u : Fin (k + 1) → ι → F}
   {deg : ℕ} {domain : ι ↪ F} {δ : ℝ≥0} (hδ : δ ≤ 1 - (ReedSolomonCode.sqrtRate deg domain))
   (hproximity :
     Pr_{let y ← $ᵖ (u 0 +ᵥ affineSpan F (Finset.univ.image (Fin.tail u)).toSet)}[
@@ -255,7 +299,7 @@ section
 open Polynomial
 open Polynomial.Bivariate
 
-/-- Following the Proximity Gap paper this the Y-degree of
+/-- Following the Proximity Gap paper this the Y-degree of 
     a trivariate polynomial `Q`.
 -/
 def D_Y (Q : F[Z][X][Y]) : ℕ := Bivariate.natDegreeY Q
@@ -308,10 +352,10 @@ structure ModifiedGuruswami
     D_YZ Q ≤ n * (m + 1/(2 : ℚ))^3 / (6 * Real.sqrt ((k + 1) / n))
 
 /-- The claim 5.4 from the proximity gap paper.
-    It essentially claims that there exists
+    It essentially claims that there exists 
     a soultion to the Guruswami-Sudan constraints above.
 -/
-lemma proximity_gap_claim_5_4
+lemma modified_guruswami_has_a_solution
   {m n k : ℕ}
   {ωs : Fin n ↪ F} {u₀ u₁ : Fin n → F}
   :
@@ -323,25 +367,25 @@ end
 variable {m : ℕ} (k : ℕ) {δ : ℚ} {x₀ : F} {u₀ u₁ : Fin n → F} {Q : F[Z][X][Y]} {ωs : Fin n ↪ F}
          [Finite F]
 
-open scoped ReedSolomonCode
+noncomputable instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s := Fintype.ofFinite _
 
 /-- The set `S` (equation 5.2 of the proximity gap paper). -/
-noncomputable def the_S (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
+noncomputable def coeffs_of_close_proximity (ωs : Fin n ↪ F) (δ : ℚ) (u₀ u₁ : Fin n → F)
   : Finset F := Set.toFinset { z | ∃ v : ReedSolomon.code ωs (k + 1), δᵣ(u₀ + z • u₁, v) ≤ δ}
 
 open Polynomial
 
 omit [DecidableEq (RatFunc F)] in
-/-- There exists a `δ`-close polynomial `P_z` for each `z`
+/-- There exists a `δ`-close polynomial `P_z` for each `z` 
     from the set `S`.
 -/
-lemma exists_Pz_of_the_S
+lemma exists_Pz_of_coeffs_of_close_proximity
   {k : ℕ}
   {z : F}
-  (hS : z ∈ the_S (k := k) ωs δ u₀ u₁)
+  (hS : z ∈ coeffs_of_close_proximity (k := k) ωs δ u₀ u₁)
   :
   ∃ Pz : F[X], Pz.natDegree ≤ k ∧ δᵣ(u₀ + z • u₁, Pz.eval ∘ ωs) ≤ δ := by
-    unfold the_S at hS
+    unfold coeffs_of_close_proximity at hS
     obtain ⟨w, hS, dist⟩ : ∃ a ∈ ReedSolomon.code ωs (k + 1), ↑δᵣ(u₀ + z • u₁, a) ≤ δ := by
       simpa using hS
     obtain ⟨p, hS⟩ : ∃ y ∈ degreeLT F (k + 1), (ReedSolomon.evalOnPoints ωs) y = w := by
@@ -353,47 +397,47 @@ lemma exists_Pz_of_the_S
       by convert dist; rw [←hS.2]; rfl
     ⟩⟩
 
-/-- The `δ`-close polynomial `Pz` for each `z`
-    from the set `S`.
+/-- The `δ`-close polynomial `Pz` for each `z` 
+    from the set `S` (`coeffs_of_close_proximity`).
 -/
 noncomputable def Pz
   {k : ℕ}
   {z : F}
-  (hS : z ∈ the_S k ωs δ u₀ u₁)
+  (hS : z ∈ coeffs_of_close_proximity k ωs δ u₀ u₁)
   :
   F[X]
-  := (exists_Pz_of_the_S (n := n) (k := k) hS).choose
+  := (exists_Pz_of_coeffs_of_close_proximity (n := n) (k := k) hS).choose
 
 /-- Proposition 5.5 from the proximity gap paper.
     There exists a subset `S'` of the set `S` and
     a bivariate polynomial `P(X, Z)` that matches
-    `Pz` on that set.
+    `Pz` on that set. 
 -/
-lemma lemma_5_5
+lemma exists_a_set_and_a_matching_polynomial
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  ∃ S', ∃ (h_sub : S' ⊆ the_S k ωs δ u₀ u₁), ∃ P : F[Z][X],
-    #S' > #(the_S k ωs δ u₀ u₁) / (2 * D_Y Q) ∧
+  ∃ S', ∃ (h_sub : S' ⊆ coeffs_of_close_proximity k ωs δ u₀ u₁), ∃ P : F[Z][X],
+    #S' > #(coeffs_of_close_proximity k ωs δ u₀ u₁) / (2 * D_Y Q) ∧
     ∀ z : S', Pz (h_sub z.2) = P.map (Polynomial.evalRingHom z.1) ∧
     P.natDegree ≤ k ∧
     Bivariate.degreeX P ≤ 1 := by sorry
 
 /-- The subset `S'` extracted from the proprosition 5.5.
 -/
-noncomputable def the_S'
+noncomputable def matching_set
   (ωs : Fin n ↪ F)
   (δ : ℚ)
   (u₀ u₁ : Fin n → F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : Finset F := (lemma_5_5 k h_gs (δ := δ)).choose
+  : Finset F := (exists_a_set_and_a_matching_polynomial k h_gs (δ := δ)).choose
 
 /-- `S'` is indeed a subset of `S` -/
-lemma the_S'_subset_the_S
+lemma matching_set_is_a_sub_of_coeffs_of_close_proximity
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : the_S' k ωs δ u₀ u₁ h_gs ⊆ the_S k ωs δ u₀ u₁ := by sorry
+  : matching_set k ωs δ u₀ u₁ h_gs ⊆ coeffs_of_close_proximity k ωs δ u₀ u₁ := by sorry
 
 /-- The equation 5.12 from the proximity gap paper. -/
-lemma eq_5_12
+lemma irreducible_factorization_of_gs_solution
   {k : ℕ}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁) :
   ∃ (C : F[Z][X]) (R : List F[Z][X][Y]) (f : List ℕ) (e : List ℕ),
@@ -408,27 +452,27 @@ lemma eq_5_12
   := sorry
 
 /-- Claim 5.6 of the proximity gap paper. -/
-lemma lemma_5_6
+lemma discr_of_irred_components_nonzero
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : ∃ x₀,
-      ∀ R ∈ (eq_5_12 h_gs).choose_spec.choose,
+      ∀ R ∈ (irreducible_factorization_of_gs_solution h_gs).choose_spec.choose,
       Bivariate.evalX x₀ (Bivariate.discr_y R) ≠ 0 := by sorry
 
 open Trivariate in
 open Bivariate in
 /-- Claim 5.7 of the proximity gap paper. -/
-lemma lemma_5_7
+lemma exists_factors_with_large_common_root_set
   (δ : ℚ) (x₀ : F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  ∃ R H, R ∈ (eq_5_12 h_gs).choose_spec.choose ∧
+  ∃ R H, R ∈ (irreducible_factorization_of_gs_solution h_gs).choose_spec.choose ∧
     Irreducible H ∧ H ∣ (Bivariate.evalX (Polynomial.C x₀) R) ∧
-    #(@Set.toFinset _ { z : the_S (F := F) k ωs δ u₀ u₁ |
+    #(@Set.toFinset _ { z : coeffs_of_close_proximity (F := F) k ωs δ u₀ u₁ |
         letI Pz := Pz z.2
         (Trivariate.eval_on_Z R z.1).eval Pz = 0 ∧
         (Bivariate.evalX z.1 H).eval (Pz.eval x₀) = 0} sorry)
-    ≥ #(the_S k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q)
-    ∧ #(the_S k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q) >
+    ≥ #(coeffs_of_close_proximity k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q)
+    ∧ #(coeffs_of_close_proximity k ωs δ u₀ u₁) / (Bivariate.natDegreeY Q) >
       2 * D_Y Q ^ 2 * (D_X ((k + 1 : ℚ) / n) n m) * D_YZ Q := by sorry
 
 /-- Claim 5.7 establishes existens of a polynomial `R`.
@@ -437,7 +481,7 @@ lemma lemma_5_7
 noncomputable def R
   (δ : ℚ) (x₀ : F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : F[Z][X][Y] := (lemma_5_7 k δ x₀ h_gs).choose
+  : F[Z][X][Y] := (exists_factors_with_large_common_root_set k δ x₀ h_gs).choose
 
 /-- Claim 5.7 establishes existens of a polynomial `H`.
     This is the extraction of this polynomial.
@@ -445,77 +489,78 @@ noncomputable def R
 noncomputable def H
   (δ : ℚ) (x₀ : F)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
-  : F[Z][X] := (lemma_5_7 k δ x₀ h_gs).choose_spec.choose
+  : F[Z][X] := (exists_factors_with_large_common_root_set k δ x₀ h_gs).choose_spec.choose
 
 /-- An important property of the polynomial
-    `H` extracted from claim 5.7 is that it is
+    `H` extracted from claim 5.7 is that it is 
     irreducible.
 -/
 lemma irreducible_H
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   Irreducible (H k δ x₀ h_gs) := by
-  have h := Classical.choose_spec <| Classical.choose_spec (lemma_5_7 (δ := δ) (x₀ := x₀) k h_gs)
+  have h := Classical.choose_spec <| Classical.choose_spec 
+    (exists_factors_with_large_common_root_set (δ := δ) (x₀ := x₀) k h_gs)
   simp [H]
   rcases h with ⟨_, h, _⟩
   sorry
 
 open AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
-    States that the approximate solution is
+    States that the approximate solution is 
     actually a solution.
     This version of the claim is stated in terms
     of coefficients.
 -/
-lemma Claim_5_8
+lemma approximate_solution_is_exact_solution_coeffs
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : ∀ t ≥ k,
-  α'
-    (R k δ x₀ h_gs)
-    x₀
-    (irreducible_H k h_gs)
-    t
-  =
+  α' 
+    x₀ 
+    (R k δ x₀ h_gs) 
+    (irreducible_H k h_gs) 
+    t 
+  = 
   (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
   := by sorry
 
 open AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
-    States that the approximate solution is
+    States that the approximate solution is 
     actually a solution.
     This version is in terms of polynomials.
 -/
-lemma Claim_5_8'
+lemma approximate_solution_is_exact_solution_coeffs'
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-    γ' (R k δ x₀ h_gs) x₀ (irreducible_H k h_gs) =
+    γ' x₀ (R k δ x₀ h_gs) (irreducible_H k h_gs) =
         PowerSeries.mk (fun t =>
           if t ≥ k
           then (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
           else PowerSeries.coeff _ t
-            (γ'
-              (R k (x₀ := x₀) (δ := δ) h_gs)
+            (γ' 
               x₀
+              (R k (x₀ := x₀) (δ := δ) h_gs)
               (irreducible_H k h_gs))) := by
    sorry
 
 open AppendixA.ClaimA2 in
 /-- Claim 5.9 from the proximity gap paper.
-    States that the solution `γ` is linear in
+    States that the solution `γ` is linear in 
     the variable `Z`.
 -/
-lemma Claim_5_9
+lemma solution_gamma_is_linear_in_Z
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   ∃ (v₀ v₁ : F[X]),
-    γ' (R k δ x₀ h_gs) x₀ (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
+    γ' x₀ (R k δ x₀ h_gs) (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
         AppendixA.polyToPowerSeries𝕃 _
           (
             (Polynomial.map Polynomial.C v₀) +
             (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
           ) := by sorry
 
-/-- The linear represenation of the solution `γ`
+/-- The linear represenation of the solution `γ` 
     extracted from the claim 5.9.
 -/
 noncomputable def P
@@ -523,8 +568,9 @@ noncomputable def P
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   F[Z][X] :=
-  let v₀ := Classical.choose (Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
-  let v₁ := Classical.choose (Classical.choose_spec <| Claim_5_9 k (δ := δ) (x₀ := x₀) h_gs)
+  let v₀ := Classical.choose (solution_gamma_is_linear_in_Z k (δ := δ) (x₀ := x₀) h_gs)
+  let v₁ := Classical.choose 
+    (Classical.choose_spec <| solution_gamma_is_linear_in_Z k (δ := δ) (x₀ := x₀) h_gs)
   (
     (Polynomial.map Polynomial.C v₀) +
     (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
@@ -536,32 +582,33 @@ open AppendixA.ClaimA2 in
 lemma gamma_eq_P
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
-  γ' (R k δ x₀ h_gs) x₀ (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
-  AppendixA.polyToPowerSeries𝕃 _
+  γ' x₀ (R k δ x₀ h_gs) (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
+  AppendixA.polyToPowerSeries𝕃 _ 
     (P k δ x₀ h_gs) := by sorry
 
 /-- The set `S'_x` from the proximity gap paper (just before claim 5.10).
     The set of all `z∈S'` such that `w(x,z)` matches `P_z(x)`.
 -/
-noncomputable def the_S'x
+noncomputable def matching_set_at_x
   (δ : ℚ)
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   (x : Fin n)
-  : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ the_S' k ωs δ u₀ u₁ h_gs,
-    u₀ x + z * u₁ x = (Pz (the_S'_subset_the_S k h_gs h)).eval (ωs x)} sorry
+  : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ matching_set k ωs δ u₀ u₁ h_gs,
+    u₀ x + z * u₁ x = 
+      (Pz (matching_set_is_a_sub_of_coeffs_of_close_proximity k h_gs h)).eval (ωs x)} sorry
 
 /-- Claim 5.10 of the proximity gap paper.
     Needed to prove the claim 5.9.
     This claim states that `γ(x)=w(x,Z)` if
     the cardinality |S'_x| is big enough.
 -/
-lemma claim_5_10
+lemma solution_gamma_matches_word_if_subset_large
   {ωs : Fin n ↪ F}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   {x : Fin n}
   {D : ℕ}
   (hD : D ≥ Bivariate.totalDegree (H k δ x₀ h_gs))
-  (hx : (the_S'x k δ h_gs x).card >
+  (hx : (matching_set_at_x k δ h_gs x).card >
     (2 * k + 1)
       * (Bivariate.natDegreeY <| H k δ x₀ h_gs)
       * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
@@ -571,11 +618,11 @@ lemma claim_5_10
   := by sorry
 
 /-- Claim 5.11 from the proximity gap paper.
-    There exists a set of points `{x₀,...,x_{k+1}}`
+    There exists a set of points `{x₀,...,x_{k+1}}` 
     such that the sets S_{x_j} satisfy the condition
     in the claim 5.10.
 -/
-lemma claim_5_11
+lemma exists_points_with_large_matching_subset
   {ωs : Fin n ↪ F}
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   {x : Fin n}
@@ -585,7 +632,7 @@ lemma claim_5_11
   ∃ Dtop : Finset (Fin n),
     Dtop.card = k + 1 ∧
     ∀ x ∈ Dtop,
-      (the_S'x k δ h_gs x).card >
+      (matching_set_at_x k δ h_gs x).card >
         (2 * k + 1)
         * (Bivariate.natDegreeY <| H k δ x₀ h_gs)
         * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
@@ -593,7 +640,6 @@ lemma claim_5_11
 
 end ProximityGapSection5
 end
-
 
 section ProximityGapSection6
 variable {F : Type} [Field F] [Fintype F] [DecidableEq F] [DecidableEq (RatFunc F)]
