@@ -645,13 +645,29 @@ section ProximityGapSection6
 variable {F : Type} [Field F] [Fintype F] [DecidableEq F] [DecidableEq (RatFunc F)]
 variable {n k m : ℕ} [NeZero n]
 
+/-- An affine curve parameterized by the field
+    and whose defining vectors are the vectors
+    `u 0, ..., u (n - 1)`.
+-/
 def curve {l : ℕ} (u : Fin l → Fin n → F) (z : F) : Fin n → F :=
     ∑ i, z ^ i.1 • u i
 
+/-- The parameters for which the curve points are
+    `δ`-close to a set `V` (typically, a linear code).
+    The set `S` from the proximity gap paper.
+-/
 def coeffs_of_close_proximity_curve {l : ℕ}
   (δ : ℚ) (u : Fin l → Fin n → F) (V : Finset (Fin n → F)) : Finset F :=
   @Set.toFinset _ { z | δᵣ(curve u z, V) ≤ δ} sorry
 
+/-- If the set of points `δ`-close to the code `V` has
+    at least `n * l + 1` points then 
+    there exists a curve defined by vectors `v` from `V`
+    such that the points of `curve u` and `curve v`
+    are `δ`-close with the same parameters.
+    Moreover, `u` and `v` differ at at most `δ * n`
+    positions.
+-/
 theorem large_agreement_set_on_curve_implies_correlated_agreement {l : ℕ}
   {rho : ℚ}
   {δ : ℚ}
@@ -666,9 +682,18 @@ theorem large_agreement_set_on_curve_implies_correlated_agreement {l : ℕ}
     ({ x : Fin n | Finset.image u ≠ Finset.image v } : Finset _).card ≤ δ * n := by
   sorry
 
+/-- The distance bound from the proximity gap paper.
+-/
 noncomputable def δ₀ (rho : ℚ) (m : ℕ) : ℝ :=
   1 - Real.sqrt rho - Real.sqrt rho / (2 * m)
 
+/-- If the set of points on the curve defined by `u`
+    close to `V` has at least
+    `((1 + 1 / (2 * m)) ^ 7 * m ^ 7) / (3 * (Real.rpow rho (3 / 2 : ℚ)))
+    * n ^ 2 * l + 1` points then 
+    there exist vectors `v` from `V` that
+    `(1 - δ) * n` close to vectors `u`.
+-/
 theorem large_agreement_set_on_curve_implies_correlated_agreement' {l : ℕ}
   [Finite F]
   {m : ℕ}
@@ -695,9 +720,12 @@ variable {l : ℕ} [NeZero l]
          {ι : Type} [Fintype ι] [Nonempty ι]
          {F : Type} [Field F] [Fintype F] [DecidableEq F]
 
+
 open scoped Pointwise in
 open scoped ProbabilityTheory in
 open Uniform in
+/-- Lemma 6.3 from the proximity gap paper.
+-/
 theorem average_proximity_implies_proximity_of_linear_subspace [DecidableEq ι] [DecidableEq F]
   {u : Fin (l + 2) → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
   (hδ : δ ∈ Set.Ioo 0 (1 - (ReedSolomonCode.sqrtRate (k + 1) domain))) :
