@@ -46,17 +46,19 @@ def JohnsonConditionStrong (B : Finset (Fin n → F)) (v : Fin n → F) : Prop :
 
 /-- The function used for `q`-ary Johnson Bound.
 -/
-noncomputable def J (q δ : ℝ) : ℝ :=
+noncomputable def J (q δ : ℚ) : ℝ :=
   let frac := q / (q - 1)
   (1 / frac) * (1 - Real.sqrt (1 - frac * δ))
 
+/-- A lemma for proving sqrt_le_J
+-/
 lemma division_by_conjugate {a b : ℝ} (hpos : 0 ≤ b) (hnonzero : a + b.sqrt ≠ 0) :
   a - (b).sqrt = (a^2 - b)/(a + b.sqrt) := by
   rw[eq_div_iff hnonzero]
   ring_nf
   simp_all
 
-lemma sqrt_le_J {q δ : ℝ} (hq : q > 1) (hx0 : 0 ≤ δ) (hx1 : δ ≤ 1) (hqx : q / (q - 1) * δ ≤ 1) :
+lemma sqrt_le_J {q δ : ℚ} (hq : q > 1) (hx0 : 0 ≤ δ) (hx1 : δ ≤ 1) (hqx : q / (q - 1) * δ ≤ 1) :
   1 - ((1-δ) : ℝ).sqrt ≤ J q δ := by
   unfold J
   set frac := q / (q - 1) with hfrac
@@ -64,14 +66,17 @@ lemma sqrt_le_J {q δ : ℝ} (hq : q > 1) (hx0 : 0 ≤ δ) (hx1 : δ ≤ 1) (hqx
   have hx' : 1 - δ ≥ 0 := by linarith
   have hfracx' : 1 - frac * δ ≥ 0 := by nlinarith
   suffices 1 - √(1 - δ) ≤ (1 / frac) * (1 - √(1 - frac * δ)) by simpa
-  rw [division_by_conjugate hx' (by positivity), division_by_conjugate hfracx' (by positivity)]
+  rw[
+    division_by_conjugate (by exact_mod_cast hx') (by positivity),
+    division_by_conjugate (by exact_mod_cast hfracx') (by positivity)]
   have : δ = 1 - (1 - δ) := by ring
   have : frac * δ = 1 - (1 - frac * δ) := by ring
   field_simp
+  norm_cast
   gcongr
-  nlinarith
-
-
+  have : 1 * δ  ≤ frac * δ  := by exact mul_le_mul_of_nonneg_right hfrac_ge hx0
+  simp at this
+  exact this
 
 /-- The `q`-ary Johnson bound.
 -/
@@ -83,8 +88,7 @@ def JohnsonConditionWeak (B : Finset (Fin n → F)) (e : ℕ) : Prop :=
 lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin n → F} {e : ℕ}
   (h : JohnsonConditionWeak B e)
   :
-  JohnsonConditionStrong (B ∩ ({ x | Δ₀(x, v) ≤ e } : Finset _)) v := by
-  sorry
+  JohnsonConditionStrong (B ∩ ({ x | Δ₀(x, v) ≤ e } : Finset _)) v := by sorry
 
 private lemma johnson_condition_strong_implies_n_pos
   (h_johnson : JohnsonConditionStrong B v)
