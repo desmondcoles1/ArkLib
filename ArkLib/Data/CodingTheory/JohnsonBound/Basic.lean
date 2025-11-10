@@ -88,7 +88,68 @@ def JohnsonConditionWeak (B : Finset (Fin n → F)) (e : ℕ) : Prop :=
 lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin n → F} {e : ℕ}
   (h : JohnsonConditionWeak B e)
   :
-  JohnsonConditionStrong (B ∩ ({ x | Δ₀(x, v) ≤ e } : Finset _)) v := by sorry
+  JohnsonConditionStrong (B ∩ ({ x | Δ₀(x, v) ≤ e } : Finset _)) v := by
+  unfold JohnsonConditionStrong
+  intro e_1 d q frac
+  have h_nonempty : (0 : ℚ) < ((B ∩ ({x | Δ₀(x, v) ≤ e} : Finset _)).card : ℚ)  := by sorry --some of these need to be hypotheses
+  have sqrt_pos :  (0 : ℝ)  ≤ 1 - frac * d / ↑n := by sorry
+  have rhs_pos :  (0 : ℝ)  ≤ 1- frac * e_1 / ↑n  := by sorry
+  have pos : frac > 0 := by sorry
+  suffices h : (1 - frac * d / ↑n : ℝ) < (1 - frac * e_1 / ↑n) ^ 2 by exact_mod_cast h
+  have h_err : e_1 ≤ e := by
+    unfold e_1
+    dsimp[JohnsonBound.e]
+    have : ∀ x ∈ B ∩ ({x | Δ₀(x, v) ≤ e} : Finset _), Δ₀(v, x) ≤ e := by
+      unfold hammingDist
+      simp
+      (simp_rw [eq_comm] ; grind)
+    have sum_bound :=
+      Finset.sum_le_card_nsmul (B ∩ ({x | Δ₀(x, v) ≤ e} : Finset _)) (fun x => Δ₀(v, x)) e this
+    simp
+    rw[inv_mul_le_iff₀ h_nonempty]
+    exact_mod_cast sum_bound
+  suffices roots : √(1 - frac * d / ↑n) < 1- frac * e_1 / ↑n by
+    rw[←Real.sqrt_lt sqrt_pos rhs_pos]
+    exact_mod_cast roots
+  suffices rearrange : e_1 / n < 1/frac * (1-√(1 - frac * d / n)) by
+    have : frac * e_1 / ↑n < 1-√(1 - frac * d / ↑n) := by
+      calc ↑frac * ↑e_1 / ↑n
+          = ↑frac * (↑e_1 / ↑n) := by ring
+        _ < ↑frac * (1/↑frac * (1-√(1 - ↑frac * ↑d / ↑n))) := by
+            exact (mul_lt_mul_left (by exact_mod_cast pos)).mpr rearrange
+        _ = 1-√(1 - ↑frac * ↑d / ↑n) := by field_simp
+    calc √(1 - ↑frac * ↑d / ↑n)
+        = 1 - (1 - √(1 - ↑frac * ↑d / ↑n)) := by ring
+      _ < 1 - ↑frac * ↑e_1 / ↑n := by linarith [h]
+  have h_errn : (↑e_1 / ↑n : ℝ) ≤ (↑e / ↑n : ℝ)   := by
+    gcongr
+    exact_mod_cast h_err
+  have jboundw : (↑e / ↑n : ℝ) < (1/↑frac * (1-√(1 - ↑frac * ↑d / ↑n)))  := by
+    have := h
+    unfold JohnsonConditionWeak J at this
+    simp_all
+    let d_weak := sInf {d | ∃ u ∈ B, ∃ v ∈ B, ¬u=v ∧ Δ₀(u,v)=d}
+    have d_subset : ↑d_weak ≤ (d : ℚ)  := by
+        unfold d
+        unfold JohnsonBound.d
+        unfold d_weak
+    have bound: (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d_weak / ↑n))
+      ≤ (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d / ↑n)) := by sorry
+    have this' : ↑e / ↑n < 1 / (↑frac) * (1 - √(1 - frac * (d_weak / ↑n))) := by
+      unfold frac
+      unfold q
+      unfold d_weak
+      push_cast
+      rw [one_div_div]
+      exact this
+    field_simp
+    field_simp at this'
+    field_simp at bound
+    linarith
+  linarith [h_errn, jboundw]
+
+
+
 
 private lemma johnson_condition_strong_implies_n_pos
   (h_johnson : JohnsonConditionStrong B v)
