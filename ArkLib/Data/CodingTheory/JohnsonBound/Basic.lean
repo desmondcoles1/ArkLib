@@ -91,9 +91,6 @@ lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin 
   JohnsonConditionStrong (B ∩ ({ x | Δ₀(x, v) ≤ e } : Finset _)) v := by
   sorry
 
-
-
-
 private lemma johnson_condition_strong_implies_n_pos
   (h_johnson : JohnsonConditionStrong B v)
   :
