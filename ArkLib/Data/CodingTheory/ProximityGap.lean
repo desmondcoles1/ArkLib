@@ -656,9 +656,10 @@ def curve {l : ℕ} (u : Fin l → Fin n → F) (z : F) : Fin n → F :=
     `δ`-close to a set `V` (typically, a linear code).
     The set `S` from the proximity gap paper.
 -/
-def coeffs_of_close_proximity_curve {l : ℕ}
+noncomputable def coeffs_of_close_proximity_curve {l : ℕ}
   (δ : ℚ) (u : Fin l → Fin n → F) (V : Finset (Fin n → F)) : Finset F :=
-  @Set.toFinset _ { z | δᵣ(curve u z, V) ≤ δ} sorry
+  have : Fintype { z | δᵣ(curve u z, V) ≤ δ} := by infer_instance
+  @Set.toFinset _ { z | δᵣ(curve u z, V) ≤ δ} this
 
 /-- If the set of points `δ`-close to the code `V` has
     at least `n * l + 1` points then
