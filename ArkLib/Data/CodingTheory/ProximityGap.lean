@@ -299,7 +299,7 @@ section
 open Polynomial
 open Polynomial.Bivariate
 
-/-- Following the Proximity Gap paper this the Y-degree of 
+/-- Following the Proximity Gap paper this the Y-degree of
     a trivariate polynomial `Q`.
 -/
 def D_Y (Q : F[Z][X][Y]) : ℕ := Bivariate.natDegreeY Q
@@ -352,7 +352,7 @@ structure ModifiedGuruswami
     D_YZ Q ≤ n * (m + 1/(2 : ℚ))^3 / (6 * Real.sqrt ((k + 1) / n))
 
 /-- The claim 5.4 from the proximity gap paper.
-    It essentially claims that there exists 
+    It essentially claims that there exists
     a soultion to the Guruswami-Sudan constraints above.
 -/
 lemma modified_guruswami_has_a_solution
@@ -376,7 +376,7 @@ noncomputable def coeffs_of_close_proximity (ωs : Fin n ↪ F) (δ : ℚ) (u₀
 open Polynomial
 
 omit [DecidableEq (RatFunc F)] in
-/-- There exists a `δ`-close polynomial `P_z` for each `z` 
+/-- There exists a `δ`-close polynomial `P_z` for each `z`
     from the set `S`.
 -/
 lemma exists_Pz_of_coeffs_of_close_proximity
@@ -397,7 +397,7 @@ lemma exists_Pz_of_coeffs_of_close_proximity
       by convert dist; rw [←hS.2]; rfl
     ⟩⟩
 
-/-- The `δ`-close polynomial `Pz` for each `z` 
+/-- The `δ`-close polynomial `Pz` for each `z`
     from the set `S` (`coeffs_of_close_proximity`).
 -/
 noncomputable def Pz
@@ -411,7 +411,7 @@ noncomputable def Pz
 /-- Proposition 5.5 from the proximity gap paper.
     There exists a subset `S'` of the set `S` and
     a bivariate polynomial `P(X, Z)` that matches
-    `Pz` on that set. 
+    `Pz` on that set.
 -/
 lemma exists_a_set_and_a_matching_polynomial
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
@@ -492,14 +492,14 @@ noncomputable def H
   : F[Z][X] := (exists_factors_with_large_common_root_set k δ x₀ h_gs).choose_spec.choose
 
 /-- An important property of the polynomial
-    `H` extracted from claim 5.7 is that it is 
+    `H` extracted from claim 5.7 is that it is
     irreducible.
 -/
 lemma irreducible_H
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   Irreducible (H k δ x₀ h_gs) := by
-  have h := Classical.choose_spec <| Classical.choose_spec 
+  have h := Classical.choose_spec <| Classical.choose_spec
     (exists_factors_with_large_common_root_set (δ := δ) (x₀ := x₀) k h_gs)
   simp [H]
   rcases h with ⟨_, h, _⟩
@@ -507,7 +507,7 @@ lemma irreducible_H
 
 open AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
-    States that the approximate solution is 
+    States that the approximate solution is
     actually a solution.
     This version of the claim is stated in terms
     of coefficients.
@@ -515,18 +515,18 @@ open AppendixA.ClaimA2 in
 lemma approximate_solution_is_exact_solution_coeffs
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   : ∀ t ≥ k,
-  α' 
-    x₀ 
-    (R k δ x₀ h_gs) 
-    (irreducible_H k h_gs) 
-    t 
-  = 
+  α'
+    x₀
+    (R k δ x₀ h_gs)
+    (irreducible_H k h_gs)
+    t
+  =
   (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
   := by sorry
 
 open AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
-    States that the approximate solution is 
+    States that the approximate solution is
     actually a solution.
     This version is in terms of polynomials.
 -/
@@ -538,7 +538,7 @@ lemma approximate_solution_is_exact_solution_coeffs'
           if t ≥ k
           then (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
           else PowerSeries.coeff _ t
-            (γ' 
+            (γ'
               x₀
               (R k (x₀ := x₀) (δ := δ) h_gs)
               (irreducible_H k h_gs))) := by
@@ -546,7 +546,7 @@ lemma approximate_solution_is_exact_solution_coeffs'
 
 open AppendixA.ClaimA2 in
 /-- Claim 5.9 from the proximity gap paper.
-    States that the solution `γ` is linear in 
+    States that the solution `γ` is linear in
     the variable `Z`.
 -/
 lemma solution_gamma_is_linear_in_Z
@@ -560,7 +560,7 @@ lemma solution_gamma_is_linear_in_Z
             (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
           ) := by sorry
 
-/-- The linear represenation of the solution `γ` 
+/-- The linear represenation of the solution `γ`
     extracted from the claim 5.9.
 -/
 noncomputable def P
@@ -569,7 +569,7 @@ noncomputable def P
   :
   F[Z][X] :=
   let v₀ := Classical.choose (solution_gamma_is_linear_in_Z k (δ := δ) (x₀ := x₀) h_gs)
-  let v₁ := Classical.choose 
+  let v₁ := Classical.choose
     (Classical.choose_spec <| solution_gamma_is_linear_in_Z k (δ := δ) (x₀ := x₀) h_gs)
   (
     (Polynomial.map Polynomial.C v₀) +
@@ -583,7 +583,7 @@ lemma gamma_eq_P
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   γ' x₀ (R k δ x₀ h_gs) (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
-  AppendixA.polyToPowerSeries𝕃 _ 
+  AppendixA.polyToPowerSeries𝕃 _
     (P k δ x₀ h_gs) := by sorry
 
 /-- The set `S'_x` from the proximity gap paper (just before claim 5.10).
@@ -594,7 +594,7 @@ noncomputable def matching_set_at_x
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   (x : Fin n)
   : Finset F := @Set.toFinset _ {z : F | ∃ h : z ∈ matching_set k ωs δ u₀ u₁ h_gs,
-    u₀ x + z * u₁ x = 
+    u₀ x + z * u₁ x =
       (Pz (matching_set_is_a_sub_of_coeffs_of_close_proximity k h_gs h)).eval (ωs x)} sorry
 
 /-- Claim 5.10 of the proximity gap paper.
@@ -618,7 +618,7 @@ lemma solution_gamma_matches_word_if_subset_large
   := by sorry
 
 /-- Claim 5.11 from the proximity gap paper.
-    There exists a set of points `{x₀,...,x_{k+1}}` 
+    There exists a set of points `{x₀,...,x_{k+1}}`
     such that the sets S_{x_j} satisfy the condition
     in the claim 5.10.
 -/
@@ -661,7 +661,7 @@ def coeffs_of_close_proximity_curve {l : ℕ}
   @Set.toFinset _ { z | δᵣ(curve u z, V) ≤ δ} sorry
 
 /-- If the set of points `δ`-close to the code `V` has
-    at least `n * l + 1` points then 
+    at least `n * l + 1` points then
     there exists a curve defined by vectors `v` from `V`
     such that the points of `curve u` and `curve v`
     are `δ`-close with the same parameters.
@@ -690,7 +690,7 @@ noncomputable def δ₀ (rho : ℚ) (m : ℕ) : ℝ :=
 /-- If the set of points on the curve defined by `u`
     close to `V` has at least
     `((1 + 1 / (2 * m)) ^ 7 * m ^ 7) / (3 * (Real.rpow rho (3 / 2 : ℚ)))
-    * n ^ 2 * l + 1` points then 
+    * n ^ 2 * l + 1` points then
     there exist vectors `v` from `V` that
     `(1 - δ) * n` close to vectors `u`.
 -/
@@ -724,7 +724,14 @@ variable {l : ℕ} [NeZero l]
 open scoped Pointwise in
 open scoped ProbabilityTheory in
 open Uniform in
-/-- Lemma 6.3 from the proximity gap paper.
+/--
+Lemma 6.3 in [BCIKS20].
+
+Let `V` be a Reed–Solomon code of rate `ρ`, and let `U` be an affine subspace obtained by
+translating a linear subspace `U'`.  For a proximity parameter `δ` below the Johnson/Guruswami–Sudan
+list-decoding bound (`0 < δ < 1 - √ρ`), suppose that a random point `u` sampled uniformly from `U`
+is `δ`-close to `V` with probability strictly larger than the proximity-gap error bound `ε`.  Then
+every point of the underlying linear subspace `U'` is also `δ`-close to `V`.
 -/
 theorem average_proximity_implies_proximity_of_linear_subspace [DecidableEq ι] [DecidableEq F]
   {u : Fin (l + 2) → ι → F} {k : ℕ} {domain : ι ↪ F} {δ : ℝ≥0}
@@ -773,7 +780,7 @@ noncomputable def agree_set (u : ι → F) (V : Finset (ι → F)) [Nonempty V] 
 
 /-- Weighted size of a subdomain. -/
 noncomputable def mu_set (ι' : Finset ι) : ℝ :=
-  1/ι'.card * ∑ i ∈ ι', (μ i).1
+  1/(Fintype.card ι) * ∑ i ∈ ι', (μ i).1
 
 /-- `μ`-weighted correlated agreement. -/
 noncomputable def weightedCorrelatedAgreement
@@ -795,11 +802,11 @@ instance {domain : ι ↪ F} {deg : ℕ} : Nonempty (finCarrier domain deg) := b
 open ProbabilityTheory in
 /-- Weighted correlated agreement over curves.
     Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
-pair `(δ, ε)` and a curve generated by vectors `u`, such that the probability that a random 
+pair `(δ, ε)` and a curve generated by vectors `u`, such that the probability that a random
 point on the curve is `δ`-close to Reed-Solomon code is at most `ε`.
 Then, the words `u` have weighted correlated agreement.
 -/
-theorem weighted_correlated_agreement_for_parameterized_curves 
+theorem weighted_correlated_agreement_for_parameterized_curves
   [DecidableEq ι] [Fintype ι] [DecidableEq F] [Fintype F]
   {l : ℕ}
   {k : ℕ} {u : Fin (l + 2) → ι → F}
@@ -830,7 +837,7 @@ theorem weighted_correlated_agreement_for_parameterized_curves
 
 /-- Weighted correlated agreement over curves.
 Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
-pair `(δ, ε)` and a curve generated by vectors `u`, such that the probability that a random 
+pair `(δ, ε)` and a curve generated by vectors `u`, such that the probability that a random
 point on the curve is `δ`-close to Reed-Solomon code is at most `ε`.
 Then, the words `u` have weighted correlated agreement.
 
@@ -863,11 +870,11 @@ open scoped Pointwise in
 open ProbabilityTheory in
 /-- Weighted correlated agreement over affine spaces.
 Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
-pair `(δ, ε)` and an affine space generated by vectors `u`, such that the probability that a random 
+pair `(δ, ε)` and an affine space generated by vectors `u`, such that the probability that a random
 point from the space is `δ`-close to Reed-Solomon code is at most `ε`.
 Then, the words `u` have weighted correlated agreement.
 -/
-theorem weighted_correlated_agreement_over_affine_spaces 
+theorem weighted_correlated_agreement_over_affine_spaces
   [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
@@ -897,13 +904,13 @@ open scoped Pointwise in
 open Uniform in
 /-- Weighted correlated agreement over affine spaces.
 Take a Reed-Solomon code of length `ι` and degree `deg`, a proximity-error parameter
-pair `(δ, ε)` and an affine space generated by vectors `u`, such that the probability that a random 
+pair `(δ, ε)` and an affine space generated by vectors `u`, such that the probability that a random
 point from the space is `δ`-close to Reed-Solomon code is at most `ε`.
 Then, the words `u` have weighted correlated agreement.
 
 Version with different bounds.
 -/
-theorem weighted_correlated_agreement_over_affine_spaces' 
+theorem weighted_correlated_agreement_over_affine_spaces'
   [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
@@ -925,8 +932,27 @@ theorem weighted_correlated_agreement_over_affine_spaces'
     (∀ i, v i ∈ ReedSolomon.code domain deg) ∧
     mu_set μ {i : ι | ∀ j, u j i = v j i} ≥ α := by sorry
 
-/-- Lemma 7.5 from the proximity gap paper. -/
-lemma list_agreement_on_curve_implies_correlated_agreement_bound 
+/--
+Lemma 7.5 in [BCIKS20].
+
+This is the “list agreement on a curve implies correlated agreement” lemma.
+
+We are given two lists of functions `u, v : Fin (l + 2) → ι → F`, where each `v i` is a
+Reed–Solomon codeword of degree `deg` over the evaluation domain `domain`.  From these
+lists we form the bivariate “curves”
+
+* `w   x z = ∑ i, z^(i.1) * u i x`,
+* `wtilde x z = ∑ i, z^(i.1) * v i x`.
+
+Fix a finite set `S' ⊆ F` with `S'.card > l + 1`, and a (product) measure `μ` on the
+evaluation domain `ι`.  Assume that for every `z ∈ S'` the one-dimensional functions
+`w · z` and `wtilde · z` have agreement at least `α` with respect to `μ`.  Then the set
+of points `x` on which *all* coordinates agree, i.e. `u i x = v i x` for every `i`,
+has μ-measure strictly larger than
+
+`α - (l + 1) / (S'.card - (l + 1))`.
+-/
+lemma list_agreement_on_curve_implies_correlated_agreement_bound
   [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
   {μ : ι → Set.Icc (0 : ℚ) 1}
@@ -941,7 +967,30 @@ lemma list_agreement_on_curve_implies_correlated_agreement_bound
   mu_set μ {x : ι | ∀ i, u i x = v i x} >
   α - ((l + 1) : ℝ) / (S'.card - (l + 1)) := by sorry
 
-/-- Lemma 7.6 from the proximity gap paper. -/
+/--
+Lemma 7.6 in [BCIKS20].
+
+This is the “integral-weight” strengthening of the list-agreement-on-a-curve ⇒
+correlated-agreement bound.
+
+We have two lists of functions `u, v : Fin (l + 2) → ι → F`, where each `v i` is a
+Reed–Solomon codeword of degree `deg` over the evaluation domain `domain`.  From
+these lists we form the bivariate “curves”
+* `w x z     = ∑ i, z^(i.1) * u i x`,
+* `wtilde x z = ∑ i, z^(i.1) * v i x`.
+
+The domain `ι` is finite and is equipped with a weighted measure `μ`, where each
+weight `μ i` is a rational with common denominator `M`.  Let `S' ⊆ F` be a set of
+field points with
+* `S'.card > l + 1`, and
+* `S'.card ≥ (M * Fintype.card ι + 1) * (l + 1)`.
+
+Assume that for every `z ∈ S'` the µ-weighted agreement between `w · z` and
+`wtilde · z` is at least `α`.  Then the µ-measure of the set of points where *all*
+coordinates agree, i.e. where `u i x = v i x` for every `i`, is at least `α`:
+
+`mu_set μ {x | ∀ i, u i x = v i x} ≥ α`.
+-/
 lemma sufficiently_large_list_agreement_on_curve_implies_correlated_agreement
   [DecidableEq ι] [Fintype ι] [DecidableEq F] {k l : ℕ} {u : Fin (l + 2) → ι → F}
   {deg : ℕ} {domain : ι ↪ F}
