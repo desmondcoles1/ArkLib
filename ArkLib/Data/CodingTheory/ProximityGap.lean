@@ -237,7 +237,7 @@ noncomputable def toRatFuncPoly (p : F[Z][X][Y]) : (RatFunc F)[X][Y] :=
 end Trivariate
 end Trivariate
 
-section ProximityGapSection5
+section BCIKS20ProximityGapSection5
 variable {F : Type} [Field F] [DecidableEq F] [DecidableEq (RatFunc F)]
 variable {n : ℕ}
 
@@ -505,7 +505,7 @@ lemma irreducible_H
   rcases h with ⟨_, h, _⟩
   sorry
 
-open AppendixA.ClaimA2 in
+open BCIKS20AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
     States that the approximate solution is
     actually a solution.
@@ -521,10 +521,10 @@ lemma approximate_solution_is_exact_solution_coeffs
     (irreducible_H k h_gs)
     t
   =
-  (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
+  (0 : BCIKS20AppendixA.𝕃 (H k δ x₀ h_gs))
   := by sorry
 
-open AppendixA.ClaimA2 in
+open BCIKS20AppendixA.ClaimA2 in
 /-- The claim 5.8 from the proximity gap paper.
     States that the approximate solution is
     actually a solution.
@@ -536,7 +536,7 @@ lemma approximate_solution_is_exact_solution_coeffs'
     γ' x₀ (R k δ x₀ h_gs) (irreducible_H k h_gs) =
         PowerSeries.mk (fun t =>
           if t ≥ k
-          then (0 : AppendixA.𝕃 (H k δ x₀ h_gs))
+          then (0 : BCIKS20AppendixA.𝕃 (H k δ x₀ h_gs))
           else PowerSeries.coeff _ t
             (γ'
               x₀
@@ -544,7 +544,7 @@ lemma approximate_solution_is_exact_solution_coeffs'
               (irreducible_H k h_gs))) := by
    sorry
 
-open AppendixA.ClaimA2 in
+open BCIKS20AppendixA.ClaimA2 in
 /-- Claim 5.9 from the proximity gap paper.
     States that the solution `γ` is linear in
     the variable `Z`.
@@ -554,7 +554,7 @@ lemma solution_gamma_is_linear_in_Z
   :
   ∃ (v₀ v₁ : F[X]),
     γ' x₀ (R k δ x₀ h_gs) (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
-        AppendixA.polyToPowerSeries𝕃 _
+        BCIKS20AppendixA.polyToPowerSeries𝕃 _
           (
             (Polynomial.map Polynomial.C v₀) +
             (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
@@ -576,14 +576,14 @@ noncomputable def P
     (Polynomial.C Polynomial.X) * (Polynomial.map Polynomial.C v₁)
   )
 
-open AppendixA.ClaimA2 in
+open BCIKS20AppendixA.ClaimA2 in
 /-- The extracted `P` from claim 5.9 equals `γ`.
 -/
 lemma gamma_eq_P
   (h_gs : ModifiedGuruswami m n k ωs Q u₀ u₁)
   :
   γ' x₀ (R k δ x₀ h_gs) (irreducible_H k (x₀ := x₀) (δ := δ) h_gs) =
-  AppendixA.polyToPowerSeries𝕃 _
+  BCIKS20AppendixA.polyToPowerSeries𝕃 _
     (P k δ x₀ h_gs) := by sorry
 
 /-- The set `S'_x` from the proximity gap paper (just before claim 5.10).
@@ -638,10 +638,10 @@ lemma exists_points_with_large_matching_subset
         * (Bivariate.natDegreeY <| R k δ x₀ h_gs)
         * D := by sorry
 
-end ProximityGapSection5
+end BCIKS20ProximityGapSection5
 end
 
-section ProximityGapSection6
+section BCIKS20ProximityGapSection6
 variable {F : Type} [Field F] [Fintype F] [DecidableEq F] [DecidableEq (RatFunc F)]
 variable {n k m : ℕ} [NeZero n]
 
@@ -748,9 +748,9 @@ theorem average_proximity_implies_proximity_of_linear_subspace [DecidableEq ι] 
 
 end
 
-end ProximityGapSection6
+end BCIKS20ProximityGapSection6
 
-section ProximityGapSection7
+section BCIKS20ProximityGapSection7
 
 variable {F : Type} [Field F] [DecidableEq F] [DecidableEq (RatFunc F)]
 variable {n k m : ℕ}
@@ -1012,6 +1012,6 @@ end
 
 end WeightedAgreement
 
-end ProximityGapSection7
+end BCIKS20ProximityGapSection7
 
 end ProximityGap
