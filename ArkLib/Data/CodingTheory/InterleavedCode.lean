@@ -16,8 +16,12 @@ noncomputable section
   Definition of distances for interleaved codes and statement for the relation between the minimal
   distance of an interleaved code and its underlying linear code.
   Statements of proximity results for Reed Solomon codes (`Lemma 4.3`, `Lemma 4.4` and `Lemma 4.5`
-   from `[AHIV22]` : `Ligero: Lightweight Sublinear Arguments Without a Trusted Setup`
-   by `S. Ames, C. Hazay, Y. Ishai, M. Venkitasubramaniam`.
+   from [AHIV22]).
+
+## References
+
+* [Ames, S., Hazay, C., Ishai, Y., and Venkitasubramaniam, M., *Ligero: Lightweight sublinear
+    arguments without a trusted setup*][AHIV22]
 -/
 
 variable {F : Type*} [Semiring F]
@@ -57,7 +61,18 @@ def codeOfLinearCode (κ : Type*) [Fintype κ] (LC : LinearCode ι F) : Interlea
 /-- The module of matrices whose rows belong to a linear code is in fact an interleaved code.
 -/
 lemma isInterleaved_codeOfLinearCode : (codeOfLinearCode κ LC).isInterleaved := by
-  sorry
+  intro V hv
+  simp_all [codeOfLinearCode, matrixSubmoduleOfLinearCode]
+  induction hv using Submodule.span_induction <;> intro i
+  case mem M hm => exact hm i
+  case zero => exact Submodule.zero_mem LC
+  case add M N hm hn him hin =>
+    apply Submodule.add_mem
+    · exact him i
+    · exact hin i
+  case smul a M hm him =>
+    apply Submodule.smul_mem
+    ·  exact him i
 
 def lawfulInterleavedCodeOfLinearCode (κ : Type*) [Fintype κ] (LC : LinearCode ι F) :
   LawfulInterleavedCode κ ι F := ⟨codeOfLinearCode κ LC, isInterleaved_codeOfLinearCode⟩

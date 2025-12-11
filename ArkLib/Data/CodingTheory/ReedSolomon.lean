@@ -17,6 +17,11 @@ import Mathlib.RingTheory.Henselian
 
   TODO: define the Berkelamp-Welch algorithm for unique decoding, and Guruswami-Sudan algorithm for
   list-decoding.
+
+## References
+
+* [Arnon, G., Chiesa, A., Fenzi, G., and Yogev, E., *WHIR: Reed–Solomon Proximity Testing
+    with Super-Fast Verification*][ACFY24]
 -/
 
 namespace ReedSolomon
@@ -345,6 +350,15 @@ theorem minDist [Field F] [DecidableEq F] (inj : Function.Injective α) [NeZero 
     omega
 
 end
+
+noncomputable scoped instance {α : Type} (s : Set α) [inst : Finite s] : Fintype s
+  := Fintype.ofFinite _
+
+open NNReal Finset Function Finset in
+def finCarrier {ι : Type} [Fintype ι]
+               {F : Type} [Field F] [Fintype F]
+               (domain : ι ↪ F) (deg : ℕ) : Finset (ι → F) :=
+  (ReedSolomon.code domain deg).carrier.toFinset
 
 end ReedSolomonCode
 end
