@@ -94,7 +94,7 @@ lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin 
   have h_nonempty : (0 : ℚ) < ((B ∩ ({x | Δ₀(x, v) ≤ e} : Finset _)).card : ℚ)  := by sorry --some of these need to be hypotheses
   have sqrt_pos :  (0 : ℝ)  ≤ 1 - frac * d / ↑n := by sorry
   have rhs_pos :  (0 : ℝ)  ≤ 1- frac * e_1 / ↑n  := by sorry
-  have pos : frac > 0 := by sorry
+  have pos : frac > 0 := by sorry --through here is hyptoheses or things that are easy
   suffices h : (1 - frac * d / ↑n : ℝ) < (1 - frac * e_1 / ↑n) ^ 2 by exact_mod_cast h
   have h_err : e_1 ≤ e := by
     unfold e_1
@@ -129,12 +129,13 @@ lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin 
     unfold JohnsonConditionWeak J at this
     simp_all
     let d_weak := sInf {d | ∃ u ∈ B, ∃ v ∈ B, ¬u=v ∧ Δ₀(u,v)=d}
-    have d_subset : ↑d_weak ≤ (d : ℚ)  := by
+    have d_subset : ↑d_weak ≤ (d : ℚ)  := by  --I think this is the hard part, d isn't just any number
         unfold d
         unfold JohnsonBound.d
         unfold d_weak
+        sorry
     have bound: (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d_weak / ↑n))
-      ≤ (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d / ↑n)) := by sorry
+      ≤ (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d / ↑n)) := by sorry --this is monotonicity
     have this' : ↑e / ↑n < 1 / (↑frac) * (1 - √(1 - frac * (d_weak / ↑n))) := by
       unfold frac
       unfold q
