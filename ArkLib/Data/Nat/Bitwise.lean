@@ -19,6 +19,7 @@ import Mathlib.Data.Nat.Cast.Order.Field
 import Mathlib.Data.ENat.Defs
 import Mathlib.Data.ENat.Basic
 import Mathlib.Data.ENNReal.Inv
+import Mathlib.Data.Nat.GCD.Basic
 
 /-!
 # Bit operations on natural numbers
@@ -168,6 +169,28 @@ theorem two_mul_lt_iff_le_half_of_sub_one (a b : ℕ) (h_b_pos : b > 0) :
     · omega
     · have hb_pos : 0 < b := Nat.pos_of_ne_zero hb
       omega
+
+/-- **Reverse Divisibility of Powers:**
+If `q > 1` and `q^d - 1` divides `q^n - 1`, then `d` must divide `n`.
+(This corresponds to the fact that cyclic subgroups are unique). -/
+lemma dvd_of_pow_sub_one_dvd_pow_sub_one {q n d : ℕ} (hq : 1 < q)
+    (h_dvd : q ^ d - 1 ∣ q ^ n - 1) : d ∣ n := by
+  have h_gcd_id : (q ^ n - 1).gcd (q ^ d - 1) = q ^ (n.gcd d) - 1 := by
+    apply Nat.pow_sub_one_gcd_pow_sub_one
+  -- Since (q^d - 1) | (q^n - 1), the GCD is exactly (q^d - 1)
+  rw [Nat.gcd_eq_right h_dvd] at h_gcd_id
+  -- We now have q^d - 1 = q^(gcd n d) - 1. This implies q^d = q^(gcd n d)
+  have h_pow_eq : q ^ d = q ^ (n.gcd d) := by
+    have lhs_gt_0: q ^ d > 0 := by
+      refine Nat.pow_pos ?_; omega
+    have rhs_gt_0: q ^ (n.gcd d) > 0 := by
+      refine Nat.pow_pos ?_; omega
+    omega -- This use h_gcd_id
+  -- By injectivity of exponentiation (base q > 1), d = gcd(n, d)
+  have h_deg_eq : d = n.gcd d :=
+    (Nat.pow_right_inj hq).mp h_pow_eq
+  rw [h_deg_eq]
+  exact Nat.gcd_dvd_left n d
 
 /--
 Returns the `k`-th least significant bit of a natural number `n` as a natural number (in `{0, 1}`).
