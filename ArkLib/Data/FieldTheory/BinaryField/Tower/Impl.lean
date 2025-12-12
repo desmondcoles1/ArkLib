@@ -2316,6 +2316,8 @@ instance instCharP2 {k : ℕ} : CharP (ConcreteBTField k) 2 :=
 
 instance (k : ℕ) : Fintype (ConcreteBTField k) := (getBTFResult k).instFintype
 
+instance instFintype {k : ℕ} : Fintype (ConcreteBTField k) := (getBTFResult k).instFintype
+
 /-- adjoined root of poly k, generator of successor field BTField (k + 1) -/
 @[simp]
 def 𝕏 (k : ℕ) : ConcreteBTField (k + 1) := Z (k + 1)
@@ -3733,11 +3735,11 @@ noncomputable instance instAlgebraTowerEquiv : AlgebraTowerEquiv
   commutesLeft' := fun i j h r => by
     exact towerEquiv_commutes_left (i:=i) (j:=j) (h:=h) (r:=r)
 
-#check instAlgebraTowerEquiv.toAlgEquivOverLeft 7 100 (by omega)
-#check instAlgebraTowerEquiv.toAlgEquivOverRight 7 100 (by omega)
+-- #check instAlgebraTowerEquiv.toAlgEquivOverLeft 7 100 (by omega)
+-- #check instAlgebraTowerEquiv.toAlgEquivOverRight 7 100 (by omega)
 
 end TowerEquivalence
 
 end ConcreteBinaryTower
 
-#check ConcreteBinaryTower.instFieldConcrete
+-- #check ConcreteBinaryTower.instFieldConcrete
