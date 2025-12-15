@@ -54,6 +54,7 @@ import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.Impl
 import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.Prelude
 import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowGcdCertificate
 import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowModCertificate
+import ArkLib.Data.FieldTheory.BinaryField.Common
 import ArkLib.Data.FieldTheory.BinaryField.Tower.Basic
 import ArkLib.Data.FieldTheory.BinaryField.Tower.Impl
 import ArkLib.Data.FieldTheory.BinaryField.Tower.Prelude
