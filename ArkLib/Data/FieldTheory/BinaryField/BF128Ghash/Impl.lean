@@ -253,7 +253,7 @@ lemma reduce_clMul_correct (prod : B256) :
         Nat.reduceLT]
       · norm_num
     have h_term1_lt : term1.toNat < 2^135 := by
-      apply BitVec_lt_tw_pow_of_toPoly_degree_lt term1 h_term1_deg
+      apply BitVec_lt_two_pow_of_toPoly_degree_lt term1 h_term1_deg
     have h_acc_deg : (toPoly (term1 ^^^ to256 l)).degree < 135 := by
       rw [toPoly_xor]
       apply (Polynomial.degree_add_le _ _).trans_lt
@@ -271,7 +271,7 @@ lemma reduce_clMul_correct (prod : B256) :
           change (n : WithBot ℕ) < (128 : ℕ) at h_toPoly_l_deg_lt
           norm_cast at ⊢ h_toPoly_l_deg_lt
           apply Nat.lt_trans h_toPoly_l_deg_lt (by omega)
-    apply BitVec_lt_tw_pow_of_toPoly_degree_lt (term1 ^^^ to256 l) h_acc_deg
+    apply BitVec_lt_two_pow_of_toPoly_degree_lt (term1 ^^^ to256 l) h_acc_deg
   have h_h2_bound : (acc.extractLsb 255 128).toNat < 2^7 := by
     rw [BitVec.extractLsb_toNat]
     apply Nat.mod_lt_of_lt
@@ -333,7 +333,7 @@ lemma reduce_clMul_correct (prod : B256) :
       rw [Nat.mod_eq_of_lt (h := by omega)]
       symm
       apply Nat.mod_eq_of_lt (h := by
-        apply BitVec_lt_tw_pow_of_toPoly_degree_lt
+        apply BitVec_lt_two_pow_of_toPoly_degree_lt
         exact h_res_lt_128
       )
     conv_rhs => rw [h_res_eq]
