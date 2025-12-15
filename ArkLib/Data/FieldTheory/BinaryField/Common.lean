@@ -66,7 +66,7 @@ lemma ZMod2Poly.mul_three (a : Polynomial (ZMod 2)) : a * 3 = a := by
   simp only [three_eq_one, mul_one];
 
 @[simp]
-lemma ZMod2Poly.natCast_zmod2 (n : ℕ) : (n : Polynomial (ZMod 2)) = ((n % 2) : ℕ) := by
+lemma ZMod2Poly.natCast_ZMod2 (n : ℕ) : (n : Polynomial (ZMod 2)) = ((n % 2) : ℕ) := by
   have : CharP (Polynomial (ZMod 2)) 2 := inferInstance
   exact CharP.cast_eq_mod (Polynomial (ZMod 2)) 2 n
 

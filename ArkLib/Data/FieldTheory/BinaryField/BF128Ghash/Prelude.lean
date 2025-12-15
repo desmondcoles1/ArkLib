@@ -18,7 +18,7 @@ from AES-GCM: P(X) = X^128 + X^7 + X^2 + X + 1.
 - `ghashTail`: The tail polynomial X^7 + X^2 + X + 1
 
 ### Verification Functions
-- `check_square_step`: Verifies a modular squaring step
+- `checkSquareStep`: Verifies a modular squaring step
 - `verify_square_step_correct`: Correctness theorem for square step verification
 - `checkDivStep`: Verifies a division step
 - `verify_div_step`: Correctness theorem for division step verification
@@ -260,7 +260,7 @@ lemma X_ZMod2Poly_eq_X : X_ZMod2Poly = X := by
 
 -- The check function (Executes in Kernel)
 -- Returns true iff rPrev^2 == q * P + rNext
-def check_square_step (rPrev : B128) (q : B128) (rNext : B128) : Bool :=
+def checkSquareStep (rPrev : B128) (q : B128) (rNext : B128) : Bool :=
   let lhs := clSq rPrev
   let rhs := (clMul (to256 q) P_val) ^^^ (to256 rNext)
   lhs == rhs
@@ -268,10 +268,10 @@ def check_square_step (rPrev : B128) (q : B128) (rNext : B128) : Bool :=
 -- The Soundness Theorem
 -- This is what you apply in your 128 generated lemmas
 theorem verify_square_step_correct (rPrev q rNext : B128) :
-  check_square_step rPrev q rNext = true →
+  checkSquareStep rPrev q rNext = true →
   (toPoly rPrev)^2 = (toPoly (to256 q)) * (toPoly P_val) + (toPoly rNext) := by
   intro h
-  dsimp only [check_square_step] at h
+  dsimp only [checkSquareStep] at h
   rw [beq_iff_eq] at h
   -- h is now: clSq rPrev = (clMul (to256 q) P_val) ^^^ (to256 rNext)
   -- The huge loop is still "folded" inside clSq/clMul, so it's fast.
