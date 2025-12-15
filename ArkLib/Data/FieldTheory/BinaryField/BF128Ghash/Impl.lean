@@ -415,6 +415,8 @@ lemma zsmul_neg (n : ℕ) (x : ConcreteBF128Ghash) :
   simp
   rfl
 
+/-- In characteristic 2, `n • x = x` if `n` is odd, and `n • x = 0` if `n` is even.
+This is because `2 • x = x + x = 0` in any ring of characteristic 2. -/
 instance : AddCommGroup ConcreteBF128Ghash where
   add_assoc := add_assoc
   add_comm := add_comm
@@ -500,7 +502,7 @@ lemma toQuot_one : toQuot 1 = 1 := by
 lemma eq_of_toQuot_eq {a b : ConcreteBF128Ghash} (h : toQuot a = toQuot b) : a = b :=
   toQuot_injective h
 
-lemma toQout_ne_zero (a : ConcreteBF128Ghash) (h_a_ne_zero : a ≠ 0) : toQuot a ≠ 0 := by
+lemma toQuot_ne_zero (a : ConcreteBF128Ghash) (h_a_ne_zero : a ≠ 0) : toQuot a ≠ 0 := by
   by_contra h
   rw [← toQuot_zero] at h
   let h_a_eq_0 := eq_of_toQuot_eq (h := h)
@@ -819,7 +821,7 @@ lemma mul_inv_cancel (a : ConcreteBF128Ghash) (h : a ≠ 0) : a * a⁻¹ = 1 := 
   have h_exp_eq : 2 ^ 128 - 2 + 1 = 2 ^ 128 - 1 := by omega
   rw [h_exp_eq]
   have h_pow_pred_eq : toQuot a ^ (2 ^ 128 - 1) = (toQuot a)^(2^128) * (toQuot a)⁻¹ := by
-    rw [pow_sub₀ (a := toQuot a) (m := 2 ^ 128) (n := 1) (ha := toQout_ne_zero a h) (h := by omega)]
+    rw [pow_sub₀ (a := toQuot a) (m := 2 ^ 128) (n := 1) (ha := toQuot_ne_zero a h) (h := by omega)]
     rw [pow_one]
   rw [h_pow_pred_eq, toQuot_pow_card]
   have h_quot_ne_zero : toQuot a ≠ 0 := by
