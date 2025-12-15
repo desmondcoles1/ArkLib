@@ -34,7 +34,7 @@ open Polynomial AdjoinRoot BinaryField
 -- Re-export common definitions for convenience
 export BinaryField (B128 B256 to256 to256_toNat clMul clSq toPoly clMul_eq_fold
   toPoly_one_eq_one toPoly_zero_eq_zero toPoly_ne_zero_iff_ne_zero
-  toPoly_degree_lt_w toPoly_degree_of_lt_two_pow BitVec_lt_tw_pow_of_toPoly_degree_lt
+  toPoly_degree_lt_w toPoly_degree_of_lt_two_pow BitVec_lt_two_pow_of_toPoly_degree_lt
   toPoly_xor toPoly_fold_xor toPoly_128_extend_256 toPoly_shiftLeft_no_overflow
   toPoly_clMul_no_overflow gcd_eq_gcd_next_step gcd_one_zero)
 

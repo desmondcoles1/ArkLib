@@ -70,7 +70,7 @@ lemma ZMod2Poly.natCast_zmod2 (n : ℕ) : (n : Polynomial (ZMod 2)) = ((n % 2) :
   have : CharP (Polynomial (ZMod 2)) 2 := inferInstance
   exact CharP.cast_eq_mod (Polynomial (ZMod 2)) 2 n
 
-lemma Zmod_2_value_eq_zero_or_one (x : ZMod 2) : x = 0 ∨ x = 1 := by
+lemma ZMod2_value_eq_zero_or_one (x : ZMod 2) : x = 0 ∨ x = 1 := by
   fin_cases x
   · left; rfl;
   · right; rfl
@@ -94,7 +94,7 @@ lemma eq_of_associated_ZMod2 {a b : Polynomial (ZMod 2)} (h : Associated a b) : 
     -- The only unit in ZMod 2 is 1
     have h_val : u_poly.coeff 0 = 1 := by
       -- In ZMod 2, elements are either 0 or 1. 0 is not a unit.
-      have u_poly_coeff_0_cases := Zmod_2_value_eq_zero_or_one (u_poly.coeff 0)
+      have u_poly_coeff_0_cases := ZMod2_value_eq_zero_or_one (u_poly.coeff 0)
 
       rcases u_poly_coeff_0_cases with u_poly_coeff_0_zero | u_poly_coeff_0_one
       · exfalso;
@@ -443,7 +443,7 @@ lemma toPoly_degree_of_lt_two_pow {w d : ℕ} (v : BitVec w)
       exact WithBot.bot_lt_coe d
   · exact compareOfLessAndEq_eq_lt.mp rfl
 
-lemma BitVec_lt_tw_pow_of_toPoly_degree_lt {w d : ℕ} (v : BitVec w)
+lemma BitVec_lt_two_pow_of_toPoly_degree_lt {w d : ℕ} (v : BitVec w)
   (h_toPoly_degree_lt : (toPoly v).degree < d) : v.toNat < 2 ^ d := by
   apply Nat.lt_pow_two_of_testBit
   intro i h_i_ge_d
