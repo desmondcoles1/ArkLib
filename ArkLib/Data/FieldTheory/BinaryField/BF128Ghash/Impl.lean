@@ -19,6 +19,12 @@ We verify them by proving isomorphism to `GF(2)[X] / (X^128 + X^7 + X^2 + X + 1)
 - `reduce_clMul`: The reduction of the carry-less multiplication
 - `inv_itoh_tsujii`: The Itoh-Tsujii inversion algorithm
 - `toQuot_inv_itoh_tsujii`: The lemma that `inv_itoh_tsujii` computes `a^(2^128 - 2)`
+
+## References
+* [NIST-SP-800-38D] Dworkin, M. Recommendation for Block Cipher Modes of Operation:
+  Galois/Counter Mode (GCM) and GMAC. NIST Special Publication 800-38D.
+  https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+
 -/
 
 namespace BF128Ghash
