@@ -32,8 +32,13 @@ Thus, we only need to check:
 2. `EuclideanDomain.gcd(P, X^(2^64) + X) = 1`
 
 ## References
-- [NIST Special Publication 800-38D](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf)
-  (Galois/Counter Mode of Operation)
+* [NIST-SP-800-38D] Dworkin, M. Recommendation for Block Cipher Modes of Operation:
+  Galois/Counter Mode (GCM) and GMAC. NIST Special Publication 800-38D.
+  https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+
+* [Rabin80] Michael O. Rabin. Probabilistic Algorithms in Finite Fields.
+  SIAM Journal on Computing, 9(2):273-280, 1980. https://doi.org/10.1137/0209024
+
 -/
 
 namespace BF128Ghash
