@@ -4,12 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors : Chung Thai Nguyen, Quang Dao
 -/
 
-import Mathlib.FieldTheory.Finite.Basic
-import Mathlib.RingTheory.Polynomial.Basic
-import Mathlib.RingTheory.AdjoinRoot
-import Mathlib.Algebra.Polynomial.FieldDivision
-import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.Prelude
-import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowModCertificate
 import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowGcdCertificate
 
 /-!
@@ -22,6 +16,9 @@ from AES-GCM: `P(X) = X^128 + X^7 + X^2 + X + 1`.
 
 - `ghashPoly`: The defining polynomial `X^128 + X^7 + X^2 + X + 1` over `GF(2)`
 - `BF128Ghash`: The field `GF(2^128)` defined as `GF(2)[X]/(ghashPoly)`
+- `ghashPoly_irreducible`: The irreducibility of the GHASH polynomial
+- `irreducible_of_rabin_128_passed_over_GF2`: The lemma that if the two Rabin conditions
+    hold for a degree 128 polynomial, it MUST be irreducible.
 
 ## Proof Strategy (Rabin's Irreducibility Test)
 
@@ -39,8 +36,9 @@ Thus, we only need to check:
   (Galois/Counter Mode of Operation)
 -/
 
-namespace BinaryField128Ghash
+namespace BF128Ghash
 open Polynomial AdjoinRoot
+noncomputable section
 
 /--
 **Rabin's Irreducibility Test (Specialized for Degree 128)**
@@ -151,36 +149,35 @@ theorem ghashPoly_irreducible : Irreducible ghashPoly := by
 -- Register the Fact instance so other files can use it automatically
 instance : Fact (Irreducible ghashPoly) := ⟨ghashPoly_irreducible⟩
 
-instance : Fact (Irreducible ghashPoly) := ⟨ghashPoly_irreducible⟩
-
+set_option linter.dupNamespace false in
 /-- GF(2^128) as the quotient field GF(2)[X]/(P(X)) where P is the GHASH polynomial. -/
-noncomputable abbrev BF128Ghash : Type := AdjoinRoot ghashPoly
+abbrev BF128Ghash : Type := AdjoinRoot ghashPoly
 
 /-- BF128Ghash is a field. -/
-noncomputable instance : Field BF128Ghash := AdjoinRoot.instField
+instance instFieldBF128Ghash : Field BF128Ghash := AdjoinRoot.instField
 
 /-- BF128Ghash is a commutative ring. -/
-noncomputable instance : CommRing BF128Ghash := inferInstance
+instance instCommRingBF128Ghash : CommRing BF128Ghash := inferInstance
 
 /-- BF128Ghash is nontrivial. -/
-noncomputable instance : Nontrivial BF128Ghash := inferInstance
+instance instNontrivialBF128Ghash : Nontrivial BF128Ghash := inferInstance
 
 /-- BF128Ghash is inhabited. -/
-noncomputable instance : Inhabited BF128Ghash := ⟨0⟩
+instance : Inhabited BF128Ghash := ⟨0⟩
 
 /-- BF128Ghash is an algebra over GF(2). -/
-noncomputable instance : Algebra (ZMod 2) BF128Ghash := AdjoinRoot.instAlgebra ghashPoly
+instance : Algebra (ZMod 2) BF128Ghash := AdjoinRoot.instAlgebra ghashPoly
 
 /-- BF128Ghash has characteristic 2. -/
-noncomputable instance : CharP BF128Ghash 2 := by
+instance : CharP BF128Ghash 2 := by
   haveI : CharP (ZMod 2) 2 := inferInstance
   apply charP_of_injective_algebraMap' (ZMod 2) BF128Ghash 2
 
 /-- The canonical embedding of GF(2) into BF128Ghash. -/
-noncomputable def ofGF2 : ZMod 2 →+* BF128Ghash := algebraMap (ZMod 2) BF128Ghash
+def ofGF2 : ZMod 2 →+* BF128Ghash := algebraMap (ZMod 2) BF128Ghash
 
 /-- The generator of the field (root of the GHASH polynomial). -/
-noncomputable def root : BF128Ghash := AdjoinRoot.root ghashPoly
+def root : BF128Ghash := AdjoinRoot.root ghashPoly
 
 /-- The root satisfies the GHASH polynomial equation:
     root^128 + root^7 + root^2 + root + 1 = 0 -/
@@ -191,7 +188,7 @@ theorem root_satisfies_poly : root^128 + root^7 + root^2 + root + 1 = 0 := by
   exact h
 
 /-- BF128Ghash is a finite type. -/
-noncomputable instance : Fintype BF128Ghash := by
+instance : Fintype BF128Ghash := by
   have h_ghashPoly_ne_zero : ghashPoly ≠ 0 := Irreducible.ne_zero ghashPoly_irreducible
   let pb := AdjoinRoot.powerBasis h_ghashPoly_ne_zero
   letI : Module.Finite (ZMod 2) BF128Ghash := PowerBasis.finite pb
@@ -218,4 +215,5 @@ theorem BF128Ghash_card : Fintype.card BF128Ghash = 2^128 := by
   -- Fintype.card (ZMod 2) = 2
   norm_num
 
-end BinaryField128Ghash
+end
+end BF128Ghash

@@ -13,31 +13,27 @@ import Mathlib.Algebra.EuclideanDomain.Basic
 import ArkLib.Data.RingTheory.CanonicalEuclideanDomain
 import Mathlib.Tactic.DepRewrite
 
-/-!
-# BinaryField128Ghash
+/-! # BinaryField128Ghash Prelude
 
 Define GF(2^128) as a single field extension over GF(2) using the GHASH polynomial
 from AES-GCM: P(X) = X^128 + X^7 + X^2 + X + 1.
 
 ## Main Definitions
 
+### Polynomial Definitions
 - `ghashPoly`: The defining polynomial X^128 + X^7 + X^2 + X + 1 over GF(2)
-- `BF128Ghash`: The field GF(2^128) defined as GF(2)[X]/(ghashPoly)
+- `ghashTail`: The tail polynomial X^7 + X^2 + X + 1
 
-## Proof Strategy (Rabin's Irreducibility Test)
-We prove irreducibility using Rabin's Test (Lemma 1 in Rabin's 1980 paper).
-For a polynomial P of degree n over GF(q), P is irreducible iff:
-1. P divides (X^(q^n) - X)
-2. EuclideanDomain.gcd(P, X^(q^(n/l)) - X) = 1 for all prime factors l of n.
+### BitVec Operations
+- `clMul`: Carry-less multiplication of 256-bit vectors
+- `clSq`: Carry-less squaring of 128-bit vectors
+- `toPoly`: Conversion from a bit vector to a polynomial over GF(2)
 
-For GHASH (n=128, q=2), the only prime factor of 128 is 2.
-Thus, we only need to check:
-1. P | (X^(2^128) + X)   (Note: -X = +X in GF(2))
-2. EuclideanDomain.gcd(P, X^(2^64) + X) = 1
-
-## References
-- [NIST Special Publication 800-38D](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf)
-  (Galois/Counter Mode of Operation)
+### Verification Functions
+- `check_square_step`: Verifies a modular squaring step
+- `verify_square_step_correct`: Correctness theorem for square step verification
+- `checkDivStep`: Verifies a division step
+- `verify_div_step`: Correctness theorem for division step verification
 -/
 
 section ZMod2Poly
@@ -141,7 +137,7 @@ end ZMod2Poly
 
 section BitVecHelperLemmas
 
-theorem BitVec.toNat_of_cast {w w2 : ℕ} (x : BitVec w) (h_width_eq : w = w2) :
+lemma BitVec.toNat_of_cast {w w2 : ℕ} (x : BitVec w) (h_width_eq : w = w2) :
     BitVec.toNat ((cast (h := by rw [h_width_eq]) x) : BitVec w2) = BitVec.toNat x := by
   subst h_width_eq
   simp only [_root_.cast_eq]
@@ -221,11 +217,11 @@ lemma Polynomial.exists_factor_le_64_of_reducible.{u} {R : Type u} [Field R] (P 
 
 end PolynomialHelperLemmas
 
-namespace BinaryField128Ghash
+namespace BF128Ghash
 
 open Polynomial AdjoinRoot
 
-#check EuclideanDomain.gcd (X^2 + X : Polynomial (ZMod 2)) (X^2 + 1)
+section GHASHPolynomial
 
 /-- The GHASH polynomial: P(X) = X^128 + X^7 + X^2 + X + 1 over GF(2).
 This is the irreducible polynomial used in AES-GCM. -/
@@ -333,7 +329,7 @@ lemma X_pow_128_mod_ghashPoly : X^128 % ghashPoly = ghashTail := by
   rw [CharTwo.sub_eq_add] -- CharP 2 auto inferred from Polynomial.charP
   rw [CanonicalEuclideanDomain.add_mod_eq (hn := by exact ghashPoly_ne_zero)]
   simp only [EuclideanDomain.mod_self, zero_add]
-  rw [CanonicalEuclideanDomain.mod_mod_eq_self (hn := by exact ghashPoly_ne_zero)]
+  rw [CanonicalEuclideanDomain.mod_mod_eq_mod (hn := by exact ghashPoly_ne_zero)]
   rw [Polynomial.mod_eq_self_iff (hq0 := by exact ghashPoly_ne_zero)]
   rw [ghashPoly_degree, ghashTail_degree];
   norm_cast
@@ -349,8 +345,9 @@ lemma reduce_degree_step (k : ℕ) : (X^(128+k)) % ghashPoly = (X^k * ghashTail)
   conv_rhs => rw [CanonicalEuclideanDomain.mul_mod_eq_mul_mod_left
     (hn := by exact ghashPoly_ne_zero), mul_comm]
 
-/-- BITVEC --------------------------------------
-------------------------------------------------------------------------- -/
+end GHASHPolynomial
+
+section BitVecOperations
 
 -- We use BitVec 256 to ensure no overflows during squaring
 abbrev B128 := BitVec 128
@@ -365,23 +362,6 @@ lemma to256_toNat (v : B128) : (to256 v).toNat = v.toNat := by
   change BitVec.toNat v < 2^256
   have h_toNat_lt := BitVec.toNat_lt_twoPow_of_le (n := 256) (x := v) (h := by omega)
   omega
-
--- def clMul (a b : B256) : B256 :=
---   let rec loop (fuel : Nat) (a_nat b_nat acc : Nat) : Nat :=
---     match fuel with
---     | 0 => acc
---     | n + 1 =>
---       -- 1. Check if LSB of a is 1 (fast Nat operation)
---       let acc' := if a_nat % 2 = 1 then acc ^^^ b_nat else acc
---       -- 2. Shift a down and b up (fast Nat operations)
---       loop n (a_nat >>> 1) (b_nat <<< 1) acc'
-
---   -- Run the loop 256 times
---   let res := loop 256 a.toNat b.toNat 0
-
---   -- Wrap result back into BitVec (performs the single modulo 2^256 here)
---   BitVec.ofNat 256 res
-
 
 -- Std.Commutative and Std.Associative instances for Nat.xor required by Finset.fold
 instance : Std.Commutative Nat.xor where
@@ -407,17 +387,19 @@ def clMul (a b : B256) : B256 :=
   (Finset.univ : Finset (Fin 256)).fold BitVec.xor 0
       (fun i => if a.getLsb i then b <<< i.val else 0)
 
-#eval clMul (1 <<< 2) (1 <<< 2) -- 16#256
-#eval clMul (21) (21) -- 273#256
-#eval clMul (54) (17) -- 854#256
+-- #eval clMul (1 <<< 2) (1 <<< 2) -- 16#256
+-- #eval clMul (21) (21) -- 273#256
+-- #eval clMul (54) (17) -- 854#256
 
 -- Squaring (Just multiply by self in GF(2))
 def clSq (a : B128) : B256 :=
   let a256 := to256 a
   clMul a256 a256
---------------------------------------------------------------------------------
--- 2. THE BRIDGE (Isomorphism)
---------------------------------------------------------------------------------
+
+end BitVecOperations
+
+section PolynomialIsomorphism
+
 -- We define toPoly as a Sum of Monomials using Fin.foldl
 -- Note: noncomputable because Polynomial doesn't have computable operations
 noncomputable def toPoly {w : Nat} (v : BitVec w) : (ZMod 2)[X] :=
@@ -586,6 +568,79 @@ lemma toPoly_degree_of_lt_two_pow {w d : ℕ} (v : BitVec w)
       rw [Polynomial.degree_zero]
       exact WithBot.bot_lt_coe d
   · exact compareOfLessAndEq_eq_lt.mp rfl
+
+lemma BitVec_lt_tw_pow_of_toPoly_degree_lt {w d : ℕ} (v : BitVec w)
+  (h_toPoly_degree_lt : (toPoly v).degree < d) : v.toNat < 2 ^ d := by
+-- We prove that for any bit `i` set in `v`, `i < d`.
+  apply Nat.lt_pow_two_of_testBit
+  intro i h_i_ge_d
+  by_cases hi_ge_w : i ≥ w
+  · refine Nat.testBit_lt_two_pow ?_
+    exact BitVec.toNat_lt_twoPow_of_le hi_ge_w
+  · -- ⊢ v.toNat.testBit i = false, where d ≤ i < w
+    by_contra h_v_testBit_i_true
+    simp only [Bool.not_eq_false] at h_v_testBit_i_true
+    -- 1. Establish that if bit i is set, i < w (basic BitVec property)
+    have h_i_lt_w : i < w := by omega
+
+    -- 2. Show that if bit i is set, the coefficient of X^i in toPoly v is 1
+    have h_coeff_one : (toPoly v).coeff i = 1 := by
+      unfold toPoly
+      rw [finset_sum_coeff]
+      -- The sum has only one term contributing to coeff i: the term where index = i
+      rw [Finset.sum_eq_single ⟨i, h_i_lt_w⟩]
+      · -- The term itself: if bit is set, coeff is 1
+        -- The goal is: (if v.getLsb ⟨i, h_i_lt_w⟩ then X ^ i else 0).coeff i = 1
+        -- We know v.toNat.testBit i = true
+        -- BitVec.getLsb v i = v.toNat.testBit i.val
+        have h_getLsb_eq_testBit : v.getLsb ⟨i, h_i_lt_w⟩ = v.toNat.testBit i := by
+          rfl
+        rw [h_getLsb_eq_testBit, h_v_testBit_i_true]
+        simp only [↓reduceIte]
+        -- Now: (X ^ i).coeff i = 1
+        rw [Polynomial.coeff_X_pow]
+        split_ifs
+        · rfl
+        · exfalso
+          omega
+      · -- All other terms j ≠ i have coeff 0 at index i
+        intro b _ hb_ne
+        -- Goal: (if v.getLsb b then X ^ b.val else 0).coeff i = 0
+        -- Since b ≠ ⟨i, h_i_lt_w⟩, we have b.val ≠ i, so coeff is 0
+        split_ifs with h_bit
+        · -- Case: v.getLsb b = true, so term is X ^ b.val
+          -- Need: (X ^ b.val).coeff i = 0 (since b.val ≠ i)
+          rw [Polynomial.coeff_X_pow]
+          split_ifs with h_b_val_eq_i
+          · -- if b.val = i, then b = ⟨i, h_i_lt_w⟩, contradiction
+            exfalso
+            apply hb_ne
+            apply Fin.ext
+            simp only
+            exact h_b_val_eq_i.symm
+          · -- if b.val ≠ i, coeff is 0
+            rfl
+        · -- Case: v.getLsb b = false, so term is 0, coeff is 0
+          rw [Polynomial.coeff_zero]
+      · -- Case where i is not in Finset.univ (impossible)
+        intro h_absurd
+        simp only [Finset.mem_univ, not_true_eq_false] at h_absurd
+
+    -- 3. If coeff i is non-zero, then degree >= i
+    have h_deg_ge : (toPoly v).degree ≥ i := by
+      rw [ge_iff_le]
+      apply Polynomial.le_degree_of_ne_zero
+      rw [h_coeff_one]
+      exact Ne.symm (zero_ne_one' (ZMod 2))
+    have h_deg_ne_lt : ¬((toPoly v).degree < i) := by
+      exact LE.le.not_gt h_deg_ge
+    -- 4. Combine bounds: i ≤ degree < d  => i < d
+    -- Note: degree is WithBot Nat, so we use coercion lemmas
+    -- exact WithBot.coe_lt_coe.mp h_toPoly_degree_lt
+    have h_toPoly_v_degree_lt_i : (toPoly v).degree < i := by
+      apply lt_of_lt_of_le h_toPoly_degree_lt
+      exact Nat.cast_le.mpr h_i_ge_d
+    exact h_deg_ne_lt h_toPoly_v_degree_lt_i
 
 -- Lemma: XOR corresponds to Addition
 lemma toPoly_xor {w} (a b : BitVec w) : toPoly (a ^^^ b) = toPoly a + toPoly b := by
@@ -816,11 +871,11 @@ lemma chain_step {k : ℕ} {prev next : Polynomial (ZMod 2)} {q_val : B128}
   conv_lhs => rw [CanonicalEuclideanDomain.mul_mod_eq (hn := by exact ghashPoly_ne_zero)]
   conv_lhs => simp only [EuclideanDomain.mod_self, mul_zero, zero_add]
   conv_lhs => rw [EuclideanDomain.zero_mod, zero_add]
-  rw [CanonicalEuclideanDomain.mod_mod_eq_self (hn := by exact ghashPoly_ne_zero)]
+  rw [CanonicalEuclideanDomain.mod_mod_eq_mod (hn := by exact ghashPoly_ne_zero)]
 
--- -----------------------------------------------------------------------------
--- 3. THE VERIFICATION FUNCTION
--- -----------------------------------------------------------------------------
+end PolynomialIsomorphism
+
+section VerificationFunctions
 
 -- The "P" constant (X^128 + X^7 + X^2 + X + 1)
 -- We represent it as a 256-bit vector
@@ -971,7 +1026,7 @@ lemma gcd_eq_gcd_next_step {a b q r : Polynomial (ZMod 2)} (hb : b ≠ 0) (h : a
     rw [h, ZMod2Poly.euclidean_gcd_comm, CanonicalEuclideanDomain.add_mod_eq (hn := hb)]
     rw [CanonicalEuclideanDomain.mul_mod_eq (hn := hb),
       EuclideanDomain.mod_self, mul_zero, EuclideanDomain.zero_mod]
-    rw [zero_add, CanonicalEuclideanDomain.mod_mod_eq_self (hn := hb)]
+    rw [zero_add, CanonicalEuclideanDomain.mod_mod_eq_mod (hn := hb)]
   conv_rhs => rw [EuclideanDomain.gcd_val, ZMod2Poly.euclidean_gcd_comm]
 
 -- 2. Helper for the Final Step
@@ -999,4 +1054,6 @@ theorem verify_div_step (a q b r : B256) (hq : q.toNat < 2 ^ 128) (hb : b.toNat 
     (h_sum := by omega)] at h
   exact h
 
-end BinaryField128Ghash
+end VerificationFunctions
+
+end BF128Ghash

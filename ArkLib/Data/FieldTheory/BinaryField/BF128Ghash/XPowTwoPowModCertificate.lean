@@ -1,8 +1,12 @@
-import Mathlib.RingTheory.Polynomial.Basic
-import Mathlib.Data.ZMod.Basic
+/-
+Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors : Chung Thai Nguyen, Quang Dao
+-/
+
 import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.Prelude
 
-namespace BinaryField128Ghash
+namespace BF128Ghash
 open Polynomial
 
 set_option maxRecDepth 1500
@@ -1121,4 +1125,4 @@ theorem X_pow_2_pow_128_eq : (X : Polynomial (ZMod 2))^(2^128) % ghashPoly = X :
   rw [r128_eq_X]
   rw [X_mod_ghashPoly]
 
-end BinaryField128Ghash
+end BF128Ghash

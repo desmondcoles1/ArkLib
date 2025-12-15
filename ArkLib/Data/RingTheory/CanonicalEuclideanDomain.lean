@@ -374,6 +374,13 @@ theorem add_mul_mod_right (a b r : R) (hb : b ≠ 0) :
       (remainder_is_canonical a b hb))
   rw [←h_unique.2]
 
+/-- Generalized `add_mul_mod_left`: (a * r + b) % a = b % a`
+The remainder ignores multiples of the divisor. -/
+theorem add_mul_mod_left (a b r : R) (hb : a ≠ 0) :
+    (a * r + b) % a = b % a := by
+  rw [add_comm]
+  rw [add_mul_mod_right (hb := hb)]
+
 /-- `If a = b + n * r, then a % n = b % n.` -/
 theorem mod_eq_of_eq_add_mul {a b n q : R} (h_eq_add_mul : a = b + n * q) (hn : n ≠ 0) :
     a % n = b % n := by
@@ -390,6 +397,16 @@ theorem mul_mod_eq_mul_mod_left (a b n : R) (hn : n ≠ 0) :
   nth_rw 1 [← EuclideanDomain.div_add_mod a n]
   rw [add_mul, mul_assoc, add_comm]
   rw [add_mul_mod_right (hb := hn)]
+
+
+/-- `(a * b) % n = 0` if `a % n = 0` -/
+theorem mul_mod_eq_zero_of_mod_dvd (a b n : R) (hn : n ≠ 0)
+    (h_mod_eq_zero : a % n = 0) : (a * b) % n = 0 := by
+  -- If a % n = 0, then (a * b) % n = ((a % n) * b) % n = (0 * b) % n = 0 % n = 0
+  rw [mul_mod_eq_mul_mod_left a b n hn]
+  rw [h_mod_eq_zero]
+  rw [zero_mul]
+  rw [EuclideanDomain.zero_mod]
 
 /-- `(a + b) % n = ((a % n) + b) % n` -/
 theorem add_mod_eq_add_mod_left (a b n : R) (hn : n ≠ 0) :
@@ -413,7 +430,7 @@ theorem mul_mod_eq (a b n : R) (hn : n ≠ 0) :
   rw [mul_comm]
 
 /-- `(a % n) % n = a % n` -/
-theorem mod_mod_eq_self (a n : R) (hn : n ≠ 0) :
+theorem mod_mod_eq_mod (a n : R) (hn : n ≠ 0) :
     (a % n) % n = a % n := by
   apply Eq.symm
   apply CanonicalEuclideanDomain.mod_eq_of_eq_add_mul (a := a) (b := a % n)

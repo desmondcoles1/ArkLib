@@ -1,20 +1,15 @@
-import Mathlib.RingTheory.Polynomial.Basic
-import Mathlib.Data.ZMod.Basic
-import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.Prelude
-import Mathlib.Tactic.DepRewrite
-import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowModCertificate
-import ArkLib.Data.RingTheory.CanonicalEuclideanDomain
+/-
+Copyright (c) 2024-2025 ArkLib Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors : Chung Thai Nguyen, Quang Dao
+-/
 
-namespace BinaryField128Ghash
+import ArkLib.Data.FieldTheory.BinaryField.BF128Ghash.XPowTwoPowModCertificate
+
+namespace BF128Ghash
 open Polynomial
 
 set_option maxRecDepth 1500
-
---------------------------------------------------------------------------------
--- GCD INFRASTRUCTURE (Linear Division)
---------------------------------------------------------------------------------
--- GCD TRACE GENERATION
---------------------------------------------------------------------------------
 
 @[reducible]
 def gcd_a_0_val : B256 := BitVec.ofNat 256 340282366920938463463374607431768211591
@@ -985,4 +980,4 @@ lemma rabin_gcd_condition_gHashPoly : EuclideanDomain.gcd ((X^(2^64)) + X) ghash
   rw [toPoly_zero_eq_zero, toPoly_one_eq_one (h_w_pos := by omega)]
   exact EuclideanDomain.gcd_one_left 0
 
-end BinaryField128Ghash
+end BF128Ghash
