@@ -86,6 +86,7 @@ def JohnsonConditionWeak (B : Finset (Fin n → F)) (e : ℕ) : Prop :=
   let q : ℚ := Fintype.card F
   (e : ℚ) / n < J q (d / n)
 
+
 lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin n → F} {e : ℕ}
   (h : JohnsonConditionWeak B e)
   :
@@ -130,10 +131,13 @@ lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin 
     unfold JohnsonConditionWeak J at this
     simp_all
     let d_weak := sInf {d | ∃ u ∈ B, ∃ v ∈ B, ¬u=v ∧ Δ₀(u,v)=d}
-    have d_subset : ↑d_weak ≤ (d : ℚ)  := by  --I think this is the hard part, d isn't just any number
+    have d_subset : ↑d_weak ≤ (d : ℚ)  := by
+    --I think this is the hard part, d isn't just any number
         unfold d
         unfold JohnsonBound.d
         unfold d_weak
+        --I don't know how to apply it but this is min_dist_le_d from the Expecations file
+          --v is a given vector, B is some set of vector, e is a nat
         sorry
     have bound: (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d_weak / ↑n))
       ≤ (↑frac)⁻¹ * (1 - √(1 - ↑frac * ↑d / ↑n)) := by sorry --this is monotonicity
@@ -149,9 +153,6 @@ lemma johnson_condition_weak_implies_strong {B : Finset (Fin n → F)} {v : Fin 
     field_simp at bound
     linarith
   linarith [h_errn, jboundw]
-
-
-
 
 private lemma johnson_condition_strong_implies_n_pos
   (h_johnson : JohnsonConditionStrong B v)
