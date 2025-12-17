@@ -82,12 +82,12 @@ def get_repo_files_content(paths_str: str) -> str:
     return all_files_content
 
 def analyze_code_with_context(diff: str, external_context: str, repo_context: str, additional_comments: str) -> str:
-    """Generates a code review using the Gemini 2.5 Pro."""
+    """Generates a code review using the Gemini 3 Pro."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key: return "Error: GEMINI_API_KEY environment variable not set."
 
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.5-pro')
+    model = genai.GenerativeModel('gemini-3-pro-preview')
 
     additional_comments_section = ""
     if additional_comments and additional_comments.strip():
