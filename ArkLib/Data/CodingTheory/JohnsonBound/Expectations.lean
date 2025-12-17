@@ -118,7 +118,7 @@ lemma min_dist_le_d [Field F] {B : Finset (Fin n → F)}
       simp
       rw[doubleindex2]
     rw[BBcount, BBcard, BBdiagcard]
-    rw[Nat.cast_sub] ; ring ; rfl
+    rw[Nat.cast_sub] ; ring_nf ; rfl
     nlinarith [sq_nonneg (B.card - 1)]
   have B2_card_pos : {x ∈ B.product B | x.1 ≠ x.2}.card > 0 := by
     have : ∃ u ∈ B, ∃ v ∈ B, u ≠ v := by
