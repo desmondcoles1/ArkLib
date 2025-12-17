@@ -91,7 +91,7 @@ def binary_tower_inductive_step
     ⟨instPrevPolyIrreducible⟩ -- used for AdjoinRoot.instField
   let sumZeroIffEqPrevBTField : ∀ (x y : prevBTField), x + y = (0 : prevBTField)
     ↔ x = y := by exact prevBTResult.sumZeroIffEq
-  let curBTField := AdjoinRoot prevPoly
+  let curBTField := AdjoinRoot prevPoly -- BTF(k) ≈ GF(2^(2^(k+1)))
   let instFieldAdjoinRootOfPoly : Field curBTField := by
     exact AdjoinRoot.instField (f := prevPoly)
   -- Lift to new BTField level

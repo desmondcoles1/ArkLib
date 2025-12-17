@@ -25,7 +25,7 @@ import Mathlib.RingTheory.MvPolynomial.Groebner
 * [Ben-Sasson, E. and Sudan, M., *Short PCPs with polylog query complexity*][BSS08]
 -/
 
-open Polynomial ReedSolomon LinearMap Finset ListDecodable STIR
+open Polynomial NNReal ReedSolomon LinearMap Finset ListDecodable STIR
 
 namespace Domain
 
@@ -175,9 +175,11 @@ noncomputable def fold
 
 /-- min{δᵣ(f, RSC[F, ι, degree]), 1 − B^⋆(ρ)} -/
 noncomputable def foldingDistRange
-   (degree : ℕ) [Fintype ι] [Nonempty ι] (φ : ι ↪ F) (f : ι → F) : ℝ :=
+   (degree : ℕ) [Fintype ι] [Nonempty ι] (φ : ι ↪ F) (f : ι → F) : ℝ≥0 :=
     let C : Set (ι → F) := code φ degree
-    min δᵣ(f, C) (1 - Bstar (LinearCode.rate (code φ degree)))
+    letI : Nonempty C := by exact Zero.instNonempty
+    letI : Fintype C := by exact Fintype.ofFinite ↑C
+    min δᵣ'(f, C) (1 - Bstar (LinearCode.rate (code φ degree)))
 
 open ProbabilityTheory
 
@@ -191,11 +193,11 @@ lemma folding
   [Nonempty ι] {S : Finset ι} [Fintype ι]
   (φ : ι ↪ F) (f : ι → F) (k : ℕ)
   [Nonempty (indexPow S φ k)]
-  {degree : ℕ} (δ : ℚ) (hδPos : δ > 0)
+  {degree : ℕ} (δ : ℝ≥0) (hδPos : δ > 0)
   (hδLt : δ < foldingDistRange degree φ f) :
   let C : Set ((indexPow S φ k) → F) := code (pow S φ k) (degree / k)
   Pr_{ let r ← $ᵖ F }[ δᵣ((fold φ f k r), C) ≤ δ]
-    ≤ ENNReal.ofReal (proximityError F (degree / k) (LinearCode.rate (code φ degree)) δ k) :=
+    ≤ proximityError F (degree / k) (LinearCode.rate (code φ degree)) δ k :=
 by sorry
 
 end Folding

@@ -19,7 +19,7 @@ def generate_ai_summary(diff):
     else:
         truncated = False
 
-    model = genai.GenerativeModel('gemini-2.5-pro')
+    model = genai.GenerativeModel('gemini-3-pro-preview')
     prompt = f"""
     Please provide a concise, high-level summary of the following git diff.
     Focus on the key changes and their purpose. Do not describe the changes line-by-line.
